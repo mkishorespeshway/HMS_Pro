@@ -1,0 +1,172 @@
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import API from "../api";
+
+const SPECIALTIES = [
+  "General Physician",
+  "Gynecologist",
+  "Dermatologist",
+  "Pediatrician",
+  "Neurologist",
+  "Cardiologist",
+];
+
+export default function SearchDoctors() {
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith("/admin");
+  const nav = useNavigate();
+  const [q, setQ] = useState("");
+  const [list, setList] = useState([]);
+  const [specialization, setSpecialization] = useState("");
+  const [error, setError] = useState("");
+
+  const search = async () => {
+    setError("");
+    try {
+      const { data } = await API.get("/doctors", { params: { q, specialization } });
+      setList(data);
+    } catch (e) {
+      setList([]);
+      setError(e.response?.data?.message || e.message || "Network Error");
+    }
+  };
+
+  useEffect(() => {
+    search();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [specialization]);
+
+  if (isAdmin) {
+    return (
+      <div className="max-w-7xl mx-auto mt-8 px-4">
+        <div className="grid grid-cols-12 gap-6">
+          <aside className="col-span-12 md:col-span-3">
+            <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <div className="text-indigo-700 font-semibold mb-4">Prescripto</div>
+              <nav className="space-y-2 text-slate-700">
+                <Link to="/admin/dashboard" className="block px-3 py-2 rounded-md hover:bg-slate-50">Dashboard</Link>
+                <Link to="/admin/appointments" className="block px-3 py-2 rounded-md hover:bg-slate-50">Appointments</Link>
+                <Link to="/admin/add-doctor" className="block px-3 py-2 rounded-md hover:bg-slate-50">Add Doctor</Link>
+                <Link to="/admin/doctors/pending" className="block px-3 py-2 rounded-md hover:bg-slate-50">Approvals</Link>
+                <div className="px-3 py-2 rounded-md bg-indigo-50 text-indigo-700">Doctors List</div>
+              </nav>
+            </div>
+          </aside>
+          <main className="col-span-12 md:col-span-9">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-semibold">Doctors List</h2>
+              <button
+                onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); }}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full"
+              >
+                Logout
+              </button>
+            </div>
+            {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {list.map((d) => (
+                <div key={d._id} className="bg-white rounded-lg border border-slate-200 shadow-sm">
+                  <div className="p-4">
+                    <div className="relative mb-3">
+                      <img
+                        src={(process.env.PUBLIC_URL || "") + "/doctor3.jpeg"}
+                        alt="Doctor"
+                        className="w-full h-36 object-cover rounded-md"
+                        onError={(e) => { e.currentTarget.src = "https://raw.githubusercontent.com/abhi051002/hms-fullstack/main/frontend/src/readme_images/doctorProfile.png"; }}
+                      />
+                      <span className="absolute top-2 left-2 bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Available</span>
+                    </div>
+                    <h3 className="text-base font-semibold">{d.user?.name}</h3>
+                    <p className="text-sm text-slate-600">{d.specializations?.join(", ") || "--"}</p>
+                    <Link
+                      to={`/doctor/${d.user._id}`}
+                      className="mt-3 inline-block text-indigo-600 hover:text-indigo-800"
+                    >
+                      View Profile
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto mt-8 px-4">
+      <h2 className="text-3xl font-semibold mb-6">All Doctors</h2>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <aside className="md:col-span-1">
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <p className="text-sm text-slate-600 mb-3">Browse through the doctors specialties.</p>
+            <div className="space-y-2">
+              {SPECIALTIES.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setSpecialization(s)}
+                  className={`w-full text-left px-3 py-2 rounded-md border ${
+                    specialization === s
+                      ? "bg-indigo-50 border-indigo-300 text-indigo-700"
+                      : "border-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+              <button
+                onClick={() => setSpecialization("")}
+                className="w-full text-left px-3 py-2 rounded-md border border-slate-300 hover:bg-slate-50"
+              >
+                Clear filter
+              </button>
+            </div>
+            <div className="mt-4">
+              <input
+                className="w-full border border-slate-300 rounded-md p-2"
+                placeholder="Search doctor or specialization"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+              <button
+                onClick={search}
+                className="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md"
+              >
+                Search
+              </button>
+            </div>
+          </div>
+        </aside>
+        <main className="md:col-span-3">
+          {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {list.map((d) => (
+              <div key={d._id} className="bg-white rounded-lg border border-slate-200 shadow-sm">
+                <div className="p-4">
+                  <div className="relative mb-3">
+                    <img
+                      src={(process.env.PUBLIC_URL || "") + "/doctor3.jpeg"}
+                      alt="Doctor"
+                      className="w-full h-36 object-cover rounded-md"
+                      onError={(e) => { e.currentTarget.src = "https://raw.githubusercontent.com/abhi051002/hms-fullstack/main/frontend/src/readme_images/doctorProfile.png"; }}
+                    />
+                    <span className="absolute top-2 left-2 bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Available</span>
+                  </div>
+                  <h3 className="text-base font-semibold">{d.user?.name}</h3>
+                  <p className="text-sm text-slate-600">{d.specializations?.join(", ") || "--"}</p>
+                  <Link
+                    to={`/doctor/${d.user._id}`}
+                    className="mt-3 inline-block text-indigo-600 hover:text-indigo-800"
+                  >
+                    View Profile
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
