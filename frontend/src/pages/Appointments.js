@@ -28,13 +28,16 @@ export default function Appointments() {
   const cancel = async (id) => {
     try {
       const apptId = id || "";
-      await API.put(`/appointments/${apptId}/cancel`);
-      setList((prev) => prev.filter((x) => String(x._id) !== String(apptId)));
+      await API.put(`/appointments/${String(apptId)}/cancel`);
+      setList((prev) => prev.map((x) => (String(x._id) === String(apptId) ? { ...x, status: "CANCELLED" } : x)));
     } catch (e) {
       const msg = e.response?.data?.message || e.message || "Cancel failed";
       if (e.response?.status === 404) {
         alert("Appointment not found or already cancelled");
-        setList((prev) => prev.filter((x) => String(x._id) !== String(id)));
+        try {
+          const { data } = await API.get("/appointments/mine");
+          setList(Array.isArray(data) ? data : []);
+        } catch (_) {}
       } else {
         alert(msg);
       }
@@ -69,14 +72,28 @@ export default function Appointments() {
                     <div className="text-sm text-slate-700">Date & Time: <span className="text-slate-900">{`${a.date} | ${a.startTime}`}</span></div>
                   </div>
                 </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => nav(`/pay/${a._id}`)}
-                    className="border border-slate-300 px-3 py-1 rounded-md"
-                  >
-                    Pay Online
-                  </button>
-                  <button onClick={() => cancel(a._id || a.id)} className="border border-slate-300 px-3 py-1 rounded-md">Cancel appointment</button>
+                <div className="flex gap-3 items-center">
+                  {String(a.status).toUpperCase() === 'CANCELLED' ? (
+                    <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">Cancelled</span>
+                  ) : String(a.status).toUpperCase() === 'COMPLETED' ? (
+                    <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Completed</span>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => nav(`/pay/${a._id}`)}
+                        className="border border-slate-300 px-3 py-1 rounded-md"
+                      >
+                        Pay Online
+                      </button>
+                      <button
+                        onClick={() => cancel(a._id || a.id)}
+                        disabled={!a?._id}
+                        className={`border px-3 py-1 rounded-md ${(!a?._id) ? 'border-slate-200 text-slate-400 cursor-not-allowed' : 'border-slate-300'}`}
+                      >
+                        Cancel appointment
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}

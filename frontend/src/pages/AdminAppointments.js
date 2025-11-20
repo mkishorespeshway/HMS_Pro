@@ -13,28 +13,16 @@ export default function AdminAppointments() {
       setLoading(true);
       try {
         setError("");
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setLoading(false);
-          nav("/admin/login");
-          return;
-        }
         const { data } = await API.get("/admin/appointments");
         setList(data || []);
       } catch (e) {
         setList([]);
-        const status = e.response?.status;
-        if (status === 401 || status === 403) {
-          setError("Please login as admin to view appointments");
-          nav("/admin/login");
-        } else {
-          setError(e.response?.data?.message || e.message || "Failed to load appointments");
-        }
+        setError(e.response?.data?.message || e.message || "Failed to load appointments");
       }
       setLoading(false);
     };
     load();
-  }, [nav]);
+  }, []);
 
   const rows = list.length
     ? list.map((a, i) => (

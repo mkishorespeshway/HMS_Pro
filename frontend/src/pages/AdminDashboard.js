@@ -7,34 +7,24 @@ export default function AdminDashboard() {
   const [doctorCount, setDoctorCount] = useState(0);
   const [appointmentCount, setAppointmentCount] = useState(0);
   const [patientCount, setPatientCount] = useState(0);
+  const [latest, setLatest] = useState([]);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          nav("/admin/login");
-          return;
-        }
         const d = await API.get("/doctors");
         setDoctorCount(d.data?.length || 0);
 
-        try {
-          const a = await API.get("/admin/appointments");
-          const list = a.data || [];
-          setAppointmentCount(list.length);
-          const setIds = new Set(list.map((x) => x.patient?._id || String(x.patient || "")));
-          setPatientCount(setIds.size);
-        } catch (eAppt) {
-          const status = eAppt.response?.status;
-          if (status === 401 || status === 403) {
-            nav("/admin/login");
-          }
-        }
+        const a = await API.get("/admin/appointments");
+        const list = a.data || [];
+        setAppointmentCount(list.length);
+        const setIds = new Set(list.map((x) => x.patient?._id || String(x.patient || "")));
+        setPatientCount(setIds.size);
+        setLatest(list.slice(0, 5));
       } catch (e) {}
     };
     load();
-  }, [nav]);
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 mt-8">
@@ -63,22 +53,55 @@ export default function AdminDashboard() {
 
         <main className="col-span-12 md:col-span-9">
           <div className="flex flex-wrap gap-4 mb-6">
-            <div className="flex-1 min-w-[160px] bg-white border border-slate-200 rounded-xl p-4">
-              <div className="text-sm text-slate-600">Doctors</div>
-              <div className="text-2xl font-semibold">{doctorCount}</div>
+            <div className="relative flex-1 min-w-[160px] bg-white border border-slate-200 rounded-xl p-4 transition-transform duration-300 hover:scale-105 hover:shadow-lg hover:bg-indigo-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center animate-pulse">👨‍⚕️</div>
+                  <div className="text-sm text-slate-600">Doctors</div>
+                </div>
+                <div className="text-2xl font-semibold animate-pulse">{doctorCount}</div>
+              </div>
             </div>
-            <div className="flex-1 min-w-[160px] bg-white border border-slate-200 rounded-xl p-4">
-              <div className="text-sm text-slate-600">Appointments</div>
-              <div className="text-2xl font-semibold">{appointmentCount}</div>
+            <div className="relative flex-1 min-w-[160px] bg-white border border-slate-200 rounded-xl p-4 transition-transform duration-300 hover:scale-105 hover:shadow-lg hover:bg-indigo-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center animate-pulse">📅</div>
+                  <div className="text-sm text-slate-600">Appointments</div>
+                </div>
+                <div className="text-2xl font-semibold animate-pulse">{appointmentCount}</div>
+              </div>
             </div>
-            <div className="flex-1 min-w-[160px] bg-white border border-slate-200 rounded-xl p-4">
-              <div className="text-sm text-slate-600">Patients</div>
-              <div className="text-2xl font-semibold">{patientCount}</div>
+            <div className="relative flex-1 min-w-[160px] bg-white border border-slate-200 rounded-xl p-4 transition-transform duration-300 hover:scale-105 hover:shadow-lg hover:bg-indigo-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center animate-pulse">👥</div>
+                  <div className="text-sm text-slate-600">Patients</div>
+                </div>
+                <div className="text-2xl font-semibold animate-pulse">{patientCount}</div>
+              </div>
             </div>
           </div>
 
           <div className="bg-white border border-slate-200 rounded-xl p-4">
-            <div className="text-slate-700">Latest Bookings</div>
+            <div className="text-slate-900 font-semibold mb-3">Latest Bookings</div>
+            {latest && latest.length ? (
+              <div className="divide-y">
+                {latest.map((b) => (
+                  <div key={String(b._id)} className="flex items-center justify-between py-2 hover:bg-slate-50 transition-colors duration-200">
+                    <div>
+                      <div className="text-slate-900 text-sm">{b.patient?.name || "Patient"}</div>
+                      <div className="text-slate-600 text-xs">with {b.doctor?.name ? `Dr. ${b.doctor.name}` : "Doctor"}</div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-slate-700 text-sm">{b.date} {b.startTime}</div>
+                      <span className={`text-xs px-2 py-1 rounded ${b.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' : b.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{b.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-slate-600 text-sm">No recent bookings</div>
+            )}
           </div>
         </main>
       </div>

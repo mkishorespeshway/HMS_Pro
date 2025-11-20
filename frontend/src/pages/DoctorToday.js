@@ -16,7 +16,10 @@ export default function DoctorToday() {
         try {
           const mine = await API.get("/appointments/mine");
           const todayStr = new Date().toISOString().slice(0, 10);
-          items = (mine.data || []).filter((a) => a.date === todayStr);
+          const upcoming = (mine.data || [])
+            .filter((a) => (a.date || "") >= todayStr)
+            .sort((x, y) => (x.date + x.startTime).localeCompare(y.date + y.startTime));
+          items = upcoming.slice(0, 10);
         } catch (_) {}
       }
       setList(items);
@@ -34,6 +37,7 @@ export default function DoctorToday() {
     if (!apptId) { alert("Invalid appointment"); return; }
     try {
       await API.put(`/appointments/${String(apptId)}/accept`, { date, startTime });
+      setList((prev) => prev.map((x) => (String(x._id || x.id) === String(apptId) ? { ...x, status: "CONFIRMED" } : x)));
       load();
     } catch (e) {
       const msg = e.response?.data?.message || e.message || "Failed to accept";
@@ -51,6 +55,7 @@ export default function DoctorToday() {
     if (!apptId) { alert("Invalid appointment"); return; }
     try {
       await API.put(`/appointments/${String(apptId)}/reject`, { date, startTime });
+      setList((prev) => prev.map((x) => (String(x._id || x.id) === String(apptId) ? { ...x, status: "CANCELLED" } : x)));
       load();
     } catch (e) {
       const msg = e.response?.data?.message || e.message || "Failed to reject";
@@ -75,26 +80,32 @@ export default function DoctorToday() {
           <td className="px-4 py-3">{a.date} {a.startTime}</td>
           <td className="px-4 py-3">₹{a.fee || 0}</td>
           <td className="px-4 py-3">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => accept(a._id || a.id, a.date, a.startTime)}
-                disabled={!(a?._id || a?.id)}
-                className={`h-7 w-7 rounded-full flex items-center justify-center ${(a?._id || a?.id) ? "bg-green-600 hover:bg-green-700 text-white" : "bg-slate-200 text-slate-500"}`}
-                title="Accept"
-              >
-                ✓
-              </button>
-              <button
-                type="button"
-                onClick={() => reject(a._id || a.id, a.date, a.startTime)}
-                disabled={!(a?._id || a?.id)}
-                className={`h-7 w-7 rounded-full flex items-center justify-center ${(a?._id || a?.id) ? "bg-red-600 hover:bg-red-700 text-white" : "bg-slate-200 text-slate-500"}`}
-                title="Reject"
-              >
-                ✕
-              </button>
-            </div>
+            {String(a.status).toUpperCase() === 'PENDING' ? (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => accept(a._id || a.id, a.date, a.startTime)}
+                  disabled={!(a?._id || a?.id)}
+                  className={`h-7 w-7 rounded-full flex items-center justify-center ${(a?._id || a?.id) ? "bg-green-600 hover:bg-green-700 text-white" : "bg-slate-200 text-slate-500"}`}
+                  title="Accept"
+                >
+                  ✓
+                </button>
+                <button
+                  type="button"
+                  onClick={() => reject(a._id || a.id, a.date, a.startTime)}
+                  disabled={!(a?._id || a?.id)}
+                  className={`h-7 w-7 rounded-full flex items-center justify-center ${(a?._id || a?.id) ? "bg-red-600 hover:bg-red-700 text-white" : "bg-slate-200 text-slate-500"}`}
+                  title="Reject"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <span className={`inline-block text-xs px-2 py-1 rounded ${String(a.status).toUpperCase() === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                {String(a.status).toUpperCase() === 'CANCELLED' ? 'Cancelled' : 'Confirmed'}
+              </span>
+            )}
           </td>
         </tr>
       ))
@@ -108,8 +119,8 @@ export default function DoctorToday() {
           <td className="px-4 py-3">₹500</td>
           <td className="px-4 py-3">
             <div className="flex gap-2">
-              <button type="button" className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md">Accept</button>
-              <button type="button" className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-md">Reject</button>
+              <button type="button" className="h-7 w-7 rounded-full bg-slate-200 text-slate-500 cursor-not-allowed">✓</button>
+              <button type="button" className="h-7 w-7 rounded-full bg-slate-200 text-slate-500 cursor-not-allowed">✕</button>
             </div>
           </td>
         </tr>
