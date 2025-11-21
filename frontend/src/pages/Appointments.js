@@ -7,6 +7,7 @@ export default function Appointments() {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [profiles, setProfiles] = useState(new Map());
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -16,7 +17,20 @@ export default function Appointments() {
       setError("");
       try {
         const { data } = await API.get("/appointments/mine");
-        setList(Array.isArray(data) ? data : []);
+        const arr = Array.isArray(data) ? data : [];
+        setList(arr);
+        const ids = Array.from(new Set(arr.map((a) => String(a.doctor?._id || a.doctor || ""))).values()).filter(Boolean);
+        if (ids.length) {
+          const resps = await Promise.all(ids.map((id) => API.get(`/doctors?user=${id}`).catch(() => ({ data: [] }))));
+          const map = new Map();
+          ids.forEach((id, idx) => {
+            const first = Array.isArray(resps[idx]?.data) ? resps[idx].data[0] : null;
+            if (first) map.set(String(id), first);
+          });
+          setProfiles(map);
+        } else {
+          setProfiles(new Map());
+        }
       } catch (e) {
         setError(e.response?.data?.message || e.message || "Failed to load");
       }
@@ -59,16 +73,36 @@ export default function Appointments() {
             {list.map((a) => (
               <div key={a._id} className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <img
-                    src={(a.doctor?.photoBase64) || ((process.env.PUBLIC_URL || "") + "/doctor3.jpeg")}
-                    alt="Doctor"
-                    className="h-14 w-14 rounded-md object-cover border"
-                    onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=128&auto=format&fit=crop"; }}
-                  />
+                  {(() => {
+                    const docId = String(a.doctor?._id || a.doctor || "");
+                    const prof = profiles.get(docId);
+                    const img = String((prof?.photoBase64 || a.doctor?.photoBase64 || ""));
+                    const hasImg = img.startsWith("data:") || img.startsWith("http");
+                    return hasImg ? (
+                      <img
+                        src={img}
+                        alt="Doctor"
+                        className="h-14 w-14 rounded-md object-cover border"
+                      />
+                    ) : (
+                      <div className="h-14 w-14 rounded-md border bg-white" />
+                    );
+                  })()}
                   <div>
-                    <div className="font-semibold">{`Dr. ${a.doctor?.name || "Doctor"}`}</div>
-                    <div className="text-sm text-slate-600">{a.doctor?.specializations?.[0] || "General physician"}</div>
-                    <div className="text-sm text-slate-700">Address: <span className="text-slate-900">{a.doctor?.clinic?.address || "--"}</span></div>
+                    {(() => {
+                      const docId = String(a.doctor?._id || a.doctor || "");
+                      const prof = profiles.get(docId);
+                      const name = a.doctor?.name ? `Dr. ${a.doctor?.name}` : "";
+                      const spec = (prof?.specializations && prof.specializations[0]) || a.doctor?.specializations?.[0] || "";
+                      const addr = (prof?.clinic?.address || a.doctor?.clinic?.address || a.doctor?.address || a.doctor?.clinicAddress || a.clinic?.address || a.clinicAddress || "");
+                      return (
+                        <>
+                          <div className="font-semibold">{name}</div>
+                          <div className="text-sm text-slate-600">{spec}</div>
+                          <div className="text-sm text-slate-700">Address: <span className="text-slate-900">{addr}</span></div>
+                        </>
+                      );
+                    })()}
                     <div className="text-sm text-slate-700">Date & Time: <span className="text-slate-900">{`${a.date} | ${a.startTime}`}</span></div>
                   </div>
                 </div>

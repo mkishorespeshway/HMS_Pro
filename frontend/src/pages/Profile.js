@@ -11,25 +11,50 @@ export default function Profile() {
   const [address, setAddress] = useState("");
   const [gender, setGender] = useState("");
   const [birthday, setBirthday] = useState("");
+  const [age, setAge] = useState("");
+  const ageFromBirthday = (d) => {
+    if (!d) return "--";
+    const b = new Date(d);
+    if (Number.isNaN(b.getTime())) return "--";
+    const today = new Date();
+    let age = today.getFullYear() - b.getFullYear();
+    const m = today.getMonth() - b.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--;
+    return String(age);
+  };
 
   useEffect(() => {
-    setName(localStorage.getItem("userName") || "Avinash Kr");
-    setEmail(localStorage.getItem("userEmail") || "test@gmail.com");
-    setPhone(localStorage.getItem("userPhone") || "0000000000");
-    setAddress(localStorage.getItem("userAddress") || "AECS Layout\nWhitefield, BLR, KA");
-    setGender(localStorage.getItem("userGender") || "Male");
-    setBirthday(localStorage.getItem("userBirthday") || "1993-01-01");
-    setPhoto(localStorage.getItem("userPhotoBase64") || "");
+    const uid = localStorage.getItem("userId");
+    const n = uid ? localStorage.getItem(`userNameById_${uid}`) : null;
+    const e = uid ? localStorage.getItem(`userEmailById_${uid}`) : null;
+    const p = uid ? localStorage.getItem(`userPhoneById_${uid}`) : null;
+    const a = uid ? localStorage.getItem(`userAddressById_${uid}`) : null;
+    const g = uid ? localStorage.getItem(`userGenderById_${uid}`) : null;
+    const b = uid ? localStorage.getItem(`userBirthdayById_${uid}`) : null;
+    const ag = uid ? localStorage.getItem(`userAgeById_${uid}`) : null;
+    const byId = uid ? localStorage.getItem(`userPhotoBase64ById_${uid}`) : null;
+    setName(n || "");
+    setEmail(e || "");
+    setPhone(p || "");
+    setAddress(a || "");
+    setGender(g || "");
+    setBirthday(b || "");
+    setAge(ag || "");
+    setPhoto(byId || "");
   }, []);
 
   const save = () => {
-    localStorage.setItem("userName", name);
-    localStorage.setItem("userEmail", email);
-    localStorage.setItem("userPhone", phone);
-    localStorage.setItem("userAddress", address);
-    localStorage.setItem("userGender", gender);
-    localStorage.setItem("userBirthday", birthday);
-    localStorage.setItem("userPhotoBase64", photo);
+    const uid = localStorage.getItem("userId");
+    if (uid) {
+      localStorage.setItem(`userNameById_${uid}`, name || "");
+      localStorage.setItem(`userEmailById_${uid}`, email || "");
+      localStorage.setItem(`userPhoneById_${uid}`, phone || "");
+      localStorage.setItem(`userAddressById_${uid}`, address || "");
+      localStorage.setItem(`userGenderById_${uid}`, gender || "");
+      localStorage.setItem(`userBirthdayById_${uid}`, birthday || "");
+      localStorage.setItem(`userAgeById_${uid}`, age || "");
+      localStorage.setItem(`userPhotoBase64ById_${uid}`, photo || "");
+    }
     setEditing(false);
   };
 
@@ -38,12 +63,15 @@ export default function Profile() {
       <div className="max-w-5xl mx-auto px-4 py-10">
         <div className="grid md:grid-cols-3 gap-8">
           <div>
-            <img
-              src={photo || DEFAULT_PHOTO}
-              alt="User"
-              className="w-24 h-24 md:w-36 md:h-36 object-cover rounded-lg border"
-              onError={(e) => { e.currentTarget.src = DEFAULT_PHOTO; }}
-            />
+            {String(photo || "").startsWith("data:image") ? (
+              <img
+                src={photo}
+                alt="User"
+                className="w-24 h-24 md:w-36 md:h-36 object-cover rounded-lg border"
+              />
+            ) : (
+              <div className="w-24 h-24 md:w-36 md:h-36 rounded-lg border bg-white" />
+            )}
           </div>
           <div className="md:col-span-2">
             <div className="text-2xl font-semibold">{name}</div>
@@ -91,6 +119,7 @@ export default function Profile() {
                 <div className="mt-3 text-sm text-slate-700 space-y-2">
                   <div> Gender: <span className="text-slate-900">{gender}</span></div>
                   <div> Birthday: <span className="text-slate-900">{birthday}</span></div>
+                  <div> Age: <span className="text-slate-900">{age}</span></div>
                 </div>
               ) : (
                 <div className="mt-3 grid sm:grid-cols-2 gap-3">
@@ -105,6 +134,10 @@ export default function Profile() {
                   <div>
                     <label className="block text-sm text-slate-700 mb-1">Birthday</label>
                     <input type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} className="border border-slate-300 rounded-md p-2 w-full" />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-700 mb-1">Age</label>
+                    <input type="number" min="0" value={age} onChange={(e) => setAge(e.target.value)} className="border border-slate-300 rounded-md p-2 w-full" />
                   </div>
                 </div>
               )}

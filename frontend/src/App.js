@@ -31,7 +31,8 @@ function Header() {
   const [open, setOpen] = useState(false);
   const hideHeader = location.pathname.startsWith('/admin') || location.pathname.startsWith('/doctor');
   const token = localStorage.getItem('token');
-  const photo = localStorage.getItem('userPhotoBase64') || ((process.env.PUBLIC_URL || '') + '/doctor3.jpeg');
+  const uid = localStorage.getItem('userId');
+  const photo = uid ? localStorage.getItem(`userPhotoBase64ById_${uid}`) : '';
   const showAdminLink = !token && !location.pathname.startsWith('/login');
   if (hideHeader) return null;
   return (
@@ -48,13 +49,19 @@ function Header() {
           </nav>
           {token ? (
             <div className="relative">
-              <img
-                src={photo}
-                alt="User"
-                className="h-9 w-9 rounded-full object-cover border border-slate-300 cursor-pointer"
-                onClick={() => setOpen((v) => !v)}
-                onError={(e) => { e.currentTarget.src = ((process.env.PUBLIC_URL || '') + '/doctor3.jpeg'); }}
-              />
+              {photo ? (
+                <img
+                  src={photo}
+                  alt="User"
+                  className="h-9 w-9 rounded-full object-cover border border-slate-300 cursor-pointer"
+                  onClick={() => setOpen((v) => !v)}
+                />
+              ) : (
+                <div
+                  className="h-9 w-9 rounded-full border border-slate-300 bg-white cursor-pointer"
+                  onClick={() => setOpen((v) => !v)}
+                />
+              )}
               {open && (
                 <div className="absolute right-0 mt-2 w-44 bg-white border border-slate-200 rounded-md shadow-md text-sm">
                   <Link to="/profile" className="block px-3 py-2 hover:bg-slate-50">My Profile</Link>

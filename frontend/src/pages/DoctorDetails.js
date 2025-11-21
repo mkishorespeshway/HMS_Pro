@@ -18,13 +18,11 @@ export default function DoctorDetails() {
     API.get(`/doctors`, { params: { user: id } }).then((res) => setDoctor(res.data[0]));
   }, [id]);
 
-  const name = doctor?.user?.name || "Doctor";
-  const specPrimary = doctor?.specializations?.[0] || "General physician";
+  const name = doctor?.user?.name || "";
+  const specPrimary = doctor?.specializations?.[0] || "";
   const experienceYears = doctor?.experienceYears ? `${doctor?.experienceYears} Years` : undefined;
-  const about = doctor?.about || "Focuses on preventive medicine, early diagnosis, and effective treatment strategies.";
-  const fee = doctor?.consultationFees ?? 0;
-  const DEFAULT_PHOTO = "https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=640&auto=format&fit=crop";
-  const photo = doctor?.photoBase64 || DEFAULT_PHOTO;
+  const about = doctor?.about || "";
+  const fee = doctor?.consultationFees ?? "";
 
   useEffect(() => {
     if (!doctor) return;
@@ -54,14 +52,15 @@ export default function DoctorDetails() {
           <div>
             <div className="bg-indigo-50 rounded-xl overflow-hidden border border-indigo-100">
               <div className="relative">
-                <img
-                  src={photo}
-                  alt="Doctor"
-                  className="w-full h-64 object-cover"
-                  onError={(e) => {
-                    if (e.currentTarget.src !== DEFAULT_PHOTO) e.currentTarget.src = DEFAULT_PHOTO;
-                  }}
-                />
+                {String(doctor?.photoBase64 || "").startsWith("data:image") ? (
+                  <img
+                    src={doctor?.photoBase64}
+                    alt="Doctor"
+                    className="w-full h-64 object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-64 bg-white" />
+                )}
               </div>
             </div>
           </div>
@@ -69,12 +68,12 @@ export default function DoctorDetails() {
             <div className="flex items-center gap-2">
               <h2 className="text-3xl font-semibold">{`Dr. ${name}`}</h2>
             </div>
-            <div className="mt-1 text-slate-700">{`MBBS - ${specPrimary}`}{experienceYears ? ` • ${experienceYears}` : ""}</div>
+            <div className="mt-1 text-slate-700">{[specPrimary, experienceYears].filter(Boolean).join(" • ")}</div>
             <div className="mt-4">
               <div className="font-semibold">About</div>
               <p className="text-slate-700 text-sm mt-1">{about}</p>
             </div>
-            <div className="mt-4 text-slate-700">Appointment fee: ₹{fee}</div>
+            {fee !== "" && (<div className="mt-4 text-slate-700">Appointment fee: ₹{fee}</div>)}
           </div>
         </div>
       </div>
@@ -171,17 +170,20 @@ export default function DoctorDetails() {
           {related.map((d) => (
             <div key={d._id} className="bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm overflow-hidden">
               <div className="relative">
-                <img
-                  src={d.photoBase64 || ((process.env.PUBLIC_URL || "") + "/doctor3.jpeg")}
-                  alt="Doctor"
-                  className="w-full h-56 object-cover"
-                  onError={(e) => { e.currentTarget.src = "https://raw.githubusercontent.com/abhi051002/hms-fullstack/main/frontend/src/readme_images/doctorProfile.png"; }}
-                />
+                {String(d.photoBase64 || "").startsWith("data:image") ? (
+                  <img
+                    src={d.photoBase64}
+                    alt="Doctor"
+                    className="w-full h-56 object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-56 bg-white" />
+                )}
                 <span className="absolute top-3 left-3 bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Available</span>
               </div>
               <div className="p-4">
                 <div className="text-base font-semibold">{`Dr. ${d.user?.name || ''}`}</div>
-                <div className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || "--"}</div>
+                <div className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || ""}</div>
               </div>
             </div>
           ))}

@@ -10,18 +10,38 @@ export default function DoctorToday() {
   const load = async () => {
     setLoading(true);
     try {
-      const { data } = await API.get("/appointments/today");
-      let items = data || [];
-      if (!items.length) {
+      let items = [];
+      try {
+        const mine = await API.get("/appointments/mine");
+        items = mine.data || [];
+      } catch (eMine) {
         try {
-          const mine = await API.get("/appointments/mine");
-          const todayStr = new Date().toISOString().slice(0, 10);
-          const upcoming = (mine.data || [])
-            .filter((a) => (a.date || "") >= todayStr)
-            .sort((x, y) => (x.date + x.startTime).localeCompare(y.date + y.startTime));
-          items = upcoming.slice(0, 10);
+          const uid = localStorage.getItem("userId");
+          const admin = await API.get("/admin/appointments");
+          const all = admin.data || [];
+          items = all.filter((a) => String(a.doctor?._id || a.doctor) === String(uid));
         } catch (_) {}
       }
+      const toTS = (a) => {
+        const d = new Date(a.date);
+        if (Number.isNaN(d.getTime())) return 0;
+        const t = String(a.startTime || "00:00");
+        const parts = t.split(":");
+        const hh = Number(parts[0]) || 0;
+        const mm = Number(parts[1]) || 0;
+        d.setHours(hh, mm, 0, 0);
+        return d.getTime();
+      };
+      const pending = (items || []).filter((a) => String(a.status).toUpperCase() === "PENDING");
+      const confirmed = (items || []).filter((a) => String(a.status).toUpperCase() === "CONFIRMED");
+      const done = (items || []).filter((a) => {
+        const s = String(a.status).toUpperCase();
+        return s === "CANCELLED" || s === "COMPLETED";
+      });
+      pending.sort((x, y) => toTS(y) - toTS(x));
+      confirmed.sort((x, y) => toTS(y) - toTS(x));
+      done.sort((x, y) => toTS(y) - toTS(x));
+      items = [...pending, ...confirmed, ...done];
       setList(items);
     } catch (e) {
       alert(e.response?.data?.message || e.message);
@@ -68,63 +88,61 @@ export default function DoctorToday() {
     }
   };
 
-  const rows = list.length
-    ? list.map((a, i) => (
-        <tr key={a._id} className="border-t">
-          <td className="px-4 py-3">{i + 1}</td>
-          <td className="px-4 py-3">{a.patient?.name || "User"}</td>
-          <td className="px-4 py-3">
-            <span className="inline-block text-xs px-2 py-1 rounded bg-slate-100 text-slate-700">{a.type === "offline" ? "Cash" : "Online"}</span>
-          </td>
-          <td className="px-4 py-3">--</td>
-          <td className="px-4 py-3">{a.date} {a.startTime}</td>
-          <td className="px-4 py-3">₹{a.fee || 0}</td>
-          <td className="px-4 py-3">
-            {String(a.status).toUpperCase() === 'PENDING' ? (
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => accept(a._id || a.id, a.date, a.startTime)}
-                  disabled={!(a?._id || a?.id)}
-                  className={`h-7 w-7 rounded-full flex items-center justify-center ${(a?._id || a?.id) ? "bg-green-600 hover:bg-green-700 text-white" : "bg-slate-200 text-slate-500"}`}
-                  title="Accept"
-                >
-                  ✓
-                </button>
-                <button
-                  type="button"
-                  onClick={() => reject(a._id || a.id, a.date, a.startTime)}
-                  disabled={!(a?._id || a?.id)}
-                  className={`h-7 w-7 rounded-full flex items-center justify-center ${(a?._id || a?.id) ? "bg-red-600 hover:bg-red-700 text-white" : "bg-slate-200 text-slate-500"}`}
-                  title="Reject"
-                >
-                  ✕
-                </button>
-              </div>
-            ) : (
-              <span className={`inline-block text-xs px-2 py-1 rounded ${String(a.status).toUpperCase() === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                {String(a.status).toUpperCase() === 'CANCELLED' ? 'Cancelled' : 'Confirmed'}
-              </span>
-            )}
-          </td>
-        </tr>
-      ))
-    : [1, 2].map((i) => (
-        <tr key={i} className="border-t">
-          <td className="px-4 py-3">{i}</td>
-          <td className="px-4 py-3">User {i}</td>
-          <td className="px-4 py-3"><span className="inline-block text-xs px-2 py-1 rounded bg-slate-100 text-slate-700">Cash</span></td>
-          <td className="px-4 py-3">22</td>
-          <td className="px-4 py-3">Nov 25th, 10:30 am</td>
-          <td className="px-4 py-3">₹500</td>
-          <td className="px-4 py-3">
-            <div className="flex gap-2">
-              <button type="button" className="h-7 w-7 rounded-full bg-slate-200 text-slate-500 cursor-not-allowed">✓</button>
-              <button type="button" className="h-7 w-7 rounded-full bg-slate-200 text-slate-500 cursor-not-allowed">✕</button>
-            </div>
-          </td>
-        </tr>
-      ));
+  const rows = list.map((a, i) => (
+    <tr key={a._id} className="border-t">
+      <td className="px-4 py-3">{i + 1}</td>
+      <td className="px-4 py-3">{a.patient?.name || ""}</td>
+      <td className="px-4 py-3">
+        <span className="inline-block text-xs px-2 py-1 rounded bg-slate-100 text-slate-700">{a.type === "offline" ? "Cash" : "Online"}</span>
+      </td>
+      <td className="px-4 py-3">{(() => {
+        const p = a.patient || {};
+        if (p.age !== undefined && p.age !== null && p.age !== "") return p.age;
+        const pid = String(p._id || a.patient || "");
+        const locAge = localStorage.getItem(`userAgeById_${pid}`) || "";
+        if (locAge) return String(locAge);
+        const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || "";
+        if (!dob) return "";
+        const b = new Date(dob);
+        if (Number.isNaN(b.getTime())) return "";
+        const today = new Date();
+        let age = today.getFullYear() - b.getFullYear();
+        const m = today.getMonth() - b.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--;
+        return String(age);
+      })()}</td>
+      <td className="px-4 py-3">{a.date} {a.startTime}</td>
+      <td className="px-4 py-3">₹{a.fee || 0}</td>
+      <td className="px-4 py-3">
+        {String(a.status).toUpperCase() === 'PENDING' ? (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => accept(a._id || a.id, a.date, a.startTime)}
+              disabled={!(a?._id || a?.id)}
+              className={`h-7 w-7 rounded-full flex items-center justify-center ${(a?._id || a?.id) ? "bg-green-600 hover:bg-green-700 text-white" : "bg-slate-200 text-slate-500"}`}
+              title="Accept"
+            >
+              ✓
+            </button>
+            <button
+              type="button"
+              onClick={() => reject(a._id || a.id, a.date, a.startTime)}
+              disabled={!(a?._id || a?.id)}
+              className={`h-7 w-7 rounded-full flex items-center justify-center ${(a?._id || a?.id) ? "bg-red-600 hover:bg-red-700 text-white" : "bg-slate-200 text-slate-500"}`}
+              title="Reject"
+            >
+              ✕
+            </button>
+          </div>
+        ) : (
+          <span className={`inline-block text-xs px-2 py-1 rounded ${String(a.status).toUpperCase() === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+            {String(a.status).toUpperCase() === 'CANCELLED' ? 'Cancelled' : 'Confirmed'}
+          </span>
+        )}
+      </td>
+    </tr>
+  ));
 
   return (
     <div className="max-w-7xl mx-auto px-4 mt-8">
@@ -168,6 +186,10 @@ export default function DoctorToday() {
                   {loading ? (
                     <tr>
                       <td colSpan={7} className="px-4 py-6 text-center text-slate-600">Loading...</td>
+                    </tr>
+                  ) : list.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-6 text-center text-slate-600">No appointments found</td>
                     </tr>
                   ) : (
                     rows

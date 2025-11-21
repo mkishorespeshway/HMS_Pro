@@ -29,12 +29,22 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-start justify-center pt-24">
-      <div className="max-w-md w-full">
-        <div className="bg-white shadow-lg rounded-xl p-6 border border-slate-200">
-          <div className="text-center text-indigo-700 font-semibold mb-4">Admin Login</div>
-          <form onSubmit={submit}>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+    <div className="min-h-screen bg-white">
+      <header className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <Link to="/" className="text-lg font-semibold text-indigo-700">Prescripto</Link>
+          <nav className="flex items-center gap-6 text-slate-700">
+            <Link to="/" className="hover:text-indigo-600">Home</Link>
+            <Link to="/doctor/login" className="hover:text-indigo-600">Doctor</Link>
+          </nav>
+        </div>
+      </header>
+      <div className="flex items-start justify-center pt-24">
+        <div className="max-w-md w-full">
+          <div className="bg-white shadow-lg rounded-xl p-6 border border-slate-200">
+            <div className="text-center text-indigo-700 font-semibold mb-4">Admin Login</div>
+            <form onSubmit={submit}>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
             <input
               className="border border-slate-300 rounded-md p-2 w-full mb-3 focus:outline-none focus:ring-4 focus:ring-indigo-100"
               placeholder="Email"
@@ -75,6 +85,7 @@ export default function AdminLogin() {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

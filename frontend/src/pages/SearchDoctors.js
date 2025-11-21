@@ -19,7 +19,17 @@ export default function SearchDoctors() {
   const [list, setList] = useState([]);
   const [specialization, setSpecialization] = useState("");
   const [error, setError] = useState("");
-  const CARD_FALLBACK = "https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=640&auto=format&fit=crop";
+  const CARD_FALLBACK = "";
+
+  const getOnlineStatus = (id) => {
+    const v = localStorage.getItem(`doctorOnlineById_${id}`);
+    return v === "1";
+  };
+
+  const photoOf = (d) => {
+    const s = String(d?.photoBase64 || "");
+    return s.startsWith("data:image") ? s : "";
+  };
 
   const search = async () => {
     setError("");
@@ -98,16 +108,24 @@ export default function SearchDoctors() {
               {list.map((d) => (
                 <div key={d._id} className="bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm overflow-hidden">
                   <div className="relative">
-                  <img
-                    src={d.photoBase64 || ((process.env.PUBLIC_URL || "") + "/doctor3.jpeg")}
-                    alt="Doctor"
-                    className="w-full h-56 object-cover"
-                    onError={(e) => { if (e.currentTarget.src !== CARD_FALLBACK) e.currentTarget.src = CARD_FALLBACK; }}
-                  />
+                  {photoOf(d) ? (
+                    <img
+                      src={photoOf(d)}
+                      alt="Doctor"
+                      className="w-full h-56 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-56 bg-white" />
+                  )}
+                  <div className="absolute top-2 right-2">
+                    <span className={`inline-block text-xs px-2 py-1 rounded ${getOnlineStatus(d.user._id) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {getOnlineStatus(d.user._id) ? 'Online' : 'Offline'}
+                    </span>
+                  </div>
                   </div>
                   <div className="p-4">
                     <h3 className="text-base font-semibold">{`Dr. ${d.user?.name || ''}`}</h3>
-                    <p className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || "--"}</p>
+                    <p className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || ""}</p>
                     <Link to={`/doctor/${d.user._id}`} className="mt-3 inline-block text-indigo-600 hover:text-indigo-800">View Profile</Link>
                   </div>
                 </div>
@@ -170,16 +188,19 @@ export default function SearchDoctors() {
             {list.map((d) => (
               <div key={d._id} className="bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm overflow-hidden">
                 <div className="relative">
-                  <img
-                    src={d.photoBase64 || ((process.env.PUBLIC_URL || "") + "/doctor3.jpeg")}
-                    alt="Doctor"
-                    className="w-full h-56 object-cover"
-                    onError={(e) => { if (e.currentTarget.src !== CARD_FALLBACK) e.currentTarget.src = CARD_FALLBACK; }}
-                  />
+                  {photoOf(d) ? (
+                    <img
+                      src={photoOf(d)}
+                      alt="Doctor"
+                      className="w-full h-56 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-56 bg-white" />
+                  )}
                 </div>
                 <div className="p-4">
                   <h3 className="text-base font-semibold">{`Dr. ${d.user?.name || ''}`}</h3>
-                  <p className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || "--"}</p>
+                  <p className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || ""}</p>
                   <Link to={`/doctor/${d.user._id}`} className="mt-3 inline-block text-indigo-600 hover:text-indigo-800">View Profile</Link>
                 </div>
               </div>

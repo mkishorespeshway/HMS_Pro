@@ -24,12 +24,35 @@ export default function AdminAppointments() {
     load();
   }, []);
 
-  const rows = list.length
-    ? list.map((a, i) => (
+  const rank = (s) => {
+    const x = String(s || "").toUpperCase();
+    if (x === "PENDING") return 0;
+    if (x === "CONFIRMED" || x === "COMPLETED") return 1;
+    if (x === "CANCELLED" || x === "CANCELED") return 2;
+    return 3;
+  };
+  const ordered = list.slice().sort((a, b) => rank(a.status) - rank(b.status));
+  const rows = ordered.length
+    ? ordered.map((a, i) => (
         <tr key={a._id} className="border-t">
           <td className="px-4 py-3">{i + 1}</td>
           <td className="px-4 py-3">{a.patient?.name || "User"}</td>
-          <td className="px-4 py-3">--</td>
+          <td className="px-4 py-3">{(() => {
+            const p = a.patient || {};
+            if (p.age !== undefined && p.age !== null && p.age !== "") return p.age;
+            const pid = String(p._id || a.patient || "");
+            const locAge = localStorage.getItem(`userAgeById_${pid}`) || "";
+            if (locAge) return String(locAge);
+            const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || "";
+            if (!dob) return "";
+            const b = new Date(dob);
+            if (Number.isNaN(b.getTime())) return "";
+            const today = new Date();
+            let age = today.getFullYear() - b.getFullYear();
+            const m = today.getMonth() - b.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--;
+            return String(age);
+          })()}</td>
           <td className="px-4 py-3">{a.date} {a.startTime}</td>
           <td className="px-4 py-3">{a.doctor?.name || "--"}</td>
           <td className="px-4 py-3">₹{a.fee || 0}</td>

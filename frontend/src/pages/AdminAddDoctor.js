@@ -88,6 +88,35 @@ export default function AdminAddDoctor() {
           <input name="phone" value={form.phone} onChange={onChange} className="border border-slate-300 rounded-md p-2 w-full mb-3" placeholder="+91-XXXXXXXXXX" />
 
           <label className="block text-sm font-medium text-slate-700 mb-1">Specializations</label>
+          {(() => {
+            const SPECIALTIES = [
+              "General Physician",
+              "Gynecologist",
+              "Dermatologist",
+              "Pediatrician",
+              "Neurologist",
+              "Cardiologist",
+            ];
+            return (
+              <select
+                defaultValue=""
+                onChange={(e) => {
+                  const val = e.target.value || "";
+                  if (!val) return;
+                  setForm((f) => ({
+                    ...f,
+                    specializations: f.specializations ? `${f.specializations}, ${val}` : val,
+                  }));
+                }}
+                className="border border-slate-300 rounded-md p-2 w-full mb-2"
+              >
+                <option value="">Select specialization</option>
+                {SPECIALTIES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            );
+          })()}
           <input name="specializations" value={form.specializations} onChange={onChange} className="border border-slate-300 rounded-md p-2 w-full mb-3" placeholder="e.g., Cardiology, Dermatology" />
 
           <div className="grid sm:grid-cols-2 gap-3">
@@ -136,6 +165,11 @@ export default function AdminAddDoctor() {
             };
             reader.readAsDataURL(file);
           }} />
+          {form.photoBase64 && (
+            <div className="mb-3">
+              <img src={form.photoBase64} alt="Selected" className="w-full h-40 object-cover rounded-md border border-slate-200" />
+            </div>
+          )}
 
           <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md">Create Doctor</button>
         </form>

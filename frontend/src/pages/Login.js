@@ -13,14 +13,17 @@ const nav = useNavigate();
     e.preventDefault();
     try {
       const { data } = await API.post("/auth/login", { email, password });
+      const role = data?.user?.role;
+      if (role !== "patient") {
+        alert("Only users can login here");
+        return;
+      }
       localStorage.setItem("token", data.token);
       if (data?.user?.id) localStorage.setItem("userId", data.user.id);
-      if (data?.user?.name) localStorage.setItem("userName", data.user.name);
-      if (data?.user?.email) localStorage.setItem("userEmail", data.user.email);
-      const role = data?.user?.role;
-      if (role === "doctor") nav("/doctor/dashboard");
-      else if (role === "admin") nav("/admin/dashboard");
-      else nav("/");
+      const uid = data?.user?.id;
+      if (uid && data?.user?.name) localStorage.setItem(`userNameById_${uid}`, data.user.name);
+      if (uid && data?.user?.email) localStorage.setItem(`userEmailById_${uid}`, data.user.email);
+      nav("/");
     } catch (err) {
       alert(err.response?.data?.message || err.message);
     }

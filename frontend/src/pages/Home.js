@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import API from "../api";
 
 export default function Home() {
@@ -9,7 +9,10 @@ export default function Home() {
   const [heroSrc, setHeroSrc] = useState(FALLBACK);
   const [list, setList] = useState([]);
   const [error, setError] = useState("");
+  const didInit = useRef(false);
   useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
     const bust = `${LOCAL}?v=${Date.now()}`;
     fetch(bust, { method: "HEAD" })
       .then((res) => {
@@ -96,16 +99,19 @@ export default function Home() {
             {list.map((d) => (
               <div key={d._id} className="bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm overflow-hidden">
                 <div className="relative">
-                  <img
-                    src={d.photoBase64 || ((process.env.PUBLIC_URL || "") + "/doctor3.jpeg")}
-                    alt="Doctor"
-                    className="w-full h-56 object-cover"
-                    onError={(e) => { if (e.currentTarget.src !== CARD_FALLBACK) e.currentTarget.src = CARD_FALLBACK; }}
-                  />
+                  {String(d.photoBase64 || "").startsWith("data:image") ? (
+                    <img
+                      src={d.photoBase64}
+                      alt="Doctor"
+                      className="w-full h-56 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-56 bg-white" />
+                  )}
                 </div>
                 <div className="p-4">
                   <h3 className="text-base font-semibold">{`Dr. ${d.user?.name || ''}`}</h3>
-                  <p className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || "--"}</p>
+                  <p className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || ""}</p>
                   <Link to={`/doctor/${d.user._id}`} className="mt-3 inline-block text-indigo-600 hover:text-indigo-800">View Profile</Link>
                 </div>
               </div>

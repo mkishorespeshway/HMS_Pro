@@ -39,7 +39,14 @@ export default function DoctorDashboard() {
         }
 
         const todayStr = new Date().toISOString().slice(0, 10);
-        const filtered = (items || []).filter((a) => a.date === todayStr);
+        let filtered = (items || []).filter((a) => a.date === todayStr);
+        try {
+          const todayRes = await API.get('/appointments/today');
+          const todayList = todayRes.data || [];
+          if (Array.isArray(todayList) && todayList.length) {
+            filtered = todayList;
+          }
+        } catch (eToday) {}
         setLatestToday(filtered);
 
         setList(items);
@@ -87,10 +94,34 @@ export default function DoctorDashboard() {
   }, [list]);
 
   const latest = useMemo(() => {
-    const src = latestToday.length ? latestToday : list;
-    const copy = [...src];
-    copy.sort((x, y) => (y.date + y.startTime).localeCompare(x.date + x.startTime));
-    return copy.slice(0, 4);
+    const mergedAll = [...(list || []), ...(latestToday || [])];
+    const seen = new Set();
+    const merged = [];
+    for (const a of mergedAll) {
+      const k = String(a._id || a.id || (a.date + "_" + String(a.startTime || "")));
+      if (!seen.has(k)) { seen.add(k); merged.push(a); }
+    }
+    const toTS = (a) => {
+      const d = new Date(a.date);
+      if (Number.isNaN(d.getTime())) return 0;
+      const t = String(a.startTime || "00:00");
+      const parts = t.split(":");
+      const hh = Number(parts[0]) || 0;
+      const mm = Number(parts[1]) || 0;
+      d.setHours(hh, mm, 0, 0);
+      return d.getTime();
+    };
+    const pending = merged.filter((a) => String(a.status).toUpperCase() === "PENDING");
+    const confirmed = merged.filter((a) => String(a.status).toUpperCase() === "CONFIRMED");
+    const done = merged.filter((a) => {
+      const s = String(a.status).toUpperCase();
+      return s === "CANCELLED" || s === "COMPLETED";
+    });
+    pending.sort((x, y) => toTS(y) - toTS(x));
+    confirmed.sort((x, y) => toTS(y) - toTS(x));
+    done.sort((x, y) => toTS(y) - toTS(x));
+    const ordered = [...pending, ...confirmed, ...done];
+    return ordered.slice(0, 4);
   }, [list, latestToday]);
 
   return (
@@ -176,14 +207,38 @@ export default function DoctorDashboard() {
                 latest.map((a) => (
                   <div key={a._id} className="flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2">
                     <div className="flex items-center gap-3">
-                      <img
-                        src={a.patient?.photoBase64 || ((process.env.PUBLIC_URL || "") + "/doctor3.jpeg")}
-                        alt="User"
-                        className="h-8 w-8 rounded-full object-cover border"
-                        onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=64&auto=format&fit=crop"; }}
-                      />
+                      {(() => {
+                        const pid = String(a.patient?._id || a.patient || "");
+                        let img = String(a.patient?.photoBase64 || localStorage.getItem(`userPhotoBase64ById_${pid}`) || "");
+                        let src = img;
+                        if (img && !img.startsWith("data:") && !img.startsWith("http")) {
+                          src = `data:image/png;base64,${img}`;
+                        }
+                        const ok = src.startsWith("data:") || src.startsWith("http");
+                        return ok ? (
+                          <img src={src} alt="User" className="h-8 w-8 rounded-full object-cover border" />
+                        ) : (
+                          <div className="h-8 w-8 rounded-full border bg-white" />
+                        );
+                      })()}
                       <div>
                         <div className="font-semibold text-slate-900">{a.patient?.name || "User"}</div>
+                        <div className="text-xs text-slate-600">{(() => {
+                          const p = a.patient || {};
+                          if (p.age !== undefined && p.age !== null && p.age !== "") return `Age: ${p.age}`;
+                          const pid = String(p._id || a.patient || "");
+                          const locAge = localStorage.getItem(`userAgeById_${pid}`) || "";
+                          if (locAge) return `Age: ${locAge}`;
+                          const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || "";
+                          if (!dob) return "";
+                          const d = new Date(dob);
+                          if (Number.isNaN(d.getTime())) return "";
+                          const t = new Date();
+                          let age = t.getFullYear() - d.getFullYear();
+                          const m = t.getMonth() - d.getMonth();
+                          if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
+                          return `Age: ${age}`;
+                        })()}</div>
                         <div className="text-xs text-slate-600">Booking on {new Date(a.date).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}</div>
                       </div>
                     </div>

@@ -8,6 +8,13 @@ export default function AdminDashboard() {
   const [appointmentCount, setAppointmentCount] = useState(0);
   const [patientCount, setPatientCount] = useState(0);
   const [latest, setLatest] = useState([]);
+  const rank = (s) => {
+    const x = String(s || "").toUpperCase();
+    if (x === "PENDING") return 0;
+    if (x === "CONFIRMED" || x === "COMPLETED") return 1;
+    if (x === "CANCELLED" || x === "CANCELED") return 2;
+    return 3;
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -20,7 +27,8 @@ export default function AdminDashboard() {
         setAppointmentCount(list.length);
         const setIds = new Set(list.map((x) => x.patient?._id || String(x.patient || "")));
         setPatientCount(setIds.size);
-        setLatest(list.slice(0, 5));
+        const ordered = list.slice().sort((u, v) => rank(u.status) - rank(v.status));
+        setLatest(ordered.slice(0, 5));
       } catch (e) {}
     };
     load();
@@ -88,9 +96,38 @@ export default function AdminDashboard() {
               <div className="divide-y">
                 {latest.map((b) => (
                   <div key={String(b._id)} className="flex items-center justify-between py-2 hover:bg-slate-50 transition-colors duration-200">
-                    <div>
-                      <div className="text-slate-900 text-sm">{b.patient?.name || "Patient"}</div>
-                      <div className="text-slate-600 text-xs">with {b.doctor?.name ? `Dr. ${b.doctor.name}` : "Doctor"}</div>
+                    <div className="flex items-center gap-3">
+                      {(() => {
+                        const pid = String(b.patient?._id || b.patient || "");
+                        let img = String(b.patient?.photoBase64 || localStorage.getItem(`userPhotoBase64ById_${pid}`) || "");
+                        let src = img;
+                        if (img && !img.startsWith("data:") && !img.startsWith("http")) {
+                          src = `data:image/png;base64,${img}`;
+                        }
+                        const ok = src.startsWith("data:") || src.startsWith("http");
+                        return ok ? (
+                          <img src={src} alt="Patient" className="h-8 w-8 rounded-full object-cover border" />
+                        ) : (
+                          <div className="h-8 w-8 rounded-full border bg-white" />
+                        );
+                      })()}
+                      <div>
+                        <div className="text-slate-900 text-sm">{b.patient?.name || "Patient"}</div>
+                        <div className="text-slate-600 text-xs">with {b.doctor?.name ? `Dr. ${b.doctor.name}` : "Doctor"}</div>
+                        <div className="text-slate-600 text-xs">{(() => {
+                          const p = b.patient || {};
+                          if (p.age !== undefined && p.age !== null && p.age !== "") return `Age: ${p.age}`;
+                          const dob = p.birthday || p.dob || p.dateOfBirth || "";
+                          if (!dob) return "";
+                          const d = new Date(dob);
+                          if (Number.isNaN(d.getTime())) return "";
+                          const t = new Date();
+                          let age = t.getFullYear() - d.getFullYear();
+                          const m = t.getMonth() - d.getMonth();
+                          if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
+                          return `Age: ${age}`;
+                        })()}</div>
+                      </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-slate-700 text-sm">{b.date} {b.startTime}</div>

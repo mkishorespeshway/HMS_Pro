@@ -30,6 +30,8 @@ export default function DoctorProfile() {
       try {
         const { data } = await API.get("/doctors", { params: { user: id } });
         setProfile(data?.[0] || null);
+        const byId = localStorage.getItem(`doctorOnlineById_${id}`);
+        if (byId !== null) setOnline(byId === "1");
       } catch (e) {}
       
     };
@@ -38,15 +40,16 @@ export default function DoctorProfile() {
 
   useEffect(() => {
     localStorage.setItem("doctorOnline", online ? "1" : "0");
+    const id = localStorage.getItem("userId");
+    if (id) localStorage.setItem(`doctorOnlineById_${id}`, online ? "1" : "0");
   }, [online]);
 
-  const name = profile?.user?.name || "Dr. Richard James";
-  const specs = profile?.specializations?.join(", ") || "MBBS - General physician";
-  const about = profile?.about || "Aims to deliver outstanding healthcare by adhering to compassionate medical care. Focuses on preventive medicine, timely diagnosis, and comprehensive treatment for better outcomes.";
-  const fee = profile?.consultationFees ?? 540;
-  const address = profile?.clinic?.address || "7/1, Cross, Basavand, Clinic Road, London";
-  const city = profile?.clinic?.city || "London";
-  const DEFAULT_PHOTO = "https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=640&auto=format&fit=crop";
+  const name = profile?.user?.name || "";
+  const specs = (profile?.specializations || []).join(", ");
+  const about = profile?.about || "";
+  const fee = profile?.consultationFees ?? "";
+  const address = profile?.clinic?.address || "";
+  const city = profile?.clinic?.city || "";
 
   const startEdit = () => {
     setError("");
@@ -122,18 +125,21 @@ export default function DoctorProfile() {
           <div className="bg-white border border-slate-200 rounded-xl p-6">
             <div className="grid sm:grid-cols-3 gap-6">
               <div>
-                <img
-                  src={profile?.photoBase64 || DEFAULT_PHOTO}
-                  alt="Doctor"
-                  className="w-full h-48 object-cover rounded-lg"
-                  onError={(e) => { if (e.currentTarget.src !== DEFAULT_PHOTO) e.currentTarget.src = DEFAULT_PHOTO; }}
-                />
+                {String(profile?.photoBase64 || "").startsWith("data:image") ? (
+                  <img
+                    src={profile?.photoBase64}
+                    alt="Doctor"
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                ) : (
+                  <div className="w-full h-48 rounded-lg border bg-white" />
+                )}
               </div>
               <div className="sm:col-span-2">
                 <div className="text-xl font-semibold">{name}</div>
                 <div className="text-sm text-slate-600">{specs}</div>
                 <p className="mt-3 text-sm text-slate-700">{about}</p>
-                <div className="mt-4 text-sm text-slate-700">Appointment Fee: ₹{fee}</div>
+                {fee !== "" && (<div className="mt-4 text-sm text-slate-700">Appointment Fee: ₹{fee}</div>)}
                 <div className="mt-1 text-sm text-slate-700">Address: {address}</div>
                 <div className="mt-1 text-sm text-slate-700">City: {city}</div>
                 <div className="mt-3 flex items-center gap-3">
