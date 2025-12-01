@@ -6,7 +6,7 @@ import API from "../api";
 export default function Appointments() {
   const nav = useNavigate();
   const location = useLocation();
-  const isPrescriptionsView = location.pathname.includes('/prescriptions') || (new URLSearchParams(location.search).get('view') === 'prescriptions');
+  const isPrescriptionsView = false;
   const [list, setList] = useState([]);
   const [presRefresh, setPresRefresh] = useState(0);
   const presItems = useMemo(() => {
@@ -59,7 +59,19 @@ export default function Appointments() {
   const [detChat, setDetChat] = useState([]);
   const [detText, setDetText] = useState("");
   const [detEdit, setDetEdit] = useState(false);
+  const [bookDocId, setBookDocId] = useState("");
 
+  useEffect(() => {
+    try {
+      const q = new URLSearchParams(location.search);
+      if (q.get('alertChat') === '1') {
+        const id = localStorage.getItem('lastChatApptId') || '';
+        const a = (list || []).find((x) => String(x._id || x.id) === id) || null;
+        if (a) setDetailsAppt(a);
+        setTimeout(() => { try { localStorage.setItem('patientBellCount', '0'); } catch(_) {} }, 0);
+      }
+    } catch(_) {}
+  }, [location.search, list]);
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) { nav("/login"); return; }
@@ -111,7 +123,11 @@ export default function Appointments() {
           const { apptId, actor } = e.data || {};
           if (!apptId) return;
           if (String(actor || '').toLowerCase() !== 'doctor') return;
-          setBellCount((c) => c + 1);
+          setBellCount((c) => {
+            const next = c + 1;
+            try { localStorage.setItem('patientBellCount', String(next)); } catch(_) {}
+            return next;
+          });
           try { localStorage.setItem('lastChatApptId', String(apptId)); } catch(_) {}
         } catch (_) {}
       };
@@ -258,7 +274,11 @@ export default function Appointments() {
               const id = String(apptId || '');
               if (!id) return;
               if (String(actor || '').toLowerCase() !== 'doctor') return;
-              setBellCount((c) => c + 1);
+              setBellCount((c) => {
+                const next = c + 1;
+                try { localStorage.setItem('patientBellCount', String(next)); } catch(_) {}
+                return next;
+              });
               try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
             } catch (_) {}
           });
@@ -534,23 +554,7 @@ export default function Appointments() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 mt-8">
-      <div className="flex items-center justify-end mb-2">
-        <button
-          onClick={() => {
-            const id = localStorage.getItem('lastChatApptId') || '';
-            const a = (list || []).find((x) => String(x._id || x.id) === id) || null;
-            if (a) setDetailsAppt(a);
-            setBellCount(0);
-          }}
-          className="relative h-9 w-9 rounded-full border border-slate-300 flex items-center justify-center"
-          title="Notifications"
-        >
-          <span role="img" aria-label="bell">🔔</span>
-          {bellCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1">{bellCount}</span>
-          )}
-        </button>
-      </div>
+      
       <h1 className="text-2xl font-semibold mb-4">{isPrescriptionsView ? 'Prescriptions' : 'My appointments'}</h1>
       <div className="bg-white border border-slate-200 rounded-xl">
         {loading ? (
@@ -620,7 +624,7 @@ export default function Appointments() {
                             <span className="text-xs text-slate-600">{label}</span>
                             {!byMe && docId && (
                               <button
-                                onClick={() => window.open(`/doctor/${docId}`, '_blank')}
+                                onClick={() => nav(`/doctor/${String(docId)}`)}
                                 className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md"
                               >
                                 Book Next Slot
@@ -671,11 +675,18 @@ export default function Appointments() {
                     <div className="flex flex-wrap gap-2 items-center">
                       <span className="inline-block text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">Joined</span>
                       {(() => {
-                        const link = meetLinkFor(a);
-                        const url = String(link).replace(/[`'\"]/g, '').trim();
-                        if (!url || !/^https?:\/\//.test(url)) return null;
+                        const id = String(a._id || a.id || '');
                         return (
-                          <button onClick={() => window.open(url, '_blank')} className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md">Rejoin</button>
+                          <button
+                            onClick={() => {
+                              try { localStorage.setItem(`joinedByPatient_${id}`, '0'); } catch(_) {}
+                              try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'patient', event: 'exit' }); } catch(_) {}
+                              setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, status: 'CONFIRMED' } : x)));
+                            }}
+                            className="border border-red-600 text-red-700 px-3 py-1 rounded-md"
+                          >
+                            Leave
+                          </button>
                         );
                       })()}
                     </div>
@@ -697,7 +708,7 @@ export default function Appointments() {
                                 <>
                                   <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">Time Expired</span>
                                   {docId && (
-                                    <button onClick={() => window.open(`/doctor/${docId}`, '_blank')} className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md">Book Next Slot</button>
+                                    <button onClick={() => nav(`/doctor/${String(docId)}`)} className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md">Book Next Slot</button>
                                   )}
                                 </>
                               );
@@ -713,15 +724,7 @@ export default function Appointments() {
                             }
                             return (
                               <>
-                            {(() => {
-                              const id = String(a._id || a.id || '');
-                              const joinedPatient = id ? localStorage.getItem(`joinedByPatient_${id}`) === '1' : false;
-                              const joinedDoctor = id ? localStorage.getItem(`doctorJoined_${id}`) === '1' : false;
-                              const joined = joinedPatient || joinedDoctor;
-                              return joined ? (
-                                <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Joined</span>
-                              ) : null;
-                            })()}
+                            {(() => { return null; })()}
                                 {(() => {
                                   const id = String(a._id || a.id || '');
                                   const jp = id ? localStorage.getItem(`joinedByPatient_${id}`) : null;
@@ -1041,11 +1044,25 @@ export default function Appointments() {
         </div>
       )}
       {detailsAppt && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          onClick={(e) => { if (e.target === e.currentTarget) setDetailsAppt(null); }}
+        >
           <div className="bg-white rounded-xl border border-slate-200 w-[95vw] max-w-lg h-[75vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <div className="font-semibold text-slate-900">Patient Details</div>
-              <button onClick={() => setDetailsAppt(null)} className="px-3 py-1 rounded-md border border-slate-300">Close</button>
+              <button
+                onClick={() => {
+                  setDetailsAppt(null);
+                  try {
+                    const q = new URLSearchParams(location.search);
+                    if (q.get('alertChat') === '1') nav('/appointments', { replace: true });
+                  } catch(_) {}
+                }}
+                className="px-3 py-1 rounded-md border border-slate-300"
+              >
+                Close
+              </button>
             </div>
             <div className="p-4 grid gap-3 overflow-y-auto flex-1">
               <div className="grid grid-cols-2 gap-4">
@@ -1257,7 +1274,10 @@ export default function Appointments() {
         </div>
       )}
       {followAppt && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          onClick={(e) => { if (e.target === e.currentTarget) setFollowAppt(null); }}
+        >
           <div className="bg-white rounded-xl border border-slate-200 w-[95vw] max-w-2xl overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <div className="font-semibold text-slate-900">Free Follow-up (5 days)</div>
@@ -1382,6 +1402,17 @@ export default function Appointments() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {bookDocId && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl border border-slate-200 w-[95vw] max-w-5xl h-[85vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b">
+              <div className="font-semibold text-slate-900">Book Next Slot</div>
+              <button onClick={() => setBookDocId("")} className="px-3 py-1 rounded-md border border-slate-300">Close</button>
+            </div>
+            <iframe title="Doctor" src={`/doctor/${bookDocId}`} className="w-full h-[calc(85vh-52px)]" />
           </div>
         </div>
       )}

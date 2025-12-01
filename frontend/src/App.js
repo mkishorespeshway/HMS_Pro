@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, Navigate } from "react-router-dom";
 import Logo from "./components/Logo";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import DoctorLogin from "./pages/DoctorLogin";
@@ -29,11 +29,50 @@ function Header() {
   const location = useLocation();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
+  const [bell, setBell] = useState(() => {
+    try { return Number(localStorage.getItem('patientBellCount') || 0) || 0; } catch(_) { return 0; }
+  });
+  const menuRef = useRef(null);
   const hideHeader = location.pathname.startsWith('/admin') || location.pathname.startsWith('/doctor') || location.pathname.startsWith('/prescription');
   const token = localStorage.getItem('token');
   const uid = localStorage.getItem('userId');
   const photo = uid ? localStorage.getItem(`userPhotoBase64ById_${uid}`) : '';
   const showAdminLink = !token && !location.pathname.startsWith('/login');
+  useEffect(() => {
+    try {
+      const chan = new BroadcastChannel('chatmsg');
+      const onMsg = (e) => {
+        try {
+          const { apptId, actor } = e.data || {};
+          if (String(actor || '').toLowerCase() !== 'doctor') return;
+          setBell((c) => {
+            const next = c + 1;
+            try { localStorage.setItem('patientBellCount', String(next)); } catch(_) {}
+            return next;
+          });
+          try { localStorage.setItem('lastChatApptId', String(apptId || '')); } catch(_) {}
+        } catch(_) {}
+      };
+      chan.onmessage = onMsg;
+      return () => { try { chan.close(); } catch(_) {} };
+    } catch(_) {}
+  }, []);
+  useEffect(() => {
+    const onDocClick = (e) => {
+      try {
+        if (!open) return;
+        const el = menuRef.current;
+        if (el && !el.contains(e.target)) setOpen(false);
+      } catch(_) {}
+    };
+    const onEsc = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('click', onDocClick, true);
+    document.addEventListener('keydown', onEsc, true);
+    return () => {
+      document.removeEventListener('click', onDocClick, true);
+      document.removeEventListener('keydown', onEsc, true);
+    };
+  }, [open]);
   if (hideHeader) return null;
   return (
     <header className="bg-white border-b">
@@ -51,7 +90,17 @@ function Header() {
             {showAdminLink && <Link to="/admin/login" className="hover:text-indigo-600">Admin</Link>}
           </nav>
           {token ? (
-            <div className="relative">
+            <div ref={menuRef} className="relative flex items-center gap-3">
+              <button
+                onClick={() => { setBell(0); try { localStorage.setItem('patientBellCount', '0'); } catch(_) {}; nav('/appointments?alertChat=1'); }}
+                className="relative h-9 w-9 rounded-full border border-slate-300 flex items-center justify-center hover:bg-slate-50"
+                title="Notifications"
+              >
+                <span role="img" aria-label="bell">🔔</span>
+                {bell > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1">{bell}</span>
+                )}
+              </button>
               {photo ? (
                 <img
                   src={photo}
@@ -66,13 +115,12 @@ function Header() {
                 />
               )}
               {open && (
-                <div className="absolute right-0 mt-2 w-44 bg-white border border-slate-200 rounded-md shadow-md text-sm">
-                  <Link to="/profile" className="block px-3 py-2 hover:bg-slate-50">My Profile</Link>
-                  <Link to="/appointments" className="block px-3 py-2 hover:bg-slate-50">My Appointments</Link>
-                  <Link to="/appointments?view=prescriptions" className="block px-3 py-2 hover:bg-slate-50">Prescriptions</Link>
+                <div className="absolute right-0 mt-2 min-w-[12rem] w-auto bg-white border border-slate-200 rounded-lg shadow-xl ring-1 ring-black/5 text-sm z-[100]">
+                  <Link to="/profile" className="block px-3 py-2 hover:bg-slate-50 whitespace-nowrap">My Profile</Link>
+                  <Link to="/appointments" className="block px-3 py-2 hover:bg-slate-50 whitespace-nowrap">My Appointments</Link>
                   <button
                     onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('userId'); nav('/login'); }}
-                    className="block w-full text-left px-3 py-2 hover:bg-slate-50"
+                    className="block w-full text-left px-3 py-2 hover:bg-slate-50 whitespace-nowrap"
                   >
                     Logout
                   </button>

@@ -49,6 +49,10 @@ export default function Prescription() {
     }
   }, [location.search]);
 
+  const isEmbed = useMemo(() => {
+    try { return new URLSearchParams(location.search).get('embed') === '1'; } catch(_) { return false; }
+  }, [location.search]);
+
   const clinicName = useMemo(() => String(profile?.clinic?.name || "").trim(), [profile]);
   const clinicCity = useMemo(() => String(profile?.clinic?.city || "").trim(), [profile]);
   const doctorName = useMemo(() => `Dr. ${appt?.doctor?.name || ''}`, [appt]);
@@ -136,83 +140,7 @@ export default function Prescription() {
   return (
     <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-sm border border-slate-200 mt-8">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">Prescription</h2>
-      {appt && (
-        <div className="flex items-center gap-2">
-          {isDoctorUser && (
-            <button onClick={() => setEdit((v) => !v)} className="px-3 py-2 rounded-md border border-slate-300">{edit ? 'Cancel Edit' : 'Edit'}</button>
-          )}
-          {edit && isDoctorUser && (
-            <button
-              onClick={async () => {
-                const parts = [
-                  symptoms ? `Symptoms: ${symptoms}` : '',
-                  diagnosis ? `Diagnosis: ${diagnosis}` : '',
-                  tests ? `Tests: ${tests}` : '',
-                  medicines ? `Medicines: ${medicines}` : '',
-                  dosage ? `Dosage: ${dosage}` : '',
-                  frequency ? `Frequency: ${frequency}` : '',
-                  duration ? `Duration: ${duration}` : '',
-                  route ? `Route: ${route}` : '',
-                  food ? `Before/After food: ${food}` : '',
-                  advice ? `Lifestyle advice: ${advice}` : '',
-                  notes ? `Notes: ${notes}` : '',
-                ].filter(Boolean);
-                const text = parts.join('\n');
-                try {
-                  await API.post(`/appointments/${id}/prescription`, { text });
-                  setAppt((prev) => (prev ? ({ ...(prev || {}), prescriptionText: text }) : prev));
-                  alert('Updated');
-                } catch (e) {
-                  alert(e.response?.data?.message || e.message || 'Failed to update');
-                }
-              }}
-              className="px-3 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white"
-            >
-              Save
-            </button>
-          )}
-            <button
-              onClick={() => {
-                try {
-                  if (window.opener) { window.close(); return; }
-                  if (window.history.length > 1) { window.history.back(); return; }
-                } catch (_) {}
-                nav('/appointments');
-              }}
-              className="px-3 py-2 rounded-md border border-slate-300"
-            >
-              Close
-            </button>
-            <button onClick={() => { try { window.print(); } catch(_) {} }} className="px-3 py-2 rounded-md border border-slate-300">Download PDF</button>
-            <button
-              onClick={async () => {
-                const key = String(id);
-                const viewUrl = `${window.location.origin}/prescription/${id}`;
-                try {
-                  const prev = JSON.parse(localStorage.getItem(`wr_${key}_prevpres`) || '[]');
-                  const label = `Prescription ${when}`;
-                  const item = { name: label, url: viewUrl, by: "doctor" };
-                  const next = Array.isArray(prev) ? [...prev, item] : [item];
-                  localStorage.setItem(`wr_${key}_prevpres`, JSON.stringify(next));
-                  try { const chan = new BroadcastChannel('prescriptions'); chan.postMessage({ id: key, item }); chan.close(); } catch (_) {}
-                } catch (_) {}
-                try { await API.post(`/appointments/${id}/prescription`, { text: appt?.prescriptionText || "" }); } catch (_) {}
-                try {
-                  if (navigator.share) {
-                    await navigator.share({ title: 'Prescription', url: viewUrl });
-                  } else {
-                    await navigator.clipboard.writeText(viewUrl);
-                  }
-                } catch (_) {}
-                alert('Sent to Prescriptions')
-              }}
-              className="px-3 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white"
-            >
-              Share
-            </button>
-          </div>
-        )}
+        <h2 className="text-2xl font-semibold">{clinicName || 'Clinic/Hospital'}</h2>
       </div>
       {!appt && <p className="text-slate-600 mt-3">Loading...</p>}
       {appt && (
@@ -238,9 +166,7 @@ export default function Prescription() {
               <div className="text-sm text-slate-700">Name: <span className="text-slate-900">{doctorName || '--'}</span></div>
               {doctorQuals && (<div className="text-sm text-slate-700">Qualification: <span className="text-slate-900">{doctorQuals}</span></div>)}
               <div className="text-sm text-slate-700">Specialization: <span className="text-slate-900">{doctorSpecs || '--'}</span></div>
-              <div className="text-sm text-slate-700">Clinic/Hospital: <span className="text-slate-900">{clinicName || '--'}</span></div>
-              <div className="text-sm text-slate-700">Clinic Address: <span className="text-slate-900">{clinicAddress || '--'}</span></div>
-              <div className="text-sm text-slate-700">City: <span className="text-slate-900">{clinicCity || '--'}</span></div>
+              
             </div>
             <div className="space-y-2">
               <div className="text-slate-900 font-semibold">Patient Details</div>
@@ -352,6 +278,84 @@ export default function Prescription() {
           >
             Share for lab tests
           </button>
+        </div>
+        <div className="mt-6 flex items-center justify-end gap-2">
+          {isDoctorUser && (
+            <button onClick={() => setEdit((v) => !v)} className="px-3 py-2 rounded-md border border-slate-300">{edit ? 'Cancel Edit' : 'Edit'}</button>
+          )}
+          {edit && isDoctorUser && (
+            <button
+              onClick={async () => {
+                const parts = [
+                  symptoms ? `Symptoms: ${symptoms}` : '',
+                  diagnosis ? `Diagnosis: ${diagnosis}` : '',
+                  tests ? `Tests: ${tests}` : '',
+                  medicines ? `Medicines: ${medicines}` : '',
+                  dosage ? `Dosage: ${dosage}` : '',
+                  frequency ? `Frequency: ${frequency}` : '',
+                  duration ? `Duration: ${duration}` : '',
+                  route ? `Route: ${route}` : '',
+                  food ? `Before/After food: ${food}` : '',
+                  advice ? `Lifestyle advice: ${advice}` : '',
+                  notes ? `Notes: ${notes}` : '',
+                ].filter(Boolean);
+                const text = parts.join('\n');
+                try {
+                  await API.post(`/appointments/${id}/prescription`, { text });
+                  setAppt((prev) => (prev ? ({ ...(prev || {}), prescriptionText: text }) : prev));
+                  alert('Updated');
+                } catch (e) {
+                  alert(e.response?.data?.message || e.message || 'Failed to update');
+                }
+              }}
+              className="px-3 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white"
+            >
+              Save
+            </button>
+          )}
+          {!isEmbed && (
+            <>
+              <button
+                onClick={() => {
+                  try {
+                    if (window.opener) { window.close(); return; }
+                    if (window.history.length > 1) { window.history.back(); return; }
+                  } catch (_) {}
+                  nav('/appointments');
+                }}
+                className="px-3 py-2 rounded-md border border-slate-300"
+              >
+                Close
+              </button>
+              <button onClick={() => { try { window.print(); } catch(_) {} }} className="px-3 py-2 rounded-md border border-slate-300">Download PDF</button>
+              <button
+                onClick={async () => {
+                  const key = String(id);
+                  const viewUrl = `${window.location.origin}/prescription/${id}`;
+                  try {
+                    const prev = JSON.parse(localStorage.getItem(`wr_${key}_prevpres`) || '[]');
+                    const label = `Prescription ${when}`;
+                    const item = { name: label, url: viewUrl, by: "doctor" };
+                    const next = Array.isArray(prev) ? [...prev, item] : [item];
+                    localStorage.setItem(`wr_${key}_prevpres`, JSON.stringify(next));
+                    try { const chan = new BroadcastChannel('prescriptions'); chan.postMessage({ id: key, item }); chan.close(); } catch (_) {}
+                  } catch (_) {}
+                  try { await API.post(`/appointments/${id}/prescription`, { text: appt?.prescriptionText || "" }); } catch (_) {}
+                  try {
+                    if (navigator.share) {
+                      await navigator.share({ title: 'Prescription', url: viewUrl });
+                    } else {
+                      await navigator.clipboard.writeText(viewUrl);
+                    }
+                  } catch (_) {}
+                  alert('Sent to Prescriptions')
+                }}
+                className="px-3 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white"
+              >
+                Share
+              </button>
+            </>
+          )}
         </div>
       </div>
     )}

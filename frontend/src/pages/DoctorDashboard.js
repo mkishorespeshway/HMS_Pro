@@ -12,9 +12,13 @@ export default function DoctorDashboard() {
   const [online, setOnline] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notifs, setNotifs] = useState([]);
-  const [bellCount, setBellCount] = useState(0);
+  const [bellCount, setBellCount] = useState(() => {
+    try { return Number(localStorage.getItem('doctorBellCount') || 0) || 0; } catch(_) { return 0; }
+  });
   const [chatAppt, setChatAppt] = useState(null);
   const socketRef = useRef(null);
+  const meetWinRef = useRef(null);
+  const meetMonitorRef = useRef(null);
   const [followAppt, setFollowAppt] = useState(null);
   const [fuChat, setFuChat] = useState([]);
   const [fuFiles, setFuFiles] = useState([]);
@@ -103,7 +107,11 @@ export default function DoctorDashboard() {
           if (String(actor || '').toLowerCase() !== 'patient') return;
           const id = String(apptId || '');
           if (!id) return;
-          setBellCount((c) => c + 1);
+          setBellCount((c) => {
+            const next = c + 1;
+            try { localStorage.setItem('doctorBellCount', String(next)); } catch(_) {}
+            return next;
+          });
           try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
           const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id);
           addNotif(`New message from ${a?.patient?.name || 'patient'}`, id);
@@ -207,6 +215,11 @@ export default function DoctorDashboard() {
                   setOnline(true);
                 } else if (event === 'exit' && actor === 'doctor') {
                   try { localStorage.removeItem(`joinedByDoctor_${id}`); } catch(_) {}
+                  if (active) {
+                    try { localStorage.setItem(`leftDoctor_${id}`, '1'); } catch(_) {}
+                  } else {
+                    try { localStorage.removeItem(`leftDoctor_${id}`); } catch(_) {}
+                  }
                   setBusy(false);
                   setOnline(true);
                 } else if (event === 'complete') {
@@ -480,6 +493,7 @@ export default function DoctorDashboard() {
                 const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id) || null;
                 setChatAppt(a);
                 setBellCount(0);
+                try { localStorage.setItem('doctorBellCount', '0'); } catch(_) {}
               }}
               className="relative h-9 w-9 rounded-full border border-slate-300 flex items-center justify-center"
               title="Notifications"
@@ -854,25 +868,7 @@ export default function DoctorDashboard() {
                           <span className={`inline-block text-xs px-2 py-1 rounded ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}</span>
                         ) : null;
                       })()}
-                      {(() => {
-                        const id = String(a._id || a.id || '');
-                        const joinedDoc = id ? localStorage.getItem(`joinedByDoctor_${id}`) === '1' : false;
-                        const joinedPat = id ? localStorage.getItem(`joinedByPatient_${id}`) === '1' : false;
-                        const joined = joinedDoc || joinedPat;
-                        if (!joined) return null;
-                        const start = new Date(a.date);
-                        const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
-                        start.setHours(sh, sm, 0, 0);
-                        const end = new Date(a.date);
-                        const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
-                        end.setHours(eh, em, 0, 0);
-                        if (end.getTime() <= start.getTime()) end.setTime(start.getTime() + 30 * 60 * 1000);
-                        const now = Date.now();
-                        const active = now >= start.getTime() && now < end.getTime();
-                        return active ? (
-                          <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Joined</span>
-                        ) : null;
-                      })()}
+                      {(() => { return null; })()}
                       {a.type === 'online' && String(a.status).toUpperCase() === 'CONFIRMED' && (
                         (() => {
                           const start = new Date(a.date);
@@ -885,24 +881,116 @@ export default function DoctorDashboard() {
                           const now = Date.now();
                           const windowStart = start.getTime() - 5 * 60 * 1000;
                           if (now >= end.getTime()) {
+                            try { localStorage.removeItem(`leftDoctor_${String(a._id || a.id)}`); } catch(_) {}
                             return (
-                              <button
-                                onClick={() => setExpiredAppt(a)}
-                                className="px-3 py-1 rounded-md border border-red-600 text-red-700"
-                              >
-                                Time Expired
-                              </button>
+                              <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">Time Expired</span>
                             );
                           }
                           if (now < windowStart) {
                             return <span className="inline-block text-xs px-2 py-1 rounded bg-amber-100 text-amber-700">Available 5 min before</span>;
+                          }
+                          const id = String(a._id || a.id || '');
+                          const joinedDoc = id ? localStorage.getItem(`joinedByDoctor_${id}`) === '1' : false;
+                          const joinedPat = id ? localStorage.getItem(`joinedByPatient_${id}`) === '1' : false;
+                          const joined = joinedDoc || joinedPat;
+                          const leftDoc = id ? localStorage.getItem(`leftDoctor_${id}`) === '1' : false;
+                          if (joined) {
+                            return (
+                              <div className="flex items-center gap-2">
+                                <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Joined</span>
+                                <button
+                                  onClick={() => {
+                                    try { localStorage.setItem(`leftDoctor_${id}`, '1'); } catch(_) {}
+                                    try { localStorage.removeItem(`joinedByDoctor_${id}`); } catch(_) {}
+                                    try {
+                                      const uid = localStorage.getItem('userId') || '';
+                                      if (uid) {
+                                        localStorage.setItem(`doctorBusyById_${uid}`, '0');
+                                        API.put('/doctors/me/status', { isOnline: true, isBusy: false }).catch(() => {});
+                                      }
+                                    } catch(_) {}
+                                    setBusy(false);
+                                    setOnline(true);
+                                    try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'exit' }); } catch(_) {}
+                                    try {
+                                      if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; }
+                                      if (meetWinRef.current && !meetWinRef.current.closed) { meetWinRef.current.close(); }
+                                      meetWinRef.current = null;
+                                    } catch(_) {}
+                                  }}
+                                  className="px-3 py-1 rounded-md border border-red-600 text-red-700"
+                                >
+                                  Leave
+                                </button>
+                              </div>
+                            );
+                          }
+                          if (leftDoc) {
+                            return (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={async () => {
+                                    if (!online) { alert('You are offline. Set status to ONLINE to rejoin consultation.'); return; }
+                                    const stored = id ? localStorage.getItem(`meetlink_${id}`) : '';
+                                    let pick = (stored && /^https?:\/\//.test(stored)) ? stored : String(a.meetingLink || '');
+                                    let url = String(pick).replace(/[`'\"]/g, '').trim();
+                                    if (!url || !/^https?:\/\//.test(url)) {
+                                      try {
+                                        const resp = await API.post(`/appointments/${id}/meet-link/generate`);
+                                        url = String(resp?.data?.url || '').trim();
+                                        if (!/^https?:\/\//.test(url)) { alert('Failed to generate meeting link'); return; }
+                                        try { localStorage.setItem(`meetlink_${id}`, url); } catch(_) {}
+                                      } catch (e) {
+                                        alert(e.response?.data?.message || e.message || 'Failed to generate meeting link');
+                                        return;
+                                      }
+                                    } else {
+                                      try { await API.put(`/appointments/${id}/meet-link`, { url }); } catch(_) {}
+                                    }
+                                    try { localStorage.removeItem(`leftDoctor_${id}`); } catch(_) {}
+                                    try { localStorage.setItem(`joinedByDoctor_${id}`, '1'); } catch(_) {}
+                                    try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'join' }); } catch(_) {}
+                                    try {
+                                      const uid = localStorage.getItem('userId') || '';
+                                      if (uid) {
+                                        localStorage.setItem(`doctorBusyById_${uid}`, '1');
+                                        API.put('/doctors/me/status', { isOnline: true, isBusy: true }).catch(() => {});
+                                      }
+                                    } catch(_) {}
+                                    setOnline(true);
+                                    setBusy(true);
+                                    try {
+                                      meetWinRef.current = window.open(url, '_blank');
+                                      meetMonitorRef.current = setInterval(() => {
+                                        if (!meetWinRef.current || meetWinRef.current.closed) {
+                                          if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; }
+                                          try { localStorage.removeItem(`joinedByDoctor_${id}`); } catch(_) {}
+                                          try {
+                                            const uid = localStorage.getItem('userId') || '';
+                                            if (uid) {
+                                              localStorage.setItem(`doctorBusyById_${uid}`, '0');
+                                              API.put('/doctors/me/status', { isOnline: true, isBusy: false }).catch(() => {});
+                                            }
+                                          } catch(_) {}
+                                          setBusy(false);
+                                          setOnline(true);
+                                          try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'exit' }); } catch(_) {}
+                                        }
+                                      }, 1000);
+                                    } catch(_) {}
+                                  }}
+                                  className="px-3 py-1 rounded-md border border-indigo-600 text-indigo-700"
+                                >
+                                  Rejoin
+                                </button>
+                              </div>
+                            );
                           }
                           return (
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={async () => {
                                   if (!online) { alert('You are offline. Set status to ONLINE to start consultation.'); return; }
-                                  const id = String(a._id || a.id || '');
                                   const stored = id ? localStorage.getItem(`meetlink_${id}`) : '';
                                   let pick = (stored && /^https?:\/\//.test(stored)) ? stored : String(a.meetingLink || '');
                                   let url = String(pick).replace(/[`'\"]/g, '').trim();
@@ -939,13 +1027,14 @@ export default function DoctorDashboard() {
                                     setOnline(true);
                                     setBusy(true);
                                   } catch(_) {}
+                                  try { localStorage.removeItem(`leftDoctor_${id}`); } catch(_) {}
                                   try { if (id) localStorage.setItem(`joinedByDoctor_${id}`, '1'); } catch(_) {}
                                   try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'join' }); } catch(_) {}
-                                  const win = window.open(url, '_blank');
                                   try {
-                                    const monitor = setInterval(() => {
-                                      if (!win || win.closed) {
-                                        clearInterval(monitor);
+                                    meetWinRef.current = window.open(url, '_blank');
+                                    meetMonitorRef.current = setInterval(() => {
+                                      if (!meetWinRef.current || meetWinRef.current.closed) {
+                                        if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; }
                                         try {
                                           if (id) localStorage.removeItem(`joinedByDoctor_${id}`);
                                           const uid = localStorage.getItem('userId') || '';
@@ -953,10 +1042,10 @@ export default function DoctorDashboard() {
                                             localStorage.setItem(`doctorBusyById_${uid}`, '0');
                                             API.put('/doctors/me/status', { isOnline: true, isBusy: false }).catch(() => {});
                                           }
-                                          setBusy(false);
-                                          setOnline(true);
-                                          try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'exit' }); } catch(_) {}
                                         } catch(_) {}
+                                        setBusy(false);
+                                        setOnline(true);
+                                        try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'exit' }); } catch(_) {}
                                       }
                                     }, 1000);
                                   } catch(_) {}
@@ -967,7 +1056,6 @@ export default function DoctorDashboard() {
                               </button>
                               <button
                                 onClick={async () => {
-                                  const id = String(a._id || a.id || '');
                                   let url = String(localStorage.getItem(`meetlink_${id}`) || a.meetingLink || '').replace(/[`'\"]/g, '').trim();
                                   if (!url || !/^https?:\/\//.test(url)) {
                                     try {
