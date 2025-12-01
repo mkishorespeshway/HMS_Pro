@@ -37,9 +37,6 @@ export default function DoctorToday() {
   const socketRef = useRef(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [summaryId, setSummaryId] = useState("");
-  const [bellCount, setBellCount] = useState(() => {
-    try { return Number(localStorage.getItem('doctorBellCount') || 0) || 0; } catch(_) { return 0; }
-  });
 
   const load = async () => {
     setLoading(true);
@@ -87,28 +84,6 @@ export default function DoctorToday() {
   useEffect(() => {
     load();
   }, []);
-
-  useEffect(() => {
-    try {
-      const chan = new BroadcastChannel('chatmsg');
-      const onMsg = (e) => {
-        try {
-          const { apptId, actor } = e.data || {};
-          if (String(actor || '').toLowerCase() !== 'patient') return;
-          const id = String(apptId || '');
-          if (!id) return;
-          setBellCount((c) => {
-            const next = c + 1;
-            try { localStorage.setItem('doctorBellCount', String(next)); } catch(_) {}
-            return next;
-          });
-          try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
-        } catch(_) {}
-      };
-      chan.onmessage = onMsg;
-      return () => { try { chan.close(); } catch(_) {} };
-    } catch(_) {}
-  }, [list]);
 
   useEffect(() => {
     const origin = String(API.defaults.baseURL || '').replace(/\/(api)?$/, '');
@@ -578,6 +553,7 @@ export default function DoctorToday() {
           }
           return (
             <div className="flex items-center gap-2">
+              <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">✓ Accepted</span>
               {(() => {
                 if (isPast) {
                   try {
@@ -587,16 +563,7 @@ export default function DoctorToday() {
                     const met = pres || (jp !== null);
                     if (met) {
                       return (
-                        <>
-                          <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Completed</span>
-                          <button
-                            type="button"
-                            onClick={() => { const sid = String(a._id || a.id || ''); if (sid) { setSummaryId(sid); setSummaryOpen(true); } }}
-                            className="px-3 py-1 rounded-md border border-indigo-600 text-indigo-700"
-                          >
-                            View Summary
-                          </button>
-                        </>
+                        <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Completed</span>
                       );
                     }
                     return (
@@ -608,9 +575,7 @@ export default function DoctorToday() {
                     );
                   }
                 }
-                return (
-                  <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">✓ Accepted</span>
-                );
+                return null;
               })()}
               {isFuture && (
                 <button
@@ -722,26 +687,7 @@ export default function DoctorToday() {
         <main className="col-span-12 md:col-span-9">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-3xl font-semibold">Doctor Appointments</h1>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => {
-                  try {
-                    const id = localStorage.getItem('lastChatApptId') || '';
-                    const a = (list || []).find((x) => String(x._id || x.id) === id) || null;
-                    if (a) setDetailsAppt(a);
-                  } catch(_) {}
-                  setBellCount(0);
-                  try { localStorage.setItem('doctorBellCount', '0'); } catch(_) {}
-                }}
-                className="relative h-9 w-9 rounded-full border border-slate-300 flex items-center justify-center"
-                title="Notifications"
-              >
-                <span role="img" aria-label="bell">🔔</span>
-                {bellCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1">{bellCount}</span>
-                )}
-              </button>
-              <button
+            <button
               onClick={() => {
                 try {
                   const uid = localStorage.getItem("userId") || "";
@@ -754,7 +700,6 @@ export default function DoctorToday() {
             >
               Logout
             </button>
-            </div>
           </div>
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
@@ -796,19 +741,6 @@ export default function DoctorToday() {
               <iframe title="Prescription" src={`/prescription/${summaryId}?embed=1`} className="w-full h-full" />
             </div>
             <div className="px-4 py-3 border-t flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    const url = `${window.location.origin}/prescription/${summaryId}`;
-                    await navigator.clipboard.writeText(url);
-                    alert('Link copied');
-                  } catch(_) {}
-                }}
-                className="px-3 py-1 rounded-md border border-indigo-600 text-indigo-700"
-              >
-                Share
-              </button>
               <button type="button" onClick={() => { try { window.open(`/prescription/${summaryId}?print=1`, '_blank'); } catch(_) {} }} className="px-3 py-1 rounded-md border border-slate-300">Download PDF</button>
               <button type="button" onClick={() => setSummaryOpen(false)} className="px-3 py-1 rounded-md border border-slate-300">Close</button>
             </div>

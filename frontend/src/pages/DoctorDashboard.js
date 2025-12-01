@@ -12,9 +12,7 @@ export default function DoctorDashboard() {
   const [online, setOnline] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notifs, setNotifs] = useState([]);
-  const [bellCount, setBellCount] = useState(() => {
-    try { return Number(localStorage.getItem('doctorBellCount') || 0) || 0; } catch(_) { return 0; }
-  });
+  const [bellCount, setBellCount] = useState(0);
   const [chatAppt, setChatAppt] = useState(null);
   const socketRef = useRef(null);
   const meetWinRef = useRef(null);
@@ -107,11 +105,7 @@ export default function DoctorDashboard() {
           if (String(actor || '').toLowerCase() !== 'patient') return;
           const id = String(apptId || '');
           if (!id) return;
-          setBellCount((c) => {
-            const next = c + 1;
-            try { localStorage.setItem('doctorBellCount', String(next)); } catch(_) {}
-            return next;
-          });
+          setBellCount((c) => c + 1);
           try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
           const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id);
           addNotif(`New message from ${a?.patient?.name || 'patient'}`, id);
@@ -493,7 +487,6 @@ export default function DoctorDashboard() {
                 const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id) || null;
                 setChatAppt(a);
                 setBellCount(0);
-                try { localStorage.setItem('doctorBellCount', '0'); } catch(_) {}
               }}
               className="relative h-9 w-9 rounded-full border border-slate-300 flex items-center justify-center"
               title="Notifications"
@@ -868,7 +861,25 @@ export default function DoctorDashboard() {
                           <span className={`inline-block text-xs px-2 py-1 rounded ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}</span>
                         ) : null;
                       })()}
-                      {(() => { return null; })()}
+                      {(() => {
+                        const id = String(a._id || a.id || '');
+                        const joinedDoc = id ? localStorage.getItem(`joinedByDoctor_${id}`) === '1' : false;
+                        const joinedPat = id ? localStorage.getItem(`joinedByPatient_${id}`) === '1' : false;
+                        const joined = joinedDoc || joinedPat;
+                        if (!joined) return null;
+                        const start = new Date(a.date);
+                        const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+                        start.setHours(sh, sm, 0, 0);
+                        const end = new Date(a.date);
+                        const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+                        end.setHours(eh, em, 0, 0);
+                        if (end.getTime() <= start.getTime()) end.setTime(start.getTime() + 30 * 60 * 1000);
+                        const now = Date.now();
+                        const active = now >= start.getTime() && now < end.getTime();
+                        return active ? (
+                          <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Joined</span>
+                        ) : null;
+                      })()}
                       {a.type === 'online' && String(a.status).toUpperCase() === 'CONFIRMED' && (
                         (() => {
                           const start = new Date(a.date);

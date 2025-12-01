@@ -724,7 +724,15 @@ export default function Appointments() {
                             }
                             return (
                               <>
-                            {(() => { return null; })()}
+                            {(() => {
+                              const id = String(a._id || a.id || '');
+                              const joinedPatient = id ? localStorage.getItem(`joinedByPatient_${id}`) === '1' : false;
+                              const joinedDoctor = id ? localStorage.getItem(`doctorJoined_${id}`) === '1' : false;
+                              const joined = joinedPatient || joinedDoctor;
+                              return joined ? (
+                                <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Joined</span>
+                              ) : null;
+                            })()}
                                 {(() => {
                                   const id = String(a._id || a.id || '');
                                   const jp = id ? localStorage.getItem(`joinedByPatient_${id}`) : null;
@@ -1044,25 +1052,11 @@ export default function Appointments() {
         </div>
       )}
       {detailsAppt && (
-        <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-          onClick={(e) => { if (e.target === e.currentTarget) setDetailsAppt(null); }}
-        >
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl border border-slate-200 w-[95vw] max-w-lg h-[75vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <div className="font-semibold text-slate-900">Patient Details</div>
-              <button
-                onClick={() => {
-                  setDetailsAppt(null);
-                  try {
-                    const q = new URLSearchParams(location.search);
-                    if (q.get('alertChat') === '1') nav('/appointments', { replace: true });
-                  } catch(_) {}
-                }}
-                className="px-3 py-1 rounded-md border border-slate-300"
-              >
-                Close
-              </button>
+              <button onClick={() => setDetailsAppt(null)} className="px-3 py-1 rounded-md border border-slate-300">Close</button>
             </div>
             <div className="p-4 grid gap-3 overflow-y-auto flex-1">
               <div className="grid grid-cols-2 gap-4">
@@ -1274,10 +1268,7 @@ export default function Appointments() {
         </div>
       )}
       {followAppt && (
-        <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-          onClick={(e) => { if (e.target === e.currentTarget) setFollowAppt(null); }}
-        >
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl border border-slate-200 w-[95vw] max-w-2xl overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <div className="font-semibold text-slate-900">Free Follow-up (5 days)</div>
