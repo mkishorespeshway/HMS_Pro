@@ -7,8 +7,8 @@ function getTransport() {
   const hostRaw = process.env.SMTP_HOST;
   const host = (hostRaw && hostRaw.includes('@')) ? undefined : hostRaw;
   const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : undefined;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const user = String(process.env.SMTP_USER || '').trim();
+  const pass = String(process.env.SMTP_PASS || '').replace(/\s+/g, '').trim();
   const secure = (String(process.env.SMTP_SECURE || '').toLowerCase() === 'true') || (process.env.SMTP_SECURE === '1');
   let service = process.env.SMTP_SERVICE;
 

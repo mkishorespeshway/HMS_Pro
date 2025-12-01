@@ -60,8 +60,8 @@ export default function DoctorDetails() {
       const [th, tm] = String(r.to || "00:00").split(":").map(Number);
       let start = fh * 60 + fm;
       let end = th * 60 + tm;
-      const min = 10 * 60;
-      const max = 24 * 60;
+      const min = 9 * 60;
+      const max = 22 * 60;
       if (start < min) start = min;
       if (end > max) end = max;
       if (end <= start) return null;
@@ -71,7 +71,7 @@ export default function DoctorDetails() {
       const eM = String(end % 60).padStart(2, "0");
       return { from: `${sH}:${sM}`, to: `${eH}:${eM}` };
     };
-    const baseRanges = avails.length ? avails : [{ day, from: "10:00", to: "24:00" }];
+    const baseRanges = avails.length ? avails : [{ day, from: "09:00", to: "22:00" }];
     const ranges = baseRanges.map(clampRange).filter(Boolean);
     const gen = (from, to) => {
       const [fh, fm] = from.split(":").map(Number);
@@ -89,7 +89,12 @@ export default function DoctorDetails() {
       }
       return out;
     };
-    const full = ranges.flatMap((r) => gen(r.from, r.to));
+    const full = ranges.flatMap((r) => gen(r.from, r.to)).filter((s) => {
+      try {
+        const [hh] = String(s.start || "00:00").split(":").map((x) => Number(x));
+        return hh < 13 || hh >= 14;
+      } catch(_) { return true; }
+    });
     setAllSlots(full);
     const uid = doctor?.user?._id;
     API.get(`/appointments/slots/${uid}`, { params: { date: selectedDate } })
@@ -260,9 +265,10 @@ export default function DoctorDetails() {
                 d.setDate(d.getDate() + i);
                 const label = d.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase();
                 const day = String(d.getDate()).padStart(2, "0");
-                const val = d.toISOString().slice(0, 10);
+                const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
                 const isSel = selectedDate === val;
-                const isToday = val === new Date().toISOString().slice(0,10);
+                const todayVal = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}`;
+                const isToday = val === todayVal;
                 const disabledToday = isToday && !doctorOnline;
                 return (
                   <button
@@ -284,7 +290,8 @@ export default function DoctorDetails() {
               <div className="text-slate-600">No slots available</div>
             )}
             {(() => {
-              const todayISO = new Date().toISOString().slice(0, 10);
+              const tNow = new Date();
+              const todayISO = `${tNow.getFullYear()}-${String(tNow.getMonth()+1).padStart(2,'0')}-${String(tNow.getDate()).padStart(2,'0')}`;
               const now = new Date();
               const nowMin = now.getHours() * 60 + now.getMinutes();
               const availKeys = new Set((slots || []).map((x) => `${x.start}-${x.end}`));
@@ -298,7 +305,10 @@ export default function DoctorDetails() {
                 const key = `${s.start}-${s.end}`;
                 const sel = selectedSlot && selectedSlot.start === s.start && selectedSlot.end === s.end;
                 const isMine = (myBooked || []).includes(key);
-                const disabled = isMine;
+                const [sh, sm] = String(s.start || "00:00").split(":").map((x) => Number(x));
+                const startMin = sh * 60 + sm;
+                const within5 = selectedDate === todayISO && startMin <= (nowMin + 5);
+                const disabled = isMine || within5;
                 return (
                   <button
                     key={key}
@@ -310,6 +320,9 @@ export default function DoctorDetails() {
                     {isMine && (
                       <span className="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700">Booked</span>
                     )}
+                    {(!isMine && within5) && (
+                      <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700">Unavailable</span>
+                    )}
                   </button>
                 );
               });
@@ -320,8 +333,18 @@ export default function DoctorDetails() {
             onClick={async () => {
               if (!isLoggedIn) { nav('/login'); return; }
               if (!selectedDate || !selectedSlot) { nav(`/book/${doctor?.user?._id}`); return; }
-            const todayISO = new Date().toISOString().slice(0,10);
+            const tNow2 = new Date();
+            const todayISO = `${tNow2.getFullYear()}-${String(tNow2.getMonth()+1).padStart(2,'0')}-${String(tNow2.getDate()).padStart(2,'0')}`;
             if (selectedDate === todayISO && !doctorOnline) { alert('Doctor is offline today. Please choose a future date.'); return; }
+            if (selectedDate === todayISO) {
+              try {
+                const [sh, sm] = String(selectedSlot.start || '00:00').split(':').map((x) => Number(x));
+                const startMin = sh * 60 + sm;
+                const now = new Date();
+                const nowMin = now.getHours() * 60 + now.getMinutes();
+                if (startMin <= nowMin + 5) { alert('This slot is unavailable less than 5 minutes before start. Please choose the next slot.'); return; }
+              } catch (_) {}
+            }
             try {
               try {
                 const mine = await API.get('/appointments/mine');
@@ -330,13 +353,13 @@ export default function DoctorDetails() {
                 const sameDay = (items || []).filter((x) => String(x.date) === String(selectedDate));
                 const exist = sameDay.find((x) => String(x.doctor?._id || x.doctor || '') === did && String(x.status).toUpperCase() !== 'CANCELLED');
                 if (exist) {
-                  const ok = window.confirm('You already booked an appointment with this doctor today.\nDo you want to cancel the first appointment?');
-                  if (!ok) return;
-                  const apptId = String(exist._id || exist.id || '');
-                  if (apptId) {
-                    try { localStorage.setItem(`cancelledByMe_${apptId}`, '1'); } catch(_) {}
-                    try { await API.put(`/appointments/${apptId}/cancel`); } catch(_) {}
+                  const s = String(exist.status).toUpperCase();
+                  if (s === 'COMPLETED') {
+                    alert('Consultation completed for today. Please book a slot for tomorrow.');
+                    return;
                   }
+                  alert('You have already booked a consultation today with this doctor.');
+                  return;
                 }
               } catch (_) {}
               const { data } = await API.post("/appointments", {

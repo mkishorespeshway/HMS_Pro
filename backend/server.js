@@ -40,6 +40,11 @@ const io = new Server(server, {
 
 io.on('connection', (socket) => {
   socket.on('disconnect', () => {});
+  socket.on('chat:new', (msg) => {
+    try {
+      socket.broadcast.emit('chat:new', msg);
+    } catch (_) {}
+  });
 });
 
 app.set('io', io);

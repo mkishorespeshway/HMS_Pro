@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
   const filter = {};
   if (city) filter['clinic.city'] = new RegExp(city, 'i');
   if (specialization) filter['specializations'] = specialization;
-  if (user) filter['user'] = user;
+  if (user && /^[0-9a-fA-F]{24}$/.test(String(user))) filter['user'] = user;
 
   let doctors = await DoctorProfile.find(filter).populate({
     path: 'user',

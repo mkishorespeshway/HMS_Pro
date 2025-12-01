@@ -34,6 +34,7 @@ export default function DoctorToday() {
   const [consSymptoms, setConsSymptoms] = useState("");
   const [consFiles, setConsFiles] = useState([]);
   const [consHistory, setConsHistory] = useState([]);
+  const socketRef = useRef(null);
 
   const load = async () => {
     setLoading(true);
@@ -81,6 +82,94 @@ export default function DoctorToday() {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    const origin = String(API.defaults.baseURL || '').replace(/\/(api)?$/, '');
+    const w = window;
+    const onReady = () => {
+      try {
+        const socket = w.io ? w.io(origin, { transports: ['websocket','polling'], auth: { token: localStorage.getItem('token') || '' } }) : null;
+        if (socket) {
+          socketRef.current = socket;
+        }
+      } catch(_) {}
+    };
+    if (!w.io) {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
+      s.onload = onReady;
+      document.body.appendChild(s);
+      return () => { try { document.body.removeChild(s); } catch(_) {} try { socketRef.current && socketRef.current.close(); } catch(_) {} };
+    } else {
+      onReady();
+      return () => { try { socketRef.current && socketRef.current.close(); } catch(_) {} };
+    }
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(async () => {
+      const now = Date.now();
+      const toEndTs = (a) => {
+        try {
+          const d = new Date(a.date);
+          const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+          d.setHours(eh, em, 0, 0);
+          return d.getTime();
+        } catch(_) { return 0; }
+      };
+      const candidates = (list || []).filter((a) => {
+        const status = String(a.status).toUpperCase();
+        if (status === 'COMPLETED' || status === 'CANCELLED') return false;
+        const endTs = toEndTs(a);
+        return endTs && now >= endTs && status === 'CONFIRMED';
+      });
+      for (const a of candidates) {
+        try {
+          await API.put(`/appointments/${String(a._id || a.id)}/complete`);
+          setList((prev) => prev.map((x) => (String(x._id || x.id) === String(a._id || a.id) ? { ...x, status: 'COMPLETED' } : x)));
+          try {
+            const w = window;
+            const origin = String(API.defaults.baseURL || '').replace(/\/(api)?$/, '');
+            const socket = w.io ? w.io(origin, { transports: ['websocket','polling'] }) : null;
+            socket && socket.emit('meet:update', { apptId: String(a._id || a.id), actor: 'doctor', event: 'complete' });
+            try { socket && socket.close(); } catch(_) {}
+          } catch(_) {}
+        } catch (_) {}
+      }
+    }, 30000);
+    return () => clearInterval(t);
+  }, [list]);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const targetMs = 5 * 60 * 1000;
+      const windowMs = 60 * 1000;
+      const now = Date.now();
+      (list || []).forEach((a) => {
+        try {
+          const id = String(a._id || a.id || '');
+          const key = `warn5m_${id}`;
+          if (!id) return;
+          if (localStorage.getItem(key) === '1') return;
+          if (String(a.type).toLowerCase() !== 'online') return;
+          const s = String(a.status || '').toUpperCase();
+          if (s === 'CANCELLED' || s === 'COMPLETED') return;
+          if (String(a.date || '') !== todayStr) return;
+          const d = new Date(a.date);
+          const [hh, mm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+          d.setHours(hh, mm, 0, 0);
+          const startTs = d.getTime();
+          const diff = startTs - now;
+          if (diff <= targetMs && diff > targetMs - windowMs) {
+            alert('Your meeting will start in 5 minutes.');
+            try { localStorage.setItem(key, '1'); } catch(_) {}
+          }
+        } catch (_) {}
+      });
+    }, 30000);
+    return () => clearInterval(t);
+  }, [list]);
 
   useEffect(() => {
     try { meetChanRef.current = new BroadcastChannel('meetlink'); } catch(_) {}
@@ -402,172 +491,174 @@ export default function DoctorToday() {
       <td className="px-4 py-3">{a.date} {a.startTime}</td>
       <td className="px-4 py-3">₹{a.fee || 0}</td>
       <td className="px-4 py-3">
-        {String(a.status).toUpperCase() === 'PENDING' ? (
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => accept(a._id || a.id, a.date, a.startTime)}
-              disabled={!(a?._id || a?.id)}
-              className={`h-7 w-7 rounded-full flex items-center justify-center ${(a?._id || a?.id) ? "bg-green-600 hover:bg-green-700 text-white" : "bg-slate-200 text-slate-500"}`}
-              title="Accept"
-            >
-              ✓
-            </button>
-            <button
-              type="button"
-              onClick={() => reject(a._id || a.id, a.date, a.startTime)}
-              disabled={!(a?._id || a?.id)}
-              className={`h-7 w-7 rounded-full flex items-center justify-center ${(a?._id || a?.id) ? "bg-red-600 hover:bg-red-700 text-white" : "bg-slate-200 text-slate-500"}`}
-              title="Reject"
-            >
-              ✕
-            </button>
-          </div>
-        ) : String(a.status).toUpperCase() === 'CANCELLED' ? (
-          <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">✕ Cancelled</span>
-        ) : String(a.status).toUpperCase() === 'COMPLETED' ? (
-          <div className="flex items-center gap-2">
-            <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Completed</span>
-            <button
-              type="button"
-              onClick={() => { window.open(`/prescription/${a._id || a.id}`, '_blank'); }}
-              className="px-3 py-1 rounded-md border border-indigo-600 text-indigo-700"
-            >
-              View Summary
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">✓ Accepted</span>
-            {a.type === 'online' && (
-              (() => {
-                const start = new Date(a.date);
-                const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
-                start.setHours(sh, sm, 0, 0);
-                const end = new Date(a.date);
-                const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
-                end.setHours(eh, em, 0, 0);
-                const now = Date.now();
-                const docId = String(a.doctor?._id || a.doctor || '');
-                const onlineFlag = localStorage.getItem(`doctorOnlineById_${docId}`);
-                const isExplicitOffline = onlineFlag === '0';
-                const open = (mode) => {
-                  let url = meetLinkFor(a);
-                  if (!url) {
-                    setMeetLink(a);
-                    url = meetLinkFor(a);
-                    if (!url) { alert('Meeting link not set. Click "Set Link" and paste a Google Meet URL.'); return; }
-                  }
-                  if (isExplicitOffline) { alert('You are offline. Set status to ONLINE to start consultation.'); return; }
-                  try {
-                    const uid = localStorage.getItem('userId') || '';
-                    if (uid) {
-                      localStorage.setItem(`doctorBusyById_${uid}`, '1');
-                      API.put('/doctors/me/status', { isOnline: true, isBusy: true }).catch(() => {});
-                    }
-                  } catch(_) {}
-                  setJoinMode(mode);
-                  setConsult(a);
-                  setPrescription(a.prescriptionText || '');
-                };
-                if (now >= end.getTime()) {
-                  return (
-                    <button type="button" onClick={() => alert('Time expired. Joining disabled.')} className="px-3 py-1 rounded-md border border-red-600 text-red-700">Time Expired</button>
-                  );
-                }
-                const early = start.getTime() - 5 * 60 * 1000;
-                if (now < early) {
-                  return <span className="inline-block text-xs px-2 py-1 rounded bg-amber-100 text-amber-700">Available 5 min before</span>;
-                }
-                const mode = String(a.consultationMode || '').toLowerCase();
-                if (mode === 'video') return (
-                  <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => open('video')} className="px-3 py-1 rounded-md border border-green-600 text-green-700">Video Call</button>
-                    <button type="button" onClick={() => setMeetLink(a)} className="px-3 py-1 rounded-md border border-indigo-600 text-indigo-700">Set Link</button>
-                  </div>
-                );
-                if (mode === 'audio') return <button type="button" onClick={() => open('audio')} className="px-3 py-1 rounded-md border border-amber-600 text-amber-700">Audio Call</button>;
-                if (mode === 'chat') return <button type="button" onClick={() => open('chat')} className="px-3 py-1 rounded-md border border-slate-600 text-slate-700">Chat Only</button>;
-                return <button type="button" onClick={() => open('video')} className="px-3 py-1 rounded-md border border-green-600 text-green-700">Video Call</button>;
-                
-              })()
-            )}
-            <button
-              type="button"
-              onClick={() => { setConsult(a); setPrescription(a.prescriptionText || ""); }}
-              className="px-3 py-1 rounded-md border border-indigo-600 text-indigo-700"
-            >
-              Write Prescription
-            </button>
-            <button
-              type="button"
-              onClick={() => reject(a._id || a.id, a.date, a.startTime)}
-              className="px-3 py-1 rounded-md border border-red-600 text-red-700"
-              title="Reject"
-            >
-              Reject
-            </button>
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  const id = String(a._id || a.id);
-                  const { data } = await API.get(`/appointments/${id}`);
-                  setDetailsAppt(data || a);
-                } catch (_) {
-                  setDetailsAppt(a);
-                }
-              }}
-              className="px-3 py-1 rounded-md border border-slate-600 text-slate-700"
-            >
-              View Documents
-            </button>
-            {(() => {
-              try {
-                if (!a.prescriptionText) return null;
-                const d = new Date(a.date);
-                const [hh, mm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
-                d.setHours(hh, mm, 0, 0);
-                const diff = Date.now() - d.getTime();
-                const max = 5 * 24 * 60 * 60 * 1000;
-                if (diff < 0 || diff > max) return null;
-                return (
+        {(() => {
+          const start = new Date(a.date);
+          const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+          start.setHours(sh, sm, 0, 0);
+          const end = new Date(a.date);
+          const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+          end.setHours(eh, em, 0, 0);
+          const now = Date.now();
+          const isPast = now >= end.getTime();
+          const isActive = now >= start.getTime() && now < end.getTime();
+          const isFuture = now < start.getTime();
+          const status = String(a.status).toUpperCase();
+          if (status === 'PENDING') {
+            return (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => accept(a._id || a.id, a.date, a.startTime)}
+                  disabled={!(a?._id || a?.id)}
+                  className={`h-7 w-7 rounded-full flex items-center justify-center ${(a?._id || a?.id) ? "bg-green-600 hover:bg-green-700 text-white" : "bg-slate-200 text-slate-500"}`}
+                  title="Accept"
+                >
+                  ✓
+                </button>
+                {isFuture && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setFollowAppt(a);
-                      const keyBase = `fu_${String(a._id || a.id)}`;
-                      try {
-                        const msgs = JSON.parse(localStorage.getItem(`${keyBase}_chat`) || '[]');
-                        const files = JSON.parse(localStorage.getItem(`${keyBase}_files`) || '[]');
-                        setFuChat(Array.isArray(msgs) ? msgs : []);
-                        setFuFiles(Array.isArray(files) ? files : []);
-                      } catch (_) { setFuChat([]); setFuFiles([]); }
-                    }}
-                    className="px-3 py-1 rounded-md border border-green-600 text-green-700"
+                    onClick={() => reject(a._id || a.id, a.date, a.startTime)}
+                    disabled={!(a?._id || a?.id)}
+                    className={`h-7 w-7 rounded-full flex items-center justify-center ${(a?._id || a?.id) ? "bg-red-600 hover:bg-red-700 text-white" : "bg-slate-200 text-slate-500"}`}
+                    title="Reject"
                   >
-                    Follow-up
+                    ✕
                   </button>
-                );
-              } catch (_) { return null; }
-            })()}
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  await API.put(`/appointments/${String(a._id || a.id)}/complete`);
-                  setList((prev) => prev.map((x) => (String(x._id || x.id) === String(a._id || a.id) ? { ...x, status: 'COMPLETED' } : x)));
-                } catch (e) {
-                  alert(e.response?.data?.message || e.message || 'Failed to complete');
+                )}
+                {isPast && (
+                  <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">Time Expired</span>
+                )}
+              </div>
+            );
+          }
+          if (status === 'CANCELLED') {
+            return <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">✕ Cancelled</span>;
+          }
+          if (status === 'COMPLETED') {
+            return (
+              <div className="flex items-center gap-2">
+                <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Completed</span>
+                <button
+                  type="button"
+                  onClick={() => { window.open(`/prescription/${a._id || a.id}`, '_blank'); }}
+                  className="px-3 py-1 rounded-md border border-indigo-600 text-indigo-700"
+                >
+                  View Summary
+                </button>
+              </div>
+            );
+          }
+          return (
+            <div className="flex items-center gap-2">
+              <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">✓ Accepted</span>
+              {(() => {
+                if (isPast) {
+                  try {
+                    const id = String(a._id || a.id || '');
+                    const pres = !!a.prescriptionText;
+                    const jp = localStorage.getItem(`joinedByPatient_${id}`);
+                    const met = pres || (jp !== null);
+                    if (met) {
+                      return (
+                        <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Completed</span>
+                      );
+                    }
+                    return (
+                      <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">Time Expired</span>
+                    );
+                  } catch(_) {
+                    return (
+                      <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">Time Expired</span>
+                    );
+                  }
                 }
-              }}
-              className="px-3 py-1 rounded-md border border-slate-300"
-            >
-              Complete
-            </button>
-            
-          </div>
-        )}
+                return null;
+              })()}
+              {isFuture && (
+                <button
+                  type="button"
+                  onClick={() => reject(a._id || a.id, a.date, a.startTime)}
+                  className="px-3 py-1 rounded-md border border-red-600 text-red-700"
+                  title="Reject"
+                >
+                  Reject
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const id = String(a._id || a.id);
+                    const { data } = await API.get(`/appointments/${id}`);
+                    setDetailsAppt(data || a);
+                  } catch (_) {
+                    setDetailsAppt(a);
+                  }
+                }}
+                className="px-3 py-1 rounded-md border border-slate-600 text-slate-700"
+              >
+                View Documents
+              </button>
+              {(() => {
+                try {
+                  if (!a.prescriptionText) return null;
+                  const d = new Date(a.date);
+                  const [hh, mm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+                  d.setHours(hh, mm, 0, 0);
+                  const diff = Date.now() - d.getTime();
+                  const max = 5 * 24 * 60 * 60 * 1000;
+                  if (diff < 0 || diff > max) return null;
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFollowAppt(a);
+                        const keyBase = `fu_${String(a._id || a.id)}`;
+                        try {
+                          const msgs = JSON.parse(localStorage.getItem(`${keyBase}_chat`) || '[]');
+                          const files = JSON.parse(localStorage.getItem(`${keyBase}_files`) || '[]');
+                          setFuChat(Array.isArray(msgs) ? msgs : []);
+                          setFuFiles(Array.isArray(files) ? files : []);
+                        } catch (_) { setFuChat([]); setFuFiles([]); }
+                      }}
+                      className="px-3 py-1 rounded-md border border-green-600 text-green-700"
+                    >
+                      Follow-up
+                    </button>
+                  );
+                } catch (_) { return null; }
+              })()}
+              {isActive && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await API.put(`/appointments/${String(a._id || a.id)}/complete`);
+                      setList((prev) => prev.map((x) => (String(x._id || x.id) === String(a._id || a.id) ? { ...x, status: 'COMPLETED' } : x)));
+                      try {
+                        const uid = localStorage.getItem('userId') || '';
+                        if (uid) localStorage.setItem(`doctorBusyById_${uid}`, '0');
+                      } catch(_) {}
+                      try {
+                        const w = window;
+                        const origin = String(API.defaults.baseURL || '').replace(/\/(api)?$/, '');
+                        const socket = w.io ? w.io(origin, { transports: ['websocket','polling'] }) : null;
+                        socket && socket.emit('meet:update', { apptId: String(a._id || a.id), actor: 'doctor', event: 'complete' });
+                        try { socket && socket.close(); } catch(_) {}
+                      } catch(_) {}
+                    } catch (e) {
+                      alert(e.response?.data?.message || e.message || 'Failed to complete');
+                    }
+                  }}
+                  className="px-3 py-1 rounded-md border border-slate-300"
+                >
+                  Complete
+                </button>
+              )}
+            </div>
+          );
+        })()}
       </td>
     </tr>
   ));
@@ -640,7 +731,7 @@ export default function DoctorToday() {
           </div>
         </main>
       </div>
-      {consult && (
+      {false && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl border border-slate-200 w-[95vw] max-w-6xl h-[85vh] overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b">
@@ -781,7 +872,7 @@ export default function DoctorToday() {
                         className="flex-1 border border-slate-300 rounded-md px-3 py-2 text-sm"
                       />
                       <button
-                        onClick={() => { if (chatText.trim()) { setChat((prev) => [...prev, chatText.trim()]); setChatText(""); } }}
+                        onClick={() => { if (chatText.trim()) { setChat((prev) => [...prev, chatText.trim()]); try { const id = String((consult && (consult._id || consult.id)) || (detailsAppt && (detailsAppt._id || detailsAppt.id)) || ''); if (id) { socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'doctor', kind: 'general' }); localStorage.setItem('lastChatApptId', id); } } catch(_) {} setChatText(""); } }}
                         className="px-3 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white"
                       >
                         Send
@@ -1079,6 +1170,8 @@ export default function DoctorToday() {
                         const next = [...wrChat, wrText.trim()];
                         setWrChat(next);
                         try { localStorage.setItem(`wr_${id}_chat`, JSON.stringify(next)); } catch(_) {}
+                        try { const chan = new BroadcastChannel('chatmsg'); chan.postMessage({ apptId: id, actor: 'doctor' }); chan.close(); } catch(_) {}
+                        try { socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'doctor', kind: 'pre' }); } catch(_) {}
                         setWrText("");
                       }
                     }}
@@ -1131,6 +1224,7 @@ export default function DoctorToday() {
                         setFuChat(next);
                         const keyBase = `fu_${String(followAppt._id || followAppt.id)}`;
                         try { localStorage.setItem(`${keyBase}_chat`, JSON.stringify(next)); } catch(_) {}
+                        try { const id = String(followAppt._id || followAppt.id); localStorage.setItem('lastChatApptId', id); const chan = new BroadcastChannel('chatmsg'); chan.postMessage({ apptId: id, actor: 'doctor' }); chan.close(); socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'doctor', kind: 'followup' }); } catch(_) {}
                         setFuText("");
                       }
                     }}

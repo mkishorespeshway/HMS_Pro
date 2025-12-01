@@ -110,6 +110,8 @@ export default function DoctorProfile() {
               </div>
             </div>
             <nav className="space-y-2 text-slate-700">
+              <Link to="/doctor/dashboard" className="block px-3 py-2 rounded-md hover:bg-slate-50">Dashboard</Link>
+              <Link to="/doctor/appointments" className="block px-3 py-2 rounded-md hover:bg-slate-50">Appointments</Link>
               <div className="px-3 py-2 rounded-md bg-indigo-50 text-indigo-700">Profile</div>
             </nav>
           </div>

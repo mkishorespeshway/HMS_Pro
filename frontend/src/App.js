@@ -9,6 +9,7 @@ import Register from "./pages/Register";
 import DoctorDetails from "./pages/DoctorDetails";
 import Payment from "./pages/Payment";
 import DoctorDashboard from "./pages/DoctorDashboard";
+import DoctorToday from "./pages/DoctorToday";
 import DoctorProfile from "./pages/DoctorProfile";
 import Prescription from "./pages/Prescription";
 import AdminPendingDoctors from "./pages/AdminPendingDoctors";
@@ -108,6 +109,7 @@ return (
         <Route path="/book/:id" element={<Navigate to="/search" />} />
         <Route path="/pay/:id" element={<Payment />} />
         <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+        <Route path="/doctor/appointments" element={<DoctorToday />} />
         <Route path="/doctor/profile" element={<DoctorProfile />} />
         <Route path="/prescription/:id" element={<Prescription />} />
         <Route path="/admin/doctors/pending" element={<AdminPendingDoctors />} />

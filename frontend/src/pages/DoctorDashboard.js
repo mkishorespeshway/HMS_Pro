@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
 import API from "../api";
@@ -12,6 +12,9 @@ export default function DoctorDashboard() {
   const [online, setOnline] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notifs, setNotifs] = useState([]);
+  const [bellCount, setBellCount] = useState(0);
+  const [chatAppt, setChatAppt] = useState(null);
+  const socketRef = useRef(null);
   const [followAppt, setFollowAppt] = useState(null);
   const [fuChat, setFuChat] = useState([]);
   const [fuFiles, setFuFiles] = useState([]);
@@ -91,6 +94,26 @@ export default function DoctorDashboard() {
     }
   }, []);
 
+  useEffect(() => {
+    try {
+      const chan = new BroadcastChannel('chatmsg');
+      const onMsg = (e) => {
+        try {
+          const { apptId, actor } = e.data || {};
+          if (String(actor || '').toLowerCase() !== 'patient') return;
+          const id = String(apptId || '');
+          if (!id) return;
+          setBellCount((c) => c + 1);
+          try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
+          const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id);
+          addNotif(`New message from ${a?.patient?.name || 'patient'}`, id);
+        } catch (_) {}
+      };
+      chan.onmessage = onMsg;
+      return () => { try { chan.close(); } catch(_) {} };
+    } catch (_) {}
+  }, [list, latestToday]);
+
   const setStatus = async (status) => {
     const uid = localStorage.getItem("userId") || "";
     if (status === "online") {
@@ -114,9 +137,9 @@ export default function DoctorDashboard() {
     }
   };
 
-  const addNotif = (text) => {
+  const addNotif = (text, apptId) => {
     const id = String(Date.now()) + String(Math.random());
-    setNotifs((prev) => [{ id, text }, ...prev].slice(0, 4));
+    setNotifs((prev) => [{ id, text, apptId }, ...prev].slice(0, 4));
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator();
@@ -144,6 +167,7 @@ export default function DoctorDashboard() {
         try {
           const socket = w.io ? w.io(origin, { transports: ["websocket", "polling"], auth: { token: localStorage.getItem("token") || "" } }) : null;
           if (socket) {
+            socketRef.current = socket;
             socket.on("appointment:new", (a) => {
               try {
                 const did = String(a?.doctor?._id || a?.doctor || "");
@@ -156,9 +180,101 @@ export default function DoctorDashboard() {
                 setList((prev) => [a, ...prev]);
               } catch (_) {}
             });
+            socket.on('meet:update', (msg) => {
+              try {
+                const { apptId, actor, event } = msg || {};
+                const id = String(apptId || '');
+                if (!id) return;
+                const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id);
+                if (!a) return;
+                const start = new Date(a.date);
+                const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+                start.setHours(sh, sm, 0, 0);
+                const end = new Date(a.date);
+                const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+                end.setHours(eh, em, 0, 0);
+                const now = Date.now();
+                const active = now >= start.getTime() && now < end.getTime();
+                if (event === 'join' && actor === 'patient') {
+                  try { localStorage.setItem(`joinedByPatient_${id}`, '1'); } catch(_) {}
+                  setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, status: active ? 'JOINED' : x.status } : x)));
+                } else if (event === 'exit' && actor === 'patient') {
+                  try { localStorage.removeItem(`joinedByPatient_${id}`); } catch(_) {}
+                  if (active) setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, status: 'CONFIRMED' } : x)));
+                } else if (event === 'join' && actor === 'doctor') {
+                  try { localStorage.setItem(`joinedByDoctor_${id}`, '1'); } catch(_) {}
+                  setBusy(true);
+                  setOnline(true);
+                } else if (event === 'exit' && actor === 'doctor') {
+                  try { localStorage.removeItem(`joinedByDoctor_${id}`); } catch(_) {}
+                  setBusy(false);
+                  setOnline(true);
+                } else if (event === 'complete') {
+                  setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, status: 'COMPLETED' } : x)));
+                  try {
+                    const uidLoc = localStorage.getItem('userId') || '';
+                    if (uidLoc) localStorage.setItem(`doctorBusyById_${uidLoc}`, '0');
+                  } catch(_) {}
+                  setBusy(false);
+                  setOnline(true);
+                }
+              } catch (_) {}
+            });
+            socket.on('meet:update', (msg) => {
+              try {
+                const { apptId, actor, event } = msg || {};
+                const id = String(apptId || '');
+                if (!id) return;
+                const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id);
+                if (!a) return;
+                const start = new Date(a.date);
+                const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+                start.setHours(sh, sm, 0, 0);
+                const end = new Date(a.date);
+                const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+                end.setHours(eh, em, 0, 0);
+                const now = Date.now();
+                const active = now >= start.getTime() && now < end.getTime();
+                if (event === 'join' && actor === 'patient') {
+                  try { localStorage.setItem(`joinedByPatient_${id}`, '1'); } catch(_) {}
+                  setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, status: active ? 'JOINED' : x.status } : x)));
+                } else if (event === 'exit' && actor === 'patient') {
+                  try { localStorage.removeItem(`joinedByPatient_${id}`); } catch(_) {}
+                  if (active) setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, status: 'CONFIRMED' } : x)));
+                 } else if (event === 'join' && actor === 'doctor') {
+                   try { localStorage.setItem(`joinedByDoctor_${id}`, '1'); } catch(_) {}
+                   setBusy(true);
+                   setOnline(true);
+                 } else if (event === 'exit' && actor === 'doctor') {
+                   try { localStorage.removeItem(`joinedByDoctor_${id}`); } catch(_) {}
+                   setBusy(false);
+                   setOnline(true);
+                } else if (event === 'complete') {
+                  setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, status: 'COMPLETED' } : x)));
+                  try {
+                    const uidLoc = localStorage.getItem('userId') || '';
+                    if (uidLoc) localStorage.setItem(`doctorBusyById_${uidLoc}`, '0');
+                  } catch(_) {}
+                  setBusy(false);
+                  setOnline(true);
+                }
+              } catch (_) {}
+            });
+            socket.on('chat:new', (msg) => {
+              try {
+                const { apptId, actor } = msg || {};
+                if (String(actor || '').toLowerCase() !== 'patient') return;
+                const id = String(apptId || '');
+                if (!id) return;
+                setBellCount((c) => c + 1);
+                try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
+                const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id);
+                addNotif(`New message from ${a?.patient?.name || 'patient'}`, id);
+              } catch (_) {}
+            });
             cleanup.push(() => { try { socket.close(); } catch(_) {} });
           }
-        } catch (_) {}
+        } catch(_) {}
       };
       if (!w.io) {
         const s = document.createElement("script");
@@ -270,6 +386,36 @@ export default function DoctorDashboard() {
     return arr.slice(0, 6);
   }, [list]);
 
+  useEffect(() => {
+    const t = setInterval(() => {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const src = [...(list || []), ...(latestToday || [])];
+      const targetMs = 5 * 60 * 1000;
+      const windowMs = 60 * 1000;
+      const now = Date.now();
+      src.forEach((a) => {
+        try {
+          const id = String(a._id || a.id || '');
+          const key = `warn5m_${id}`;
+          if (!id) return;
+          if (localStorage.getItem(key) === '1') return;
+          if (String(a.type).toLowerCase() !== 'online') return;
+          const s = String(a.status || '').toUpperCase();
+          if (s === 'CANCELLED' || s === 'COMPLETED') return;
+          if (String(a.date || '') !== todayStr) return;
+          const startTs = apptStartTs(a);
+          if (!startTs) return;
+          const diff = startTs - now;
+          if (diff <= targetMs && diff > targetMs - windowMs) {
+            alert('Your meeting will start in 5 minutes.');
+            try { localStorage.setItem(key, '1'); } catch(_) {}
+          }
+        } catch (_) {}
+      });
+    }, 30000);
+    return () => clearInterval(t);
+  }, [list, latestToday]);
+
   const completed = useMemo(() => {
     const arr = (list || []).filter((a) => String(a.status).toUpperCase() === "COMPLETED");
     arr.sort((x, y) => apptStartTs(y) - apptStartTs(x));
@@ -320,28 +466,46 @@ export default function DoctorDashboard() {
             </div>
             <nav className="space-y-2 text-slate-700">
               <div className="px-3 py-2 rounded-md bg-indigo-50 text-indigo-700">Dashboard</div>
-              <button
-                onClick={() => {
-                  try { document.getElementById('all-appointments')?.scrollIntoView({ behavior: 'smooth' }); } catch(_) {}
-                }}
-                className="block w-full text-left px-3 py-2 rounded-md hover:bg-slate-50"
-              >
-                Appointments
-              </button>
+              <Link to="/doctor/appointments" className="block px-3 py-2 rounded-md hover:bg-slate-50">Appointments</Link>
               <Link to="/doctor/profile" className="block px-3 py-2 rounded-md hover:bg-slate-50">Profile</Link>
             </nav>
           </div>
         </aside>
 
         <main className="col-span-12 md:col-span-9">
+          <div className="flex items-center justify-end mb-2">
+            <button
+              onClick={() => {
+                const id = localStorage.getItem('lastChatApptId') || '';
+                const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id) || null;
+                setChatAppt(a);
+                setBellCount(0);
+              }}
+              className="relative h-9 w-9 rounded-full border border-slate-300 flex items-center justify-center"
+              title="Notifications"
+            >
+              <span role="img" aria-label="bell">🔔</span>
+              {bellCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1">{bellCount}</span>
+              )}
+            </button>
+          </div>
           <div className="fixed right-4 top-4 z-50 space-y-2">
             {notifs.map((n) => (
-              <div key={n.id} className="flex items-center gap-2 bg-white shadow-lg border border-amber-200 rounded-lg px-3 py-2">
+              <button key={n.id} onClick={() => {
+                try {
+                  const id = String(n.apptId || localStorage.getItem('lastChatApptId') || '');
+                  const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id) || null;
+                  setChatAppt(a);
+                  setBellCount(0);
+                  setNotifs((prev) => prev.filter((x) => x.id !== n.id));
+                } catch (_) {}
+              }} className="flex items-center gap-2 bg-white shadow-lg border border-amber-200 rounded-lg px-3 py-2 cursor-pointer">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 2a7 7 0 00-7 7v3l-2 3h18l-2-3V9a7 7 0 00-7-7zm0 20a3 3 0 003-3H9a3 3 0 003 3z" fill="#F59E0B"/>
                 </svg>
                 <div className="text-sm text-slate-900">{n.text}</div>
-              </div>
+              </button>
             ))}
           </div>
           <div className="flex items-center justify-between mb-6">
@@ -391,7 +555,9 @@ export default function DoctorDashboard() {
                         <div className="text-xs text-slate-600">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`inline-block text-xs px-2 py-1 rounded ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}</span>
+                        {String(a.status).toUpperCase() !== 'CANCELLED' && (
+                          <span className={`inline-block text-xs px-2 py-1 rounded ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}</span>
+                        )}
                         {String(a.status).toUpperCase() === 'PENDING' && (
                           <div className="flex items-center gap-2">
                             <button
@@ -433,11 +599,30 @@ export default function DoctorDashboard() {
                         <div className="font-semibold text-slate-900">{a.patient?.name || 'Patient'}</div>
                         <div className="text-xs text-slate-600">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
                       </div>
-                      {a.prescriptionText ? (
-                        <button onClick={() => window.open(`/prescription/${a._id || a.id}`, '_blank')} className="px-2 py-1 rounded-md border border-indigo-600 text-indigo-700 text-xs">Prescription</button>
-                      ) : (
-                        <span className="text-xs text-slate-600">No prescription</span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {a.prescriptionText ? (
+                          <button onClick={() => window.open(`/prescription/${a._id || a.id}`, '_blank')} className="px-2 py-1 rounded-md border border-indigo-600 text-indigo-700 text-xs">Prescription</button>
+                        ) : (
+                          <span className="text-xs text-slate-600">No prescription</span>
+                        )}
+                        {canFollowUp(a) && (
+                          <button
+                            onClick={() => {
+                              setFollowAppt(a);
+                              const keyBase = `fu_${String(a._id || a.id)}`;
+                              try {
+                                const msgs = JSON.parse(localStorage.getItem(`${keyBase}_chat`) || '[]');
+                                const files = JSON.parse(localStorage.getItem(`${keyBase}_files`) || '[]');
+                                setFuChat(Array.isArray(msgs) ? msgs : []);
+                                setFuFiles(Array.isArray(files) ? files : []);
+                              } catch (_) { setFuChat([]); setFuFiles([]); }
+                            }}
+                            className="px-2 py-1 rounded-md border border-green-600 text-green-700 text-xs"
+                          >
+                            Follow-up
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -526,7 +711,13 @@ export default function DoctorDashboard() {
                         const txt = s === 'PENDING' ? 'Pending' : s === 'CONFIRMED' ? 'Confirmed' : s === 'COMPLETED' ? 'Completed' : 'Cancelled';
                         return <span className={`inline-block text-xs px-2 py-1 rounded ${cls}`}>{txt}</span>;
                       })()}
-                      <span className={`inline-block text-xs px-2 py-1 rounded ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}</span>
+                      {(() => {
+                        const s = String(a.status).toUpperCase();
+                        const showPay = s !== 'CANCELLED' && s !== 'COMPLETED';
+                        return showPay ? (
+                          <span className={`inline-block text-xs px-2 py-1 rounded ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}</span>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
                 ))
@@ -656,7 +847,32 @@ export default function DoctorDashboard() {
                       <div className="text-xs text-slate-600">Time: {a.startTime} • Type: {a.type === 'online' ? 'Online' : 'Clinic'}</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`inline-block text-xs px-2 py-1 rounded ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}</span>
+                      {(() => {
+                        const s = String(a.status).toUpperCase();
+                        const showPay = s !== 'CANCELLED' && s !== 'COMPLETED';
+                        return showPay ? (
+                          <span className={`inline-block text-xs px-2 py-1 rounded ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}</span>
+                        ) : null;
+                      })()}
+                      {(() => {
+                        const id = String(a._id || a.id || '');
+                        const joinedDoc = id ? localStorage.getItem(`joinedByDoctor_${id}`) === '1' : false;
+                        const joinedPat = id ? localStorage.getItem(`joinedByPatient_${id}`) === '1' : false;
+                        const joined = joinedDoc || joinedPat;
+                        if (!joined) return null;
+                        const start = new Date(a.date);
+                        const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+                        start.setHours(sh, sm, 0, 0);
+                        const end = new Date(a.date);
+                        const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+                        end.setHours(eh, em, 0, 0);
+                        if (end.getTime() <= start.getTime()) end.setTime(start.getTime() + 30 * 60 * 1000);
+                        const now = Date.now();
+                        const active = now >= start.getTime() && now < end.getTime();
+                        return active ? (
+                          <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Joined</span>
+                        ) : null;
+                      })()}
                       {a.type === 'online' && String(a.status).toUpperCase() === 'CONFIRMED' && (
                         (() => {
                           const start = new Date(a.date);
@@ -685,9 +901,7 @@ export default function DoctorDashboard() {
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={async () => {
-                                  const docId = String(a.doctor?._id || a.doctor || '');
-                                  const isOnline = localStorage.getItem(`doctorOnlineById_${docId}`) === '1';
-                                  if (!isOnline) { alert('You are offline. Set status to ONLINE to start consultation.'); return; }
+                                  if (!online) { alert('You are offline. Set status to ONLINE to start consultation.'); return; }
                                   const id = String(a._id || a.id || '');
                                   const stored = id ? localStorage.getItem(`meetlink_${id}`) : '';
                                   let pick = (stored && /^https?:\/\//.test(stored)) ? stored : String(a.meetingLink || '');
@@ -722,8 +936,30 @@ export default function DoctorDashboard() {
                                       localStorage.setItem(`doctorBusyById_${uid}`, '1');
                                       API.put('/doctors/me/status', { isOnline: true, isBusy: true }).catch(() => {});
                                     }
+                                    setOnline(true);
+                                    setBusy(true);
                                   } catch(_) {}
-                                  window.open(url, '_blank');
+                                  try { if (id) localStorage.setItem(`joinedByDoctor_${id}`, '1'); } catch(_) {}
+                                  try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'join' }); } catch(_) {}
+                                  const win = window.open(url, '_blank');
+                                  try {
+                                    const monitor = setInterval(() => {
+                                      if (!win || win.closed) {
+                                        clearInterval(monitor);
+                                        try {
+                                          if (id) localStorage.removeItem(`joinedByDoctor_${id}`);
+                                          const uid = localStorage.getItem('userId') || '';
+                                          if (uid) {
+                                            localStorage.setItem(`doctorBusyById_${uid}`, '0');
+                                            API.put('/doctors/me/status', { isOnline: true, isBusy: false }).catch(() => {});
+                                          }
+                                          setBusy(false);
+                                          setOnline(true);
+                                          try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'exit' }); } catch(_) {}
+                                        } catch(_) {}
+                                      }
+                                    }, 1000);
+                                  } catch(_) {}
                                 }}
                                 className="px-3 py-1 rounded-md border border-green-600 text-green-700"
                               >
@@ -846,6 +1082,59 @@ export default function DoctorDashboard() {
                   </div>
                 </div>
                 <div className="mt-2 text-xs text-slate-600">No video call in follow-up. For a new call, patient must book again.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {chatAppt && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl border border-slate-200 w-[95vw] max-w-lg h-[70vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b">
+              <div className="font-semibold text-slate-900">Patient Details</div>
+              <button onClick={() => setChatAppt(null)} className="px-3 py-1 rounded-md border border-slate-300">Close</button>
+            </div>
+            <div className="p-4 grid gap-3 overflow-y-auto flex-1">
+              <div className="text-slate-700 text-sm">Patient: <span className="text-slate-900">{chatAppt.patient?.name || ''}</span></div>
+              <div>
+                <div className="text-slate-900 font-semibold mb-2">Pre-call chat</div>
+                <div className="h-28 overflow-y-auto border border-slate-200 rounded-md p-2 bg-slate-50">
+                  {(() => {
+                    try {
+                      const id = String(chatAppt._id || chatAppt.id);
+                      const msgs = JSON.parse(localStorage.getItem(`wr_${id}_chat`) || '[]');
+                      if (!Array.isArray(msgs) || msgs.length === 0) return <div className="text-slate-600 text-sm">No messages</div>;
+                      return msgs.map((m, idx) => (<div key={idx} className="text-sm text-slate-700">{m}</div>));
+                    } catch(_) { return <div className="text-slate-600 text-sm">No messages</div>; }
+                  })()}
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <input id="chatInputDoc" placeholder="Reply to patient" className="flex-1 border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                  <button
+                    onClick={() => {
+                      try {
+                        const id = String(chatAppt._id || chatAppt.id);
+                        const input = document.getElementById('chatInputDoc');
+                        const val = String(input?.value || '').trim();
+                        if (!val) return;
+                        const msgs = JSON.parse(localStorage.getItem(`wr_${id}_chat`) || '[]');
+                        const next = [...(Array.isArray(msgs) ? msgs : []), val];
+                        localStorage.setItem(`wr_${id}_chat`, JSON.stringify(next));
+                        if (input) input.value = '';
+                        try {
+                          const chan = new BroadcastChannel('chatmsg');
+                          chan.postMessage({ apptId: id, actor: 'doctor' });
+                          chan.close();
+                        } catch(_) {}
+                        try { socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'doctor', kind: 'pre' }); } catch(_) {}
+                        try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
+                      } catch(_) {}
+                    }}
+                    className="px-3 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white"
+                  >
+                    Send
+                  </button>
+                </div>
               </div>
             </div>
           </div>

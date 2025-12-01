@@ -54,6 +54,8 @@ export default function Appointments() {
   const [detSymptoms, setDetSymptoms] = useState("");
   const [detSummary, setDetSummary] = useState("");
   const [detPrevFiles, setDetPrevFiles] = useState([]);
+  const [bellCount, setBellCount] = useState(0);
+  const socketRef = useRef(null);
   const [detChat, setDetChat] = useState([]);
   const [detText, setDetText] = useState("");
   const [detEdit, setDetEdit] = useState(false);
@@ -101,6 +103,23 @@ export default function Appointments() {
     return () => { try { chan && chan.close(); } catch(_) {} };
   }, []);
 
+  useEffect(() => {
+    try {
+      const chan = new BroadcastChannel('chatmsg');
+      const onMsg = (e) => {
+        try {
+          const { apptId, actor } = e.data || {};
+          if (!apptId) return;
+          if (String(actor || '').toLowerCase() !== 'doctor') return;
+          setBellCount((c) => c + 1);
+          try { localStorage.setItem('lastChatApptId', String(apptId)); } catch(_) {}
+        } catch (_) {}
+      };
+      chan.onmessage = onMsg;
+      return () => { try { chan.close(); } catch(_) {} };
+    } catch (_) {}
+  }, [list]);
+
   
 
   useEffect(() => {
@@ -132,12 +151,66 @@ export default function Appointments() {
     const onFocus = () => {
       API.get("/appointments/mine").then((res) => {
         const arr = Array.isArray(res.data) ? res.data : [];
-        setList(arr);
+        try {
+          const now = Date.now();
+          const reset = arr.map((a) => {
+            try {
+              const d = new Date(a.date);
+              const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+              d.setHours(sh, sm, 0, 0);
+              const end = new Date(a.date);
+              const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+              end.setHours(eh, em, 0, 0);
+              const active = now >= d.getTime() && now < end.getTime();
+              const id = String(a._id || a.id || '');
+              const joined = id ? localStorage.getItem(`joinedByPatient_${id}`) === '1' : false;
+              if (joined) {
+                try { localStorage.setItem(`joinedByPatient_${id}`, '0'); } catch(_) {}
+              }
+              if (String(a.status).toUpperCase() === 'JOINED' && active) {
+                return { ...a, status: 'CONFIRMED' };
+              }
+            } catch (_) {}
+            return a;
+          });
+          setList(reset);
+        } catch (_) { setList(arr); }
       }).catch(() => {});
     };
     window.addEventListener('focus', onFocus);
     return () => { clearInterval(iv); window.removeEventListener('focus', onFocus); };
   }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const targetMs = 5 * 60 * 1000;
+      const windowMs = 60 * 1000;
+      const now = Date.now();
+      (list || []).forEach((a) => {
+        try {
+          const id = String(a._id || a.id || '');
+          const key = `warn5m_${id}`;
+          if (!id) return;
+          if (localStorage.getItem(key) === '1') return;
+          if (String(a.type).toLowerCase() !== 'online') return;
+          const s = String(a.status || '').toUpperCase();
+          if (s === 'CANCELLED' || s === 'COMPLETED') return;
+          if (String(a.date || '') !== todayStr) return;
+          const d = new Date(a.date);
+          const [hh, mm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+          d.setHours(hh, mm, 0, 0);
+          const startTs = d.getTime();
+          const diff = startTs - now;
+          if (diff <= targetMs && diff > targetMs - windowMs) {
+            alert('Your meeting will start in 5 minutes.');
+            try { localStorage.setItem(key, '1'); } catch(_) {}
+          }
+        } catch (_) {}
+      });
+    }, 30000);
+    return () => clearInterval(t);
+  }, [list]);
 
   useEffect(() => {
     const iv = setInterval(async () => {
@@ -167,8 +240,9 @@ export default function Appointments() {
     const onReady = () => {
       try {
         const socket = w.io ? w.io(origin, { transports: ["websocket", "polling"] }) : null;
-        if (socket) {
-          socket.on('doctor:status', (p) => {
+          if (socket) {
+            socketRef.current = socket;
+            socket.on('doctor:status', (p) => {
             const did = String(p?.doctorId || "");
             if (!did) return;
             setProfiles((prev) => {
@@ -177,6 +251,61 @@ export default function Appointments() {
               if (cur) next.set(did, { ...cur, isOnline: !!p.isOnline, isBusy: !!p.isBusy });
               return next;
             });
+          });
+          socket.on('chat:new', (msg) => {
+            try {
+              const { apptId, actor } = msg || {};
+              const id = String(apptId || '');
+              if (!id) return;
+              if (String(actor || '').toLowerCase() !== 'doctor') return;
+              setBellCount((c) => c + 1);
+              try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
+            } catch (_) {}
+          });
+          socket.on('meet:update', (msg) => {
+            try {
+              const { apptId, actor, event } = msg || {};
+              const id = String(apptId || '');
+              if (!id) return;
+              const a = (list || []).find((x) => String(x._id || x.id) === id);
+              if (!a) return;
+              const d = new Date(a.date);
+              const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+              d.setHours(sh, sm, 0, 0);
+              const end = new Date(a.date);
+              const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+              end.setHours(eh, em, 0, 0);
+              const now = Date.now();
+              const active = now >= d.getTime() && now < end.getTime();
+              if (event === 'join' && actor === 'doctor') {
+                try { localStorage.setItem(`doctorJoined_${id}`, '1'); } catch(_) {}
+                setProfiles((prev) => {
+                  const next = new Map(prev);
+                  const did = String(a.doctor?._id || a.doctor || '');
+                  const cur = next.get(did);
+                  if (cur) next.set(did, { ...cur, isBusy: true, isOnline: true });
+                  return next;
+                });
+              } else if (event === 'exit' && actor === 'doctor') {
+                try { localStorage.removeItem(`doctorJoined_${id}`); } catch(_) {}
+                setProfiles((prev) => {
+                  const next = new Map(prev);
+                  const did = String(a.doctor?._id || a.doctor || '');
+                  const cur = next.get(did);
+                  if (cur) next.set(did, { ...cur, isBusy: false, isOnline: true });
+                  return next;
+                });
+              } else if (event === 'complete') {
+                setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, status: 'COMPLETED' } : x)));
+              } else if (event === 'join' && actor === 'patient') {
+                try { localStorage.setItem(`joinedByPatient_${id}`, '1'); } catch(_) {}
+                setList((prev) => prev.slice());
+              } else if (event === 'exit' && actor === 'patient') {
+                try { localStorage.removeItem(`joinedByPatient_${id}`); } catch(_) {}
+                if (active) setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, status: 'CONFIRMED' } : x)));
+                else setList((prev) => prev.slice());
+              }
+            } catch (_) {}
           });
           cleanup.push(() => { try { socket.close(); } catch(_) {} });
         }
@@ -295,6 +424,37 @@ export default function Appointments() {
     } catch (_) { return 0; }
   };
 
+  const apptEndTs = (a) => {
+    try {
+      const d = new Date(a.date);
+      const [hh, mm] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+      d.setHours(hh, mm, 0, 0);
+      return d.getTime();
+    } catch (_) { return apptStartTs(a); }
+  };
+
+  const isJoinWindow = (a) => {
+    try {
+      if (a.type !== 'online' || String(a.status).toUpperCase() !== 'CONFIRMED') return false;
+      const start = apptStartTs(a);
+      const end = apptEndTs(a);
+      const now = Date.now();
+      const early = start - 5 * 60 * 1000;
+      const url = String(meetLinkFor(a) || '').replace(/[`'\"]/g, '').trim();
+      if (!url || !/^https?:\/\//.test(url)) return false;
+      return now >= early && now < end;
+    } catch (_) { return false; }
+  };
+
+  const canCancelAppt = (a) => {
+    const s = String(a.status).toUpperCase();
+    if (s === 'CANCELLED' || s === 'COMPLETED' || s === 'JOINED') return false;
+    const now = Date.now();
+    if (apptEndTs(a) < now) return false;
+    if (isJoinWindow(a)) return false;
+    return !!a?._id;
+  };
+
   const canFollowUp = (a) => {
     if (!a || !a.prescriptionText) return false;
     const ts = apptStartTs(a);
@@ -374,6 +534,23 @@ export default function Appointments() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 mt-8">
+      <div className="flex items-center justify-end mb-2">
+        <button
+          onClick={() => {
+            const id = localStorage.getItem('lastChatApptId') || '';
+            const a = (list || []).find((x) => String(x._id || x.id) === id) || null;
+            if (a) setDetailsAppt(a);
+            setBellCount(0);
+          }}
+          className="relative h-9 w-9 rounded-full border border-slate-300 flex items-center justify-center"
+          title="Notifications"
+        >
+          <span role="img" aria-label="bell">🔔</span>
+          {bellCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1">{bellCount}</span>
+          )}
+        </button>
+      </div>
       <h1 className="text-2xl font-semibold mb-4">{isPrescriptionsView ? 'Prescriptions' : 'My appointments'}</h1>
       <div className="bg-white border border-slate-200 rounded-xl">
         {loading ? (
@@ -399,7 +576,21 @@ export default function Appointments() {
                     return <div className="h-14 w-14 rounded-md border bg-white" />;
                   })()}
                   <div>
-                    <div className="font-semibold">{isPrescriptionsView ? (a.doctor || '') : (a.doctor?.name ? `Dr. ${a.doctor?.name}` : '')}</div>
+                    <div className="font-semibold">
+                      {(() => {
+                        if (isPrescriptionsView) return a.doctor || '';
+                        const docId = String(a.doctor?._id || a.doctor || '');
+                        const prof = profiles.get(docId);
+                        const online = !!prof?.isOnline;
+                        const cls = online ? 'bg-green-500' : 'bg-red-500';
+                        return (
+                          <span className="inline-flex items-center gap-2">
+                            {a.doctor?.name ? `Dr. ${a.doctor?.name}` : ''}
+                            <span className={`h-2 w-2 rounded-full ${cls}`}></span>
+                          </span>
+                        );
+                      })()}
+                    </div>
                     <div className="text-sm text-slate-700">Date & Time: <span className="text-slate-900">{isPrescriptionsView ? `${a.date} | ${a.time}` : `${a.date} | ${a.startTime}`}</span></div>
                     {!isPrescriptionsView && (() => {
                       try {
@@ -474,6 +665,18 @@ export default function Appointments() {
                         Rate Doctor
                       </button>
                     </div>
+                  ) : String(a.status).toUpperCase() === 'JOINED' ? (
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <span className="inline-block text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">Joined</span>
+                      {(() => {
+                        const link = meetLinkFor(a);
+                        const url = String(link).replace(/[`'\"]/g, '').trim();
+                        if (!url || !/^https?:\/\//.test(url)) return null;
+                        return (
+                          <button onClick={() => window.open(url, '_blank')} className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md">Rejoin</button>
+                        );
+                      })()}
+                    </div>
                   ) : (
                     <>
                       {a.type === 'online' && String(a.status).toUpperCase() === 'CONFIRMED' && (
@@ -507,14 +710,54 @@ export default function Appointments() {
                               return <span className="inline-block text-xs px-2 py-1 rounded bg-amber-100 text-amber-700">Waiting for doctor to set meeting link</span>;
                             }
                             return (
-                              <button
-                                onClick={() => {
-                                  window.open(url, '_blank');
-                                }}
-                                className="border border-green-600 text-green-700 px-3 py-1 rounded-md"
-                              >
-                                Join Meeting
-                              </button>
+                              <>
+                            {(() => {
+                              const id = String(a._id || a.id || '');
+                              const joinedPatient = id ? localStorage.getItem(`joinedByPatient_${id}`) === '1' : false;
+                              const joinedDoctor = id ? localStorage.getItem(`doctorJoined_${id}`) === '1' : false;
+                              const joined = joinedPatient || joinedDoctor;
+                              return joined ? (
+                                <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Joined</span>
+                              ) : null;
+                            })()}
+                                <button
+                                  onClick={() => {
+                                    try {
+                                      const id = String(a._id || a.id);
+                                      localStorage.setItem(`joinedByPatient_${id}`, '1');
+                                      setList((prev) => prev.slice());
+                                    } catch(_) {}
+                                    const win = window.open(url, '_blank');
+                                    try { socketRef.current && socketRef.current.emit('meet:update', { apptId: String(a._id || a.id), actor: 'patient', event: 'join' }); } catch(_) {}
+                                    try {
+                                      const id = String(a._id || a.id);
+                                      const monitor = setInterval(() => {
+                                        if (!win || win.closed) {
+                                          clearInterval(monitor);
+                                          try { localStorage.setItem(`joinedByPatient_${id}`, '0'); setList((prev) => prev.slice()); } catch(_) {}
+                                          try {
+                                            const now = Date.now();
+                                            const d = new Date(a.date);
+                                            const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+                                            d.setHours(sh, sm, 0, 0);
+                                            const end = new Date(a.date);
+                                            const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+                                            end.setHours(eh, em, 0, 0);
+                                            const active = now >= d.getTime() && now < end.getTime();
+                                            if (active) {
+                                              setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, status: 'CONFIRMED' } : x)));
+                                            }
+                                            try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'patient', event: 'exit' }); } catch(_) {}
+                                          } catch (_) {}
+                                        }
+                                      }, 1000);
+                                    } catch(_) {}
+                                  }}
+                                  className="border border-green-600 text-green-700 px-3 py-1 rounded-md"
+                                >
+                                  Join Meeting
+                                </button>
+                              </>
                             );
                           } catch (_) { return null; }
                         })()
@@ -545,13 +788,15 @@ export default function Appointments() {
                       ) : (
                         <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Paid</span>
                       )}
-                      <button
-                        onClick={() => cancel(a._id || a.id)}
-                        disabled={!a?._id}
-                        className={`border px-3 py-1 rounded-md ${(!a?._id) ? 'border-slate-200 text-slate-400 cursor-not-allowed' : 'border-slate-300'}`}
-                      >
-                        Cancel appointment
-                      </button>
+                      {canCancelAppt(a) && (
+                        <button
+                          onClick={() => cancel(a._id || a.id)}
+                          disabled={!a?._id}
+                          className={`border px-3 py-1 rounded-md ${(!a?._id) ? 'border-slate-200 text-slate-400 cursor-not-allowed' : 'border-slate-300'}`}
+                        >
+                          Cancel appointment
+                        </button>
+                      )}
                       {a.prescriptionText && (
                         <>
                           <button
@@ -676,6 +921,9 @@ export default function Appointments() {
                         const next = [...waitChat, waitText.trim()];
                         setWaitChat(next);
                         try { localStorage.setItem(`wr_${id}_chat`, JSON.stringify(next)); } catch(_) {}
+                        try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
+                        try { const chan = new BroadcastChannel('chatmsg'); chan.postMessage({ apptId: id, actor: 'patient' }); chan.close(); } catch(_) {}
+                        try { socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'patient', kind: 'pre' }); } catch(_) {}
                         setWaitText("");
                       }
                     }}
@@ -707,6 +955,7 @@ export default function Appointments() {
                       setWaitFiles(nextFiles);
                       const id = String(waitingAppt._id || waitingAppt.id);
                       try { localStorage.setItem(`wr_${id}_files`, JSON.stringify(nextFiles)); } catch(_) {}
+                      try { socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'patient', kind: 'report' }); } catch(_) {}
                       e.target.value = '';
                     }}
                   />
@@ -863,6 +1112,9 @@ export default function Appointments() {
                         const next = [...detChat, detText.trim()];
                         setDetChat(next);
                         try { localStorage.setItem(`wr_${id}_chat`, JSON.stringify(next)); } catch(_) {}
+                        try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
+                        try { const chan = new BroadcastChannel('chatmsg'); chan.postMessage({ apptId: id, actor: 'patient' }); chan.close(); } catch(_) {}
+                        try { socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'patient', kind: 'pre' }); } catch(_) {}
                         setDetText("");
                       }
                     }}
@@ -896,6 +1148,7 @@ export default function Appointments() {
                     const id = String(detailsAppt._id || detailsAppt.id);
                     try { localStorage.setItem(`wr_${id}_prevpres`, JSON.stringify(nextFiles)); } catch(_) {}
                     try { localStorage.setItem(`wr_${id}_files`, JSON.stringify(nextFiles)); } catch(_) {}
+                    try { socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'patient', kind: 'report' }); } catch(_) {}
                     e.target.value = '';
                   }}
                 />
@@ -1034,6 +1287,12 @@ export default function Appointments() {
                           const next = [...fuChat, fuText.trim()];
                           setFuChat(next);
                           saveFollowData(followAppt._id || followAppt.id, next, fuFiles, fuSymptoms);
+                          try {
+                            const id = String(followAppt._id || followAppt.id);
+                            localStorage.setItem('lastChatApptId', id);
+                            const chan = new BroadcastChannel('chatmsg'); chan.postMessage({ apptId: id, actor: 'patient' }); chan.close();
+                            socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'patient', kind: 'followup' });
+                          } catch(_) {}
                           setFuText("");
                         }
                       }}
@@ -1065,6 +1324,7 @@ export default function Appointments() {
                       const nextFiles = [...fuFiles, ...newItems];
                       setFuFiles(nextFiles);
                       saveFollowData(followAppt._id || followAppt.id, fuChat, nextFiles, fuSymptoms);
+                      try { const id = String(followAppt._id || followAppt.id); socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'patient', kind: 'report' }); } catch(_) {}
                       e.target.value = '';
                     }}
                   />

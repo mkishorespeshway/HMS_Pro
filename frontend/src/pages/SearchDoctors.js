@@ -46,8 +46,11 @@ export default function SearchDoctors() {
   };
 
   const photoOf = (d) => {
-    const s = String(d?.photoBase64 || "");
-    return s.startsWith("data:image") ? s : "";
+    let s = String(d?.photoBase64 || "").trim();
+    if (!s) return "";
+    if (s.startsWith("data:")) return s;
+    if (s.startsWith("http")) return s;
+    return `data:image/png;base64,${s}`;
   };
 
   const search = async () => {
