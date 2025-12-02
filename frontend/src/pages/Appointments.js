@@ -84,6 +84,40 @@ export default function Appointments() {
     } catch(_) {}
   }, [location.search, list, alertHandled, nav]);
   useEffect(() => {
+    try {
+      const q = new URLSearchParams(location.search);
+      const joinId = q.get('joinMeet') || '';
+      if (joinId) {
+        const a = (list || []).find((x) => String(x._id || x.id) === joinId) || null;
+        if (a) {
+          const link = meetLinkFor(a);
+          const url = String(link).replace(/[`'\"]/g, '').trim();
+          if (url && /^https?:\/\//.test(url)) {
+            const idX = String(a._id || a.id);
+            try { localStorage.setItem(`joinedByPatient_${idX}`, '1'); } catch(_) {}
+            const win = window.open(url, '_blank');
+            try { socketRef.current && socketRef.current.emit('meet:update', { apptId: idX, actor: 'patient', event: 'join' }); } catch(_) {}
+            if (win) {
+              const end = new Date(a.date);
+              const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+              end.setHours(eh, em, 0, 0);
+              const monitor = setInterval(() => {
+                const now = Date.now();
+                const expired = now >= end.getTime();
+                if (expired || !win || win.closed) {
+                  clearInterval(monitor);
+                  try { localStorage.setItem(`joinedByPatient_${idX}`, expired ? '0' : '0'); } catch(_) {}
+                  try { socketRef.current && socketRef.current.emit('meet:update', { apptId: idX, actor: 'patient', event: expired ? 'complete' : 'exit' }); } catch(_) {}
+                }
+              }, 1000);
+            }
+          }
+        }
+        try { nav('/appointments', { replace: true }); } catch(_) {}
+      }
+    } catch(_) {}
+  }, [location.search, list, nav]);
+  useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) { nav("/login"); return; }
     const load = async () => {

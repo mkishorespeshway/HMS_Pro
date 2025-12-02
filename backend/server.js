@@ -73,19 +73,19 @@ io.on('connection', (socket) => {
       start.setHours(sh, sm, 0, 0);
       const now = Date.now();
       if (event === 'join' && String(actor).toLowerCase() === 'patient') {
-        await createNotification(app, { userId: a.doctor, title: 'Patient Joined', message: 'Patient has joined and is waiting. Click Join Meet.', type: 'meet', link: '/doctor/dashboard', dedupeKey: `pt_join_${id}` });
+        await createNotification(app, { userId: a.doctor, title: 'Patient Joined', message: 'Patient has joined and is waiting. Click Join Meet.', type: 'meet', link: '/doctor/dashboard', dedupeKey: `pt_join_${id}`, apptId: id });
         if (now > start.getTime()) {
-          await createNotification(app, { userId: a.patient, title: 'Late Join', message: 'You are late. Remaining duration will be reduced automatically.', type: 'meet', link: '/appointments', dedupeKey: `late_${id}_p` });
+          await createNotification(app, { userId: a.patient, title: 'Late Join', message: 'You are late. Remaining duration will be reduced automatically.', type: 'meet', link: '/appointments', dedupeKey: `late_${id}_p`, apptId: id });
         }
       } else if (event === 'join' && String(actor).toLowerCase() === 'doctor') {
-        await createNotification(app, { userId: a.patient, title: 'Doctor Joined', message: 'Doctor is available and waiting. Join Meet now.', type: 'meet', link: '/appointments', dedupeKey: `doc_join_${id}` });
+        await createNotification(app, { userId: a.patient, title: 'Doctor Joined', message: 'Doctor is available and waiting. Join Meet now.', type: 'meet', link: '/appointments', dedupeKey: `doc_join_${id}`, apptId: id });
         if (now > start.getTime()) {
-          await createNotification(app, { userId: a.doctor, title: 'Late Join', message: 'You are late. Remaining duration will be reduced automatically.', type: 'meet', link: '/doctor/dashboard', dedupeKey: `late_${id}_d` });
+          await createNotification(app, { userId: a.doctor, title: 'Late Join', message: 'You are late. Remaining duration will be reduced automatically.', type: 'meet', link: '/doctor/dashboard', dedupeKey: `late_${id}_d`, apptId: id });
         }
       } else if (event === 'exit' && String(actor).toLowerCase() === 'patient') {
-        await createNotification(app, { userId: a.doctor, title: 'Patient Left', message: 'Patient left the call. They may rejoin while time remains.', type: 'meet', link: '/doctor/dashboard', dedupeKey: `pt_exit_${id}` });
+        await createNotification(app, { userId: a.doctor, title: 'Patient Left', message: 'Patient left the call. They may rejoin while time remains.', type: 'meet', link: '/doctor/dashboard', dedupeKey: `pt_exit_${id}`, apptId: id });
       } else if (event === 'exit' && String(actor).toLowerCase() === 'doctor') {
-        await createNotification(app, { userId: a.patient, title: 'Doctor Left', message: 'Doctor left the call. Please wait or rejoin later.', type: 'meet', link: '/appointments', dedupeKey: `doc_exit_${id}` });
+        await createNotification(app, { userId: a.patient, title: 'Doctor Left', message: 'Doctor left the call. Please wait or rejoin later.', type: 'meet', link: '/appointments', dedupeKey: `doc_exit_${id}`, apptId: id });
       }
     } catch (_) {}
   });

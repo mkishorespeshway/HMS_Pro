@@ -34,6 +34,9 @@ function Header() {
     try { return Number(localStorage.getItem('patientBellCount') || 0) || 0; } catch(_) { return 0; }
   });
   const [notifs, setNotifs] = useState([]);
+  const [seenIds, setSeenIds] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('seenNotifIds') || '[]')); } catch(_) { return new Set(); }
+  });
   const [muteUntil, setMuteUntil] = useState(0);
   const [panelOpen, setPanelOpen] = useState(false);
   const [panelItems, setPanelItems] = useState([]);
@@ -48,6 +51,7 @@ function Header() {
   useEffect(() => {
     (async () => {
       try {
+        if (!token) return;
         const { data } = await API.get('/notifications', { params: { unread: 1 } });
         const items = Array.isArray(data) ? data : [];
         const unread = items.filter((x) => !x.read).length;
@@ -72,7 +76,7 @@ function Header() {
       chan.onmessage = onMsg;
       return () => { try { chan.close(); } catch(_) {} };
     } catch(_) {}
-  }, []);
+  }, [token]);
   useEffect(() => {
     const origin = String(API.defaults.baseURL || '').replace(/\/(api)?$/, '');
     const w = window;
@@ -91,6 +95,17 @@ function Header() {
               const apptId = p?.apptId ? String(p.apptId) : '';
               try {
                 if (p?.type === 'chat' && p?.apptId) localStorage.setItem('lastChatApptId', String(p.apptId));
+              } catch(_) {}
+              try {
+                const sid = String(p?.id || '');
+                if (sid) {
+                  setSeenIds((prev) => {
+                    const next = new Set(prev);
+                    next.add(sid);
+                    try { localStorage.setItem('seenNotifIds', JSON.stringify(Array.from(next))); } catch(_) {}
+                    return next;
+                  });
+                }
               } catch(_) {}
               setBell((c) => {
                 const next = c + 1;
@@ -114,6 +129,7 @@ function Header() {
         }
       } catch (_) {}
     };
+    if (!token) return () => {};
     if (!w.io) {
       const s = document.createElement('script');
       s.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
@@ -124,7 +140,34 @@ function Header() {
       onReady();
     }
     return () => { cleanup.forEach((fn) => fn()); };
-  }, []);
+  }, [token]);
+
+  useEffect(() => {
+    const t = setInterval(async () => {
+      try {
+        if (!token) return;
+        const { data } = await API.get('/notifications', { params: { unread: 1 } });
+        const items = Array.isArray(data) ? data : [];
+        items.forEach((n) => {
+          const sid = String(n._id || n.id || '');
+          if (!sid || seenIds.has(sid)) return;
+          const id = String(Date.now()) + String(Math.random());
+          const text = n.message || '';
+          const link = n.link || '';
+          const type = n.type || 'general';
+          const apptId = n.apptId ? String(n.apptId) : '';
+          setNotifs((prev) => [{ id, text, link, type, apptId }, ...prev].slice(0, 4));
+          setTimeout(() => { setNotifs((prev) => prev.filter((x) => x.id !== id)); }, 6000);
+          setSeenIds((prev) => {
+            const next = new Set(prev); next.add(sid);
+            try { localStorage.setItem('seenNotifIds', JSON.stringify(Array.from(next))); } catch(_) {}
+            return next;
+          });
+        });
+      } catch(_) {}
+    }, 15000);
+    return () => clearInterval(t);
+  }, [token, seenIds]);
   if (hideHeader) return null;
   return (
     <header className="bg-white border-b">
@@ -199,9 +242,14 @@ function Header() {
                             <button
                               onClick={async () => {
                                 try {
-                                  if (n.type === 'chat' && n.apptId) localStorage.setItem('lastChatApptId', String(n.apptId));
-                                  if (n.type === 'chat' && (!n.link || !n.link.includes('alertChat=1'))) {
-                                    nav('/appointments?alertChat=1');
+                                  if (n.type === 'chat' && n.apptId) localStorage.setItem('lastChatApptId', String(n.apptId)); if (n.type === 'chat' && (!n.link || !n.link.includes('alertChat=1'))) {
+                                    const msg = String(n.message || n.text || '').toLowerCase();
+                                    const extra = msg.includes('report uploaded') ? '&view=reports' : '';
+                                    nav(`/appointments?alertChat=1${extra}`);
+                                  } else if (n.type === 'meet' && n.apptId) {
+                                    nav(`/appointments?joinMeet=${encodeURIComponent(String(n.apptId))}`);
+                                  } else if (n.type === 'appointment') {
+                                    nav('/appointments');
                                   } else if (n.link) {
                                     nav(n.link);
                                   }
@@ -230,7 +278,7 @@ function Header() {
               )}
               <div className="fixed right-4 top-4 z-50 space-y-2">
                 {notifs.map((n) => (
-                  <button key={n.id} onClick={() => { try { if (n.type === 'chat' && n.apptId) localStorage.setItem('lastChatApptId', String(n.apptId)); if (n.type === 'chat' && (!n.link || !n.link.includes('alertChat=1'))) { nav('/appointments?alertChat=1'); } else if (n.link) { nav(n.link); } } catch(_) {} setNotifs((prev) => prev.filter((x) => x.id !== n.id)); }} className="flex items-center gap-2 bg-white shadow-lg border border-amber-200 rounded-lg px-3 py-2 cursor-pointer">
+                  <button key={n.id} onClick={() => { try { if (n.type === 'chat' && n.apptId) localStorage.setItem('lastChatApptId', String(n.apptId)); if (n.type === 'chat' && (!n.link || !n.link.includes('alertChat=1'))) { const msg = String(n.text || n.message || '').toLowerCase(); const extra = msg.includes('report uploaded') ? '&view=reports' : ''; nav(`/appointments?alertChat=1${extra}`); } else if (n.type === 'meet' && n.apptId) { nav(`/appointments?joinMeet=${encodeURIComponent(String(n.apptId))}`); } else if (n.type === 'appointment') { nav('/appointments'); } else if (n.link) { nav(n.link); } } catch(_) {} setNotifs((prev) => prev.filter((x) => x.id !== n.id)); }} className="flex items-center gap-2 bg-white shadow-lg border border-amber-200 rounded-lg px-3 py-2 cursor-pointer">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 2a7 7 0 00-7 7v3l-2 3h18l-2-3V9a7 7 0 00-7-7zm0 20a3 3 0 003-3H9a3 3 0 003 3z" fill="#F59E0B"/>
                     </svg>

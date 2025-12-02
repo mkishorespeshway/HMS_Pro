@@ -153,6 +153,60 @@ export default function DoctorDashboard() {
     }
   };
 
+  const openMeetFor = async (apptId) => {
+    try {
+      const id = String(apptId || '');
+      if (!id) return;
+      const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id) || null;
+      if (!a) { nav('/doctor/appointments?joinMeet=' + encodeURIComponent(id)); return; }
+      if (!online) { alert('You are offline. Set status to ONLINE to join consultation.'); return; }
+      const stored = id ? localStorage.getItem(`meetlink_${id}`) : '';
+      let pick = (stored && /^https?:\/\//.test(stored)) ? stored : String(a.meetingLink || '');
+      let url = String(pick).replace(/[`'\"]/g, '').trim();
+      if (!url || !/^https?:\/\//.test(url)) {
+        try {
+          const resp = await API.post(`/appointments/${id}/meet-link/generate`);
+          url = String(resp?.data?.url || '').trim();
+          if (!/^https?:\/\//.test(url)) { alert('Failed to generate meeting link'); return; }
+          try { localStorage.setItem(`meetlink_${id}`, url); } catch(_) {}
+        } catch (e) {
+          alert(e.response?.data?.message || e.message || 'Failed to generate meeting link');
+          return;
+        }
+      } else {
+        try { await API.put(`/appointments/${id}/meet-link`, { url }); } catch(_) {}
+      }
+      try { localStorage.setItem(`joinedByDoctor_${id}`, '1'); } catch(_) {}
+      try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'join' }); } catch(_) {}
+      try {
+        const uid = localStorage.getItem('userId') || '';
+        if (uid) {
+          localStorage.setItem(`doctorBusyById_${uid}`, '1');
+          API.put('/doctors/me/status', { isOnline: true, isBusy: true }).catch(() => {});
+        }
+      } catch(_) {}
+      setOnline(true);
+      setBusy(true);
+      try {
+        meetWinRef.current = window.open(url, '_blank');
+        meetMonitorRef.current = setInterval(() => {
+          if (!meetWinRef.current || meetWinRef.current.closed) {
+            if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; }
+            try { localStorage.removeItem(`joinedByDoctor_${id}`); } catch(_) {}
+            try {
+              const uid = localStorage.getItem('userId') || '';
+              if (uid) {
+                localStorage.setItem(`doctorBusyById_${uid}`, '0');
+                API.put('/doctors/me/status', { isOnline: true, isBusy: false }).catch(() => {});
+              }
+            } catch(_) {}
+            setBusy(false);
+          }
+        }, 1000);
+      } catch(_) {}
+    } catch(_) {}
+  };
+
   const addNotif = (text, apptId, link) => {
     const id = String(Date.now()) + String(Math.random());
     setNotifs((prev) => [{ id, text, apptId, link }, ...prev].slice(0, 4));
@@ -191,7 +245,7 @@ export default function DoctorDashboard() {
                 const key = String(a._id || a.id || "");
                 const seen = new Set([...(list || []), ...(latestToday || [])].map((x) => String(x._id || x.id || "")));
                 if (seen.has(key)) return;
-                addNotif(`New appointment booked at ${a.startTime || "--:--"}`);
+                addNotif(`New appointment booked at ${a.startTime || "--:--"}`, null, "/doctor/dashboard#all-appointments");
                 setLatestToday((prev) => [a, ...prev]);
                 setList((prev) => [a, ...prev]);
               } catch (_) {}
@@ -338,7 +392,7 @@ export default function DoctorDashboard() {
         for (const a of items) {
           const key = String(a._id || a.id || "");
           if (!seen.has(key)) {
-            addNotif(`New appointment booked at ${a.startTime || "--:--"}`);
+            addNotif(`New appointment booked at ${a.startTime || "--:--"}`, null, "/doctor/dashboard#all-appointments");
             setLatestToday((prev) => [a, ...prev]);
             setList((prev) => [a, ...prev]);
           }
@@ -580,6 +634,10 @@ export default function DoctorDashboard() {
                                     const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id) || null;
                                     setChatAppt(a || { _id: id, id, patient: { name: '' } });
                                   }
+                                } else if (n.type === 'meet' && n.apptId) {
+                                  await openMeetFor(n.apptId);
+                                } else if (n.type === 'appointment') {
+                                  nav('/doctor/appointments');
                                 } else if (n.link) {
                                   nav(n.link);
                                 }
@@ -608,15 +666,21 @@ export default function DoctorDashboard() {
           </div>
           <div className="fixed right-4 top-4 z-50 space-y-2">
             {notifs.map((n) => (
-              <button key={n.id} onClick={() => {
+              <button key={n.id} onClick={async () => {
                 try {
-                  if (n.apptId) {
+                  if (n.type === 'chat' && n.apptId) {
                     const id = String(n.apptId);
                     try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
                     const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id) || null;
                     setChatAppt(a || { _id: id, id, patient: { name: '' } });
+                  } else if (n.type === 'meet' && n.apptId) {
+                    await openMeetFor(n.apptId);
                   } else if (n.link) {
                     nav(n.link);
+                  } else if (n.type === 'meet' || n.type === 'appointment') {
+                    nav('/doctor/appointments');
+                  } else if (n.apptId) {
+                    nav('/doctor/dashboard#all-appointments');
                   }
                   setNotifs((prev) => prev.filter((x) => x.id !== n.id));
                 } catch (_) {}
@@ -1268,7 +1332,31 @@ export default function DoctorDashboard() {
                         <div key={idx} className="flex items-center justify-between border rounded-md p-2">
                           <div className="text-sm text-slate-700 truncate">{f.name}</div>
                           <div className="flex items-center gap-2">
-                            <button onClick={() => window.open(f.url, '_blank')} className="px-2 py-1 rounded-md border border-slate-300 text-sm">Open</button>
+                            <button
+                              onClick={() => {
+                                try {
+                                  const s = String(f.url || '');
+                                  if (s.startsWith('data:')) {
+                                    const m = s.match(/^data:(.*?);base64,(.*)$/);
+                                    const mime = (m && m[1]) || 'application/octet-stream';
+                                    const b64 = (m && m[2]) || '';
+                                    const byteChars = atob(b64);
+                                    const byteNumbers = new Array(byteChars.length);
+                                    for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+                                    const byteArray = new Uint8Array(byteNumbers);
+                                    const blob = new Blob([byteArray], { type: mime });
+                                    const obj = URL.createObjectURL(blob);
+                                    window.open(obj, '_blank');
+                                    setTimeout(() => { try { URL.revokeObjectURL(obj); } catch(_) {} }, 15000);
+                                  } else {
+                                    window.open(s, '_blank');
+                                  }
+                                } catch(_) {}
+                              }}
+                              className="px-2 py-1 rounded-md border border-slate-300 text-sm"
+                            >
+                              Open
+                            </button>
                           </div>
                         </div>
                       ))
@@ -1301,6 +1389,25 @@ export default function DoctorDashboard() {
                       return msgs.map((m, idx) => (<div key={idx} className="text-sm text-slate-700">{m}</div>));
                     } catch(_) { return <div className="text-slate-600 text-sm">No messages</div>; }
                   })()}
+                </div>
+                <div className="mt-3">
+                  <div className="text-slate-900 font-semibold mb-1">Medical reports uploaded</div>
+                  <div className="space-y-2">
+                    {(() => {
+                      try {
+                        const id = String(chatAppt._id || chatAppt.id);
+                        const files = JSON.parse(localStorage.getItem(`wr_${id}_files`) || '[]');
+                        const arr = Array.isArray(files) ? files : [];
+                        if (arr.length === 0) return <div className="text-slate-600 text-sm">No reports uploaded</div>;
+                        return arr.map((f, idx) => (
+                          <div key={idx} className="flex items-center justify-between border rounded-md p-2">
+                            <div className="text-sm text-slate-700 truncate max-w-[12rem]">{f.name}</div>
+                            <button onClick={() => window.open(String(f.url || ''), '_blank')} className="px-2 py-1 rounded-md border border-slate-300 text-sm">Open</button>
+                          </div>
+                        ));
+                      } catch(_) { return <div className="text-slate-600 text-sm">No reports uploaded</div>; }
+                    })()}
+                  </div>
                 </div>
                 <div className="mt-2 flex gap-2">
                   <input id="chatInputDoc" placeholder="Reply to patient" className="flex-1 border border-slate-300 rounded-md px-3 py-2 text-sm" />

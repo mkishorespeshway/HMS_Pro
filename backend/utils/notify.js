@@ -8,7 +8,7 @@ async function createNotification(app, payload) {
   let existing = null;
   if (dedupeKey && type !== 'chat') existing = await Notification.findOne({ user: userId, dedupeKey });
   if (existing) return existing;
-  const doc = await Notification.create({ user: userId, title, message, type, link, dedupeKey });
+  const doc = await Notification.create({ user: userId, title, message, type, link, dedupeKey, apptId: apptId ? String(apptId) : undefined });
   try {
     const io = app.get('io');
     if (io) io.to(`user:${String(userId)}`).emit('notify', { id: String(doc._id), title, message, type, link, apptId: apptId ? String(apptId) : undefined, text });
