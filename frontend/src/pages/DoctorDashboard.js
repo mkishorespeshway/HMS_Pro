@@ -15,6 +15,7 @@ export default function DoctorDashboard() {
   const [bellCount, setBellCount] = useState(0);
   const [chatAppt, setChatAppt] = useState(null);
   const [chatPreview, setChatPreview] = useState(null);
+  const [isFullPreview, setIsFullPreview] = useState(false);
   const socketRef = useRef(null);
   const meetWinRef = useRef(null);
   const meetMonitorRef = useRef(null);
@@ -1375,7 +1376,7 @@ export default function DoctorDashboard() {
           <div className="bg-white rounded-xl border border-slate-200 w-[95vw] max-w-lg h-[70vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <div className="font-semibold text-slate-900">Patient Details</div>
-              <button onClick={() => { setChatAppt(null); setChatPreview(null); }} className="px-3 py-1 rounded-md border border-slate-300">Close</button>
+              <button onClick={() => { setChatAppt(null); setChatPreview(null); setIsFullPreview(false); }} className="px-3 py-1 rounded-md border border-slate-300">Close</button>
             </div>
             <div className="p-4 grid gap-3 overflow-y-auto flex-1">
               <div className="text-slate-700 text-sm">Patient: <span className="text-slate-900">{chatAppt.patient?.name || ''}</span></div>
@@ -1403,21 +1404,38 @@ export default function DoctorDashboard() {
                         return arr.map((f, idx) => (
                           <div key={idx} className="flex items-center justify-between border rounded-md p-2">
                             <div className="text-sm text-slate-700 truncate max-w-[12rem]">{f.name}</div>
-                            <button onClick={() => setChatPreview(f)} className="px-2 py-1 rounded-md border border-slate-300 text-sm">Open</button>
+                            <button onClick={() => { setChatPreview(f); setIsFullPreview(true); }} className="px-2 py-1 rounded-md border border-slate-300 text-sm">Open</button>
                           </div>
                         ));
                       } catch(_) { return <div className="text-slate-600 text-sm">No reports uploaded</div>; }
                     })()}
                   </div>
-                  {chatPreview && (
+                  {chatPreview && !isFullPreview && (
                     <div className="mt-3 border rounded-md p-2">
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-sm text-slate-900 truncate">{chatPreview.name || 'Selected report'}</div>
-                        <button onClick={() => setChatPreview(null)} className="px-2 py-1 rounded-md border border-slate-300 text-xs">Close Preview</button>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => setIsFullPreview(true)} className="px-2 py-1 rounded-md border border-slate-300 text-xs">Full Screen</button>
+                          <button onClick={() => setChatPreview(null)} className="px-2 py-1 rounded-md border border-slate-300 text-xs">Close Preview</button>
+                        </div>
                       </div>
                       <div className="flex items-center justify-center">
-                        <img src={String(chatPreview.url || '')} alt="" className="max-h-64 w-auto object-contain" />
+                        <img src={String(chatPreview.url || '')} alt="" className="max-h-64 w-auto object-contain cursor-zoom-in" onClick={() => setIsFullPreview(true)} />
                       </div>
+                    </div>
+                  )}
+                  {chatPreview && isFullPreview && (
+                    <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => setIsFullPreview(false)}
+                        className="absolute top-4 right-4 px-3 py-1 rounded-md border border-slate-300 bg-white/90"
+                      >Close</button>
+                      <img
+                        src={String(chatPreview.url || '')}
+                        alt=""
+                        className="max-w-[95vw] max-h-[95vh] w-auto h-auto object-contain shadow-2xl"
+                      />
                     </div>
                   )}
                 </div>

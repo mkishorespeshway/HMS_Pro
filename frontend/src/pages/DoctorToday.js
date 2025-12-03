@@ -37,6 +37,8 @@ export default function DoctorToday() {
   const socketRef = useRef(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [summaryId, setSummaryId] = useState("");
+  const [filePreview, setFilePreview] = useState(null);
+  const [isFullPreview, setIsFullPreview] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -436,21 +438,8 @@ export default function DoctorToday() {
   const openFile = (u) => {
     try {
       const s = String(u || '');
-      if (s.startsWith('data:')) {
-        const m = s.match(/^data:(.*?);base64,(.*)$/);
-        const mime = (m && m[1]) || 'application/octet-stream';
-        const b64 = (m && m[2]) || '';
-        const byteChars = atob(b64);
-        const byteNumbers = new Array(byteChars.length);
-        for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: mime });
-        const obj = URL.createObjectURL(blob);
-        window.open(obj, '_blank');
-        setTimeout(() => { try { URL.revokeObjectURL(obj); } catch(_) {} }, 15000);
-      } else {
-        window.open(s, '_blank');
-      }
+      setFilePreview({ url: s });
+      setIsFullPreview(true);
     } catch (_) {}
   };
 
@@ -785,6 +774,20 @@ export default function DoctorToday() {
           </div>
         </div>
       )}
+      {filePreview && isFullPreview && (
+        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center">
+          <button
+            type="button"
+            onClick={() => setIsFullPreview(false)}
+            className="absolute top-4 right-4 px-3 py-1 rounded-md border border-slate-300 bg-white/90"
+          >Close</button>
+          <img
+            src={String(filePreview.url || '')}
+            alt=""
+            className="max-w-[95vw] max-h-[95vh] w-auto h-auto object-contain shadow-2xl"
+          />
+        </div>
+      )}
       {false && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl border border-slate-200 w-[95vw] max-w-6xl h-[85vh] overflow-hidden">
@@ -1109,14 +1112,14 @@ export default function DoctorToday() {
       {detailsAppt && (
         <div
           className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-          onClick={(e) => { if (e.target === e.currentTarget) setDetailsAppt(null); }}
+          onClick={(e) => { if (e.target === e.currentTarget) { setDetailsAppt(null); setIsFullPreview(false); setFilePreview(null); } }}
         >
           <div className="bg-white rounded-xl border border-slate-200 w-[95vw] max-w-lg h-[75vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <div className="font-semibold text-slate-900">Patient Details</div>
               <button
                 type="button"
-                onClick={() => setDetailsAppt(null)}
+                onClick={() => { setDetailsAppt(null); setIsFullPreview(false); setFilePreview(null); }}
                 className="px-3 py-1 rounded-md border border-slate-300"
               >
                 Close

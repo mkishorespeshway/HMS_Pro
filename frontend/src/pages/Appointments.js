@@ -19,22 +19,19 @@ export default function Appointments() {
     (list || []).forEach((a) => {
       try {
         const id = String(a._id || a.id);
-        const prev = JSON.parse(localStorage.getItem(`wr_${id}_prevpres`) || '[]');
-        const arr = Array.isArray(prev) ? prev : [];
-        arr.forEach((it) => {
-          if (String(it?.by || '') !== 'doctor') return;
-          const name = String(it?.name || '').trim();
-          const url = String(it?.url || '').trim();
-          if (!url || !url.includes('/prescription/')) return;
-          items.push({
-            _id: id,
-            doctor: a.doctor?.name ? `Dr. ${a.doctor?.name}` : '',
-            date: a.date || '',
-            time: a.startTime || '',
-            name,
-            url,
-            docId: String(typeof a.doctor === 'string' ? a.doctor : (a.doctor?._id || a.doctor?.id || ''))
-          });
+        if (!id) return;
+        const has = typeof a.prescriptionText === 'string' && String(a.prescriptionText).trim() !== '';
+        if (!has) return;
+        const name = `Prescription ${a.date || ''} ${a.startTime || ''}`.trim();
+        const url = `/prescription/${id}`;
+        items.push({
+          _id: id,
+          doctor: a.doctor?.name ? `Dr. ${a.doctor?.name}` : '',
+          date: a.date || '',
+          time: a.startTime || '',
+          name,
+          url,
+          docId: String(typeof a.doctor === 'string' ? a.doctor : (a.doctor?._id || a.doctor?.id || ''))
         });
       } catch (_) {}
     });
@@ -69,6 +66,11 @@ export default function Appointments() {
   const [detEdit, setDetEdit] = useState(false);
   const [bookDocId, setBookDocId] = useState("");
   const [alertHandled, setAlertHandled] = useState(false);
+  const [filePreview, setFilePreview] = useState(null);
+  const [isFullPreview, setIsFullPreview] = useState(false);
+  const [presOpen, setPresOpen] = useState(false);
+  const [presId, setPresId] = useState("");
+  const presIframeRef = useRef(null);
 
   useEffect(() => {
     try {
@@ -558,21 +560,8 @@ export default function Appointments() {
   const openFile = (u) => {
     try {
       const s = String(u || '');
-      if (s.startsWith('data:')) {
-        const m = s.match(/^data:(.*?);base64,(.*)$/);
-        const mime = (m && m[1]) || 'application/octet-stream';
-        const b64 = (m && m[2]) || '';
-        const byteChars = atob(b64);
-        const byteNumbers = new Array(byteChars.length);
-        for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: mime });
-        const obj = URL.createObjectURL(blob);
-        window.open(obj, '_blank');
-        setTimeout(() => { try { URL.revokeObjectURL(obj); } catch(_) {} }, 15000);
-      } else {
-        window.open(s, '_blank');
-      }
+      setFilePreview({ url: s });
+      setIsFullPreview(true);
     } catch (_) {}
   };
 
@@ -657,7 +646,7 @@ export default function Appointments() {
                 </div>
                 <div className="flex gap-3 items-center">
                   {isPrescriptionsView ? (
-                    <button onClick={() => { try { const u = String(a.url || ''); if (u) nav(u); } catch(_) {} }} className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md">Open</button>
+                    <button onClick={() => { try { const u = String(a.url || ''); const m = u.match(/\/prescription\/([^?]+)/); const id = m ? m[1] : ''; if (id) { setPresId(id); setPresOpen(true); } } catch(_) {} }} className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md">Open</button>
                   ) : String(a.status).toUpperCase() === 'CANCELLED' ? (
                     <div className="flex flex-wrap gap-2 items-center">
                       <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">Cancelled</span>
@@ -686,7 +675,7 @@ export default function Appointments() {
                       <button disabled className="border border-slate-200 text-slate-400 px-3 py-1 rounded-md cursor-not-allowed">Session Completed</button>
                       {a.prescriptionText && (
                         <button
-                          onClick={() => window.open(`/prescription/${a._id || a.id}`, '_blank')}
+                          onClick={() => { const id = String(a._id || a.id || ''); if (id) { setPresId(id); setPresOpen(true); } }}
                           className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md"
                         >
                           View Prescription
@@ -1144,11 +1133,11 @@ export default function Appointments() {
         </div>
       )}
       {detailsAppt && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={(e) => { if (e.target === e.currentTarget) { setDetailsAppt(null); setIsFullPreview(false); setFilePreview(null); } }}>
           <div className="bg-white rounded-xl border border-slate-200 w-[95vw] max-w-lg h-[75vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <div className="font-semibold text-slate-900">Patient Details</div>
-              <button onClick={() => { setDetailsAppt(null); try { nav('/appointments', { replace: true }); } catch(_) {} }} className="px-3 py-1 rounded-md border border-slate-300">Close</button>
+              <button onClick={() => { setDetailsAppt(null); setIsFullPreview(false); setFilePreview(null); try { nav('/appointments', { replace: true }); } catch(_) {} }} className="px-3 py-1 rounded-md border border-slate-300">Close</button>
             </div>
             <div className="p-4 grid gap-3 overflow-y-auto flex-1">
               <div className="grid grid-cols-2 gap-4">
@@ -1356,6 +1345,34 @@ export default function Appointments() {
                 </button>
                 <div className="text-xs text-slate-600">Only visible to doctor</div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {filePreview && isFullPreview && (
+        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center">
+          <button
+            type="button"
+            onClick={() => setIsFullPreview(false)}
+            className="absolute top-4 right-4 px-3 py-1 rounded-md border border-slate-300 bg-white/90"
+          >Close</button>
+          <img
+            src={String(filePreview.url || '')}
+            alt=""
+            className="max-w-[95vw] max-h-[95vh] w-auto h-auto object-contain shadow-2xl"
+          />
+        </div>
+      )}
+      {presOpen && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white border border-slate-200 rounded-xl shadow-lg w-[95vw] max-w-6xl h-[85vh] overflow-hidden flex flex-col">
+            <div className="px-4 py-3 border-b font-semibold">Prescription</div>
+            <div className="flex-1">
+              <iframe ref={presIframeRef} title="Prescription" src={`/prescription/${presId}?embed=1`} className="w-full h-full" />
+            </div>
+            <div className="px-4 py-3 border-t flex items-center justify-end gap-2">
+              <button type="button" onClick={() => { try { const w = presIframeRef?.current?.contentWindow; if (w) { try { w.postMessage({ type: 'PRINT' }, window.location.origin); } catch(__) { try { w.focus(); w.print(); } catch(___) {} } } else { window.open(`/prescription/${presId}?print=1`, '_blank'); } } catch(_) { try { window.open(`/prescription/${presId}?print=1`, '_blank'); } catch(__) {} } }} className="px-3 py-1 rounded-md border border-slate-300">Download PDF</button>
+              <button type="button" onClick={() => setPresOpen(false)} className="px-3 py-1 rounded-md border border-slate-300">Close</button>
             </div>
           </div>
         </div>

@@ -49,6 +49,21 @@ export default function Prescription() {
     }
   }, [location.search]);
 
+  useEffect(() => {
+    const onMsg = (e) => {
+      try {
+        const ok = e && e.origin === window.location.origin;
+        const typ = e && (e.data?.type || e.data);
+        if (!ok) return;
+        if (typ === 'PRINT') {
+          setTimeout(() => { try { window.print(); } catch(_) {} }, 0);
+        }
+      } catch(_) {}
+    };
+    window.addEventListener('message', onMsg);
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
   const isEmbed = useMemo(() => {
     try { return new URLSearchParams(location.search).get('embed') === '1'; } catch(_) { return false; }
   }, [location.search]);
@@ -327,7 +342,7 @@ export default function Prescription() {
               >
                 Close
               </button>
-              <button onClick={() => { try { window.print(); } catch(_) {} }} className="px-3 py-2 rounded-md border border-slate-300">Download PDF</button>
+              <button onClick={() => { try { window.open(`/prescription/${id}?print=1`, '_blank'); } catch(_) {} }} className="px-3 py-2 rounded-md border border-slate-300">Download PDF</button>
               {isDoctorUser && (
                 <button
                   onClick={async () => {
