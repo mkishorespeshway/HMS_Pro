@@ -35,3 +35,105 @@
 .animate-zoom-in {
   animation: zoomIn 0.5s ease-out forwards;
 }
+
+.page-gradient {
+  min-height: 100vh;
+  background-image: linear-gradient(to bottom right, #eff6ff, #eef2ff, #f5f3ff);
+}
+
+.glass-card {
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 25px rgba(31, 41, 55, 0.12);
+}
+
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: scale(1.03);
+  box-shadow: 0 16px 40px rgba(31, 41, 55, 0.15);
+}
+
+.btn-gradient {
+  background-image: linear-gradient(to right, #4f46e5, #7c3aed);
+  color: #fff;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+}
+
+.btn-gradient:hover {
+  filter: brightness(1.05);
+  transform: scale(1.03);
+  box-shadow: 0 12px 30px rgba(79, 70, 229, 0.25);
+}
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.nav-link {
+  color: #334155;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.nav-link:hover {
+  color: #4f46e5;
+  transform: translateY(-1px);
+}
+
+.hero-gradient {
+  background-image: linear-gradient(to right, #4f46e5, #2563eb);
+  color: #fff;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.badge-online {
+  background-image: linear-gradient(to right, #34d399, #10b981);
+  color: #fff;
+}
+
+.badge-busy {
+  background-image: linear-gradient(to right, #f59e0b, #fb923c);
+  color: #fff;
+}
+
+.badge-offline {
+  background-image: linear-gradient(to right, #f87171, #f43f5e);
+  color: #fff;
+}
+
+.input-elevated {
+  border: 2px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  background-color: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.2s ease;
+}
+
+.input-elevated:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 6px rgba(79, 70, 229, 0.12);
+}
+
+.input-elevated:hover {
+  transform: scale(1.02);
+}

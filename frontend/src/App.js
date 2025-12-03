@@ -30,6 +30,7 @@ function Header() {
   const location = useLocation();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [bell, setBell] = useState(() => {
     try { return Number(localStorage.getItem('patientBellCount') || 0) || 0; } catch(_) { return 0; }
   });
@@ -170,20 +171,50 @@ function Header() {
   }, [token, seenIds]);
   if (hideHeader) return null;
   return (
-    <header className="bg-white border-b">
+    <header className="navbar animate-fade-in">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2 text-indigo-700">
             <Logo size={28} />
             <span className="text-lg font-semibold">HospoZen</span>
           </Link>
-          <nav className="flex items-center gap-6 text-slate-700">
-            <Link to="/" className="hover:text-indigo-600">Home</Link>
-            <Link to="/search" className="hover:text-indigo-600">All Doctors</Link>
-            <Link to="/about" className="hover:text-indigo-600">About</Link>
-            <Link to="/contact" className="hover:text-indigo-600">Contact</Link>
-            {showAdminLink && <Link to="/admin/login" className="hover:text-indigo-600">Admin</Link>}
-          </nav>
+          <div className="flex items-center gap-3">
+            <button className="md:hidden h-9 w-9 rounded-md border border-slate-300 flex items-center justify-center" onClick={() => setMobileOpen((v) => !v)}>
+              <span role="img" aria-label="menu">☰</span>
+            </button>
+            <nav className="hidden md:flex items-center gap-6">
+              {(() => {
+                const p = location.pathname;
+                const linkCls = (active) => active ? "nav-link text-indigo-700 font-semibold" : "nav-link";
+                return (
+                  <>
+                    <Link to="/" className={linkCls(p === "/")}>Home</Link>
+                    <Link to="/search" className={linkCls(p.startsWith("/search"))}>All Doctors</Link>
+                    <Link to="/about" className={linkCls(p.startsWith("/about"))}>About</Link>
+                    <Link to="/contact" className={linkCls(p.startsWith("/contact"))}>Contact</Link>
+                    {showAdminLink && <Link to="/admin/login" className={linkCls(p.startsWith("/admin"))}>Admin</Link>}
+                  </>
+                );
+              })()}
+            </nav>
+            {mobileOpen && (
+              <div className="absolute top-16 left-0 right-0 mx-4 glass-card p-3 md:hidden">
+                {(() => {
+                  const p = location.pathname;
+                  const linkCls = (active) => active ? "block px-3 py-2 rounded-md text-indigo-700 font-semibold" : "block px-3 py-2 rounded-md nav-link";
+                  return (
+                    <>
+                      <Link to="/" className={linkCls(p === "/")} onClick={() => setMobileOpen(false)}>Home</Link>
+                      <Link to="/search" className={linkCls(p.startsWith("/search"))} onClick={() => setMobileOpen(false)}>All Doctors</Link>
+                      <Link to="/about" className={linkCls(p.startsWith("/about"))} onClick={() => setMobileOpen(false)}>About</Link>
+                      <Link to="/contact" className={linkCls(p.startsWith("/contact"))} onClick={() => setMobileOpen(false)}>Contact</Link>
+                      {showAdminLink && <Link to="/admin/login" className={linkCls(p.startsWith("/admin"))} onClick={() => setMobileOpen(false)}>Admin</Link>}
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
           {token ? (
             <div className="relative flex items-center gap-3">
               <button
@@ -303,13 +334,13 @@ function Header() {
                 </button>
               )}
               {open && (
-                <div className="absolute right-0 top-12 w-48 bg-white border border-slate-200 rounded-lg shadow-lg text-sm z-50">
-                  <Link to="/profile" className="block px-3 py-2 hover:bg-slate-50">My Profile</Link>
-                  <Link to="/appointments" className="block px-3 py-2 hover:bg-slate-50">My Appointments</Link>
-                  <Link to="/appointments?view=prescriptions" className="block px-3 py-2 hover:bg-slate-50">Prescriptions</Link>
+                <div className="absolute right-0 top-12 w-48 glass-card shadow-2xl text-sm z-50">
+                  <Link to="/profile" className="block px-3 py-2 nav-link">My Profile</Link>
+                  <Link to="/appointments" className="block px-3 py-2 nav-link">My Appointments</Link>
+                  <Link to="/appointments?view=prescriptions" className="block px-3 py-2 nav-link">Prescriptions</Link>
                   <button
                     onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('userId'); nav('/login'); }}
-                    className="block w-full text-left px-3 py-2 hover:bg-slate-50"
+                    className="block w-full text-left px-3 py-2 nav-link"
                   >
                     Logout
                   </button>
@@ -317,7 +348,7 @@ function Header() {
               )}
             </div>
           ) : (
-            <Link to="/register" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full">Create Account</Link>
+            <Link to="/register" className="btn-gradient">Create Account</Link>
           )}
         </div>
       </div>
@@ -331,7 +362,7 @@ return (
 <Header />
 
 
-<div className="p-6 bg-slate-50 min-h-screen">
+<div className="p-6 page-gradient">
 <Routes>
 <Route path="/" element={<Home />} />
 <Route path="/about" element={<About />} />

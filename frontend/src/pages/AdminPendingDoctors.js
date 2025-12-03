@@ -43,7 +43,7 @@ return (
   <div className="max-w-7xl mx-auto mt-8 px-4">
     <div className="grid grid-cols-12 gap-6">
       <aside className="col-span-12 md:col-span-3">
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
+        <div className="glass-card p-4 animate-fade-in">
           <div className="mb-4">
             <div className="flex items-center gap-2 text-indigo-700 font-semibold">
               <Logo size={24} />
@@ -60,12 +60,12 @@ return (
         </div>
       </aside>
 
-      <main className="col-span-12 md:col-span-9">
+      <main className="col-span-12 md:col-span-9 animate-fade-in">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-3xl font-semibold">Pending Doctor Approvals</h2>
           <button
             onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); }}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full"
+            className="btn-gradient"
           >
             Logout
           </button>
@@ -74,7 +74,7 @@ return (
         {loading && <p className="text-slate-600">Loading...</p>}
         <div className="space-y-4">
           {list.map((row) => (
-            <div key={row.user._id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+            <div key={row.user._id} className="glass-card p-4 card-hover">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-semibold">{row.user.name}</div>
@@ -84,8 +84,8 @@ return (
               </div>
               <div className="text-sm text-slate-700 mt-2">Specializations: {row.profile?.specializations?.join(", ") || "--"}</div>
               <div className="mt-3 flex gap-3">
-                <button onClick={() => approve(row.user._id)} className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md">Approve</button>
-                <button onClick={() => reject(row.user._id)} className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md">Reject</button>
+                <button onClick={() => approve(row.user._id)} className="btn-gradient">Approve</button>
+                <button onClick={() => reject(row.user._id)} className="btn-gradient" style={{ backgroundImage: 'linear-gradient(to right, #ef4444, #f97316)' }}>Reject</button>
               </div>
             </div>
           ))}

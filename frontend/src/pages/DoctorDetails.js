@@ -126,17 +126,17 @@ export default function DoctorDetails() {
   return (
     <>
       {isAdminRoute ? (
-        <header className="bg-white border-b">
+        <header className="navbar animate-fade-in">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center gap-2 text-indigo-700">
                 <Logo size={24} />
                 <span className="text-lg font-semibold">HospoZen</span>
               </div>
-              <nav className="flex items-center gap-6 text-slate-700">
+              <nav className="flex items-center gap-6">
                 <button
                   onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('userId'); nav('/admin/login'); }}
-                  className="px-3 py-1 rounded-full border border-slate-300"
+                  className="btn-gradient"
                 >
                   Logout
                 </button>
@@ -145,19 +145,27 @@ export default function DoctorDetails() {
           </div>
         </header>
       ) : (
-        <header className="bg-white border-b">
+        <header className="navbar animate-fade-in">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
               <Link to="/" className="flex items-center gap-2 text-indigo-700">
                 <Logo size={24} />
                 <span className="text-lg font-semibold">HospoZen</span>
               </Link>
-              <div className="flex items-center gap-6 text-slate-700">
+              <div className="flex items-center gap-6">
                 <nav className="flex items-center gap-6">
-                  <Link to="/" className="hover:text-indigo-600">Home</Link>
-                  <Link to="/search" className="hover:text-indigo-600">All Doctors</Link>
-                  <Link to="/about" className="hover:text-indigo-600">About</Link>
-                  <Link to="/contact" className="hover:text-indigo-600">Contact</Link>
+                  {(() => {
+                    const p = location.pathname;
+                    const linkCls = (active) => active ? "nav-link text-indigo-700 font-semibold" : "nav-link";
+                    return (
+                      <>
+                        <Link to="/" className={linkCls(p === "/")}>Home</Link>
+                        <Link to="/search" className={linkCls(p.startsWith("/search"))}>All Doctors</Link>
+                        <Link to="/about" className={linkCls(p.startsWith("/about"))}>About</Link>
+                        <Link to="/contact" className={linkCls(p.startsWith("/contact"))}>Contact</Link>
+                      </>
+                    );
+                  })()}
                 </nav>
                 {token ? (
                   <div className="relative">
@@ -175,13 +183,13 @@ export default function DoctorDetails() {
                       />
                     )}
                     {menuOpen && (
-                      <div className="absolute right-0 mt-2 w-44 bg-white border border-slate-200 rounded-md shadow-md text-sm">
-                        <Link to="/profile" className="block px-3 py-2 hover:bg-slate-50">My Profile</Link>
-                        <Link to="/appointments" className="block px-3 py-2 hover:bg-slate-50">My Appointments</Link>
-                        <Link to="/prescriptions" className="block px-3 py-2 hover:bg-slate-50">Prescriptions</Link>
+                      <div className="absolute right-0 mt-2 w-44 glass-card shadow-2xl text-sm">
+                        <Link to="/profile" className="block px-3 py-2 nav-link">My Profile</Link>
+                        <Link to="/appointments" className="block px-3 py-2 nav-link">My Appointments</Link>
+                        <Link to="/prescriptions" className="block px-3 py-2 nav-link">Prescriptions</Link>
                         <button
                           onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('userId'); nav('/login'); }}
-                          className="block w-full text-left px-3 py-2 hover:bg-slate-50"
+                          className="block w-full text-left px-3 py-2 nav-link"
                         >
                           Logout
                         </button>
@@ -189,7 +197,7 @@ export default function DoctorDetails() {
                     )}
                   </div>
                 ) : (
-                  <Link to="/register" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full">Create Account</Link>
+                  <Link to="/register" className="btn-gradient">Create Account</Link>
                 )}
               </div>
             </div>
@@ -197,7 +205,7 @@ export default function DoctorDetails() {
         </header>
       )}
       <div className="max-w-7xl mx-auto px-4 mt-8">
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
+      <div className="glass-card p-6 animate-fade-in">
         <div className="grid md:grid-cols-3 gap-6 items-start">
           <div>
             <div className="bg-indigo-50 rounded-xl overflow-hidden border border-indigo-100">
@@ -206,7 +214,7 @@ export default function DoctorDetails() {
                   <img
                     src={doctor?.photoBase64}
                     alt="Doctor"
-                    className="w-full h-64 object-cover"
+                    className="w-full h-64 object-cover transform hover:scale-110 transition-transform duration-700"
                   />
                 ) : (
                   <div className="w-full h-64 bg-white" />
@@ -222,7 +230,7 @@ export default function DoctorDetails() {
                 const isOnline = typeof doctor?.isOnline === 'boolean' ? !!doctor?.isOnline : (localStorage.getItem(`doctorOnlineById_${uid}`) === '1');
                 const isBusy = typeof doctor?.isBusy === 'boolean' ? !!doctor?.isBusy : (localStorage.getItem(`doctorBusyById_${uid}`) === '1');
                 return (
-                  <span className={`inline-block text-xs px-2 py-1 rounded ${isBusy ? 'bg-amber-100 text-amber-700' : (isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}`}>{isBusy ? 'Busy' : (isOnline ? 'Online' : 'Offline')}</span>
+                  <span className={`badge ${isBusy ? 'badge-busy' : (isOnline ? 'badge-online' : 'badge-offline')}`}>{isBusy ? 'Busy' : (isOnline ? 'Online' : 'Offline')}</span>
                 );
               })()}
             </div>
@@ -238,13 +246,13 @@ export default function DoctorDetails() {
 
       {!isAdminRoute && (
       <div className="mt-8">
-        <div className="bg-white border border-slate-200 rounded-xl p-6">
+        <div className="glass-card p-6 animate-fade-in">
           <div className="text-slate-900 font-semibold mb-4">Booking slots</div>
           <div className="flex items-center gap-4 mb-4">
             <select
               value={type}
               onChange={(e) => setType(e.target.value === 'online' ? 'online' : 'offline')}
-              className="border border-slate-300 rounded-md p-2 text-sm"
+              className="input-elevated text-sm"
             >
               <option value="offline">Clinic/Hospital Visit</option>
               <option value="online">Online Consultation</option>
@@ -253,7 +261,7 @@ export default function DoctorDetails() {
               <select
                 value={consultMode}
                 onChange={(e) => setConsultMode(e.target.value)}
-                className="border border-slate-300 rounded-md p-2 text-sm"
+                className="input-elevated text-sm"
               >
                 <option value="video">Video call</option>
                 <option value="audio">Audio call</option>
@@ -276,7 +284,7 @@ export default function DoctorDetails() {
                     key={val}
                     onClick={() => { if (!disabledToday) setSelectedDate(val); }}
                     disabled={disabledToday}
-                    className={`px-4 py-3 rounded-full border ${isSel ? "bg-indigo-600 text-white border-indigo-600" : disabledToday ? "bg-white text-slate-400 border-slate-200 cursor-not-allowed" : "bg-white text-slate-900 border-slate-300"}`}
+                    className={`px-4 py-3 rounded-full border card-hover ${isSel ? "bg-indigo-600 text-white border-indigo-600" : disabledToday ? "bg-white text-slate-400 border-slate-200 cursor-not-allowed" : "bg-white text-slate-900 border-slate-300"}`}
                   >
                     <div className="text-xs">{label}</div>
                     <div className="text-base">{day}</div>
@@ -315,14 +323,14 @@ export default function DoctorDetails() {
                     key={key}
                     onClick={() => { if (!disabled) setSelectedSlot(s); }}
                     disabled={disabled}
-                    className={`px-4 py-2 rounded-full border flex items-center gap-2 ${sel ? "bg-indigo-600 text-white border-indigo-600" : disabled ? "bg-white text-slate-400 border-slate-200 cursor-not-allowed" : "bg-white text-slate-900 border-slate-300"}`}
+                    className={`px-4 py-2 rounded-full border flex items-center gap-2 card-hover ${sel ? "bg-indigo-600 text-white border-indigo-600" : disabled ? "bg-white text-slate-400 border-slate-200 cursor-not-allowed" : "bg-white text-slate-900 border-slate-300"}`}
                   >
                     <span>{s.start} - {s.end}</span>
                     {isMine && (
-                      <span className="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700">Booked</span>
+                      <span className="badge badge-offline">Booked</span>
                     )}
                     {(!isMine && within5) && (
-                      <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700">Unavailable</span>
+                      <span className="badge">Unavailable</span>
                     )}
                   </button>
                 );
@@ -405,7 +413,7 @@ export default function DoctorDetails() {
               alert(err.response?.data?.message || err.message);
             }
             }}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white w-full md:w-auto px-6 py-3 rounded-full"
+            className="btn-gradient w-full md:w-auto"
           >
             {isLoggedIn ? "Book an appointment" : "Login to book"}
           </button>
@@ -419,18 +427,18 @@ export default function DoctorDetails() {
         <p className="text-slate-600 text-center mt-2">Simply browse through our extensive list of trusted doctors.</p>
         <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {related.map((d) => (
-            <div key={d._id} className="bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm overflow-hidden">
+            <div key={d._id} className="glass-card overflow-hidden card-hover">
               <div className="relative">
                 {String(d.photoBase64 || "").startsWith("data:image") ? (
                   <img
                     src={d.photoBase64}
                     alt="Doctor"
-                    className="w-full h-56 object-cover"
+                    className="w-full h-56 object-cover transform hover:scale-110 transition-transform duration-700"
                   />
                 ) : (
-                  <div className="w-full h-56 bg-white" />
+                  <div className="w-full h-56 bg-gradient-to-br from-slate-100 to-slate-200" />
                 )}
-                <span className="absolute top-3 left-3 bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Available</span>
+                <span className="absolute top-3 left-3 badge badge-online">Available</span>
               </div>
               <div className="p-4">
                 <div className="text-base font-semibold">{`Dr. ${d.user?.name || ''}`}</div>
@@ -443,8 +451,8 @@ export default function DoctorDetails() {
       )}
 
       {!isAdminRoute && (
-      <section className="mt-8">
-        <div className="max-w-7xl mx-auto px-4 py-12">
+      <section className="mt-8 animate-fade-in">
+        <div className="max-w-7xl mx-auto px-4 py-12 glass-card">
           <div className="grid md:grid-cols-3 gap-8 items-start">
             <div>
               <div className="flex items-center gap-2 text-indigo-700 font-semibold text-lg">

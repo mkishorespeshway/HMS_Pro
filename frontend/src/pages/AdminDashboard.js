@@ -41,14 +41,14 @@ export default function AdminDashboard() {
         <h1 className="text-3xl font-semibold">Admin Dashboard</h1>
         <button
           onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); }}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full"
+          className="btn-gradient"
         >
           Logout
         </button>
       </div>
       <div className="grid grid-cols-12 gap-6">
         <aside className="col-span-12 md:col-span-3">
-          <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="glass-card p-4 animate-fade-in">
             <div className="mb-4">
               <div className="flex items-center gap-2 text-indigo-700 font-semibold">
                 <Logo size={28} />
@@ -101,7 +101,7 @@ export default function AdminDashboard() {
             {latest && latest.length ? (
               <div className="divide-y">
                 {latest.map((b) => (
-                  <div key={String(b._id)} className="flex items-center justify-between py-2 hover:bg-slate-50 transition-colors duration-200">
+                  <div key={String(b._id)} className="flex items-center justify-between py-2 card-hover">
                     <div className="flex items-center gap-3">
                       {(() => {
                         const pid = String(b.patient?._id || b.patient || "");
@@ -137,7 +137,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-slate-700 text-sm">{b.date} {b.startTime}</div>
-                      <span className={`text-xs px-2 py-1 rounded ${b.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' : b.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{b.status}</span>
+                      <span className={`badge ${b.status === 'CONFIRMED' ? 'badge-online' : b.status === 'CANCELLED' ? 'badge-offline' : 'badge-busy'}`}>{b.status}</span>
                     </div>
                   </div>
                 ))}

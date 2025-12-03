@@ -58,7 +58,7 @@ export default function AdminAppointments() {
           <td className="px-4 py-3">{a.doctor?.name || "--"}</td>
           <td className="px-4 py-3">₹{a.fee || 0}</td>
           <td className="px-4 py-3">
-            <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">
+            <span className={`badge ${String(a.status || '').toUpperCase()==='PENDING' ? 'badge-busy' : ((String(a.status || '').toUpperCase()==='CANCELLED' || String(a.status || '').toUpperCase()==='CANCELED') ? 'badge-offline' : 'badge-online')}`}>
               {a.status}
             </span>
           </td>
@@ -74,7 +74,7 @@ export default function AdminAppointments() {
     <div className="max-w-7xl mx-auto px-4 mt-8">
       <div className="grid grid-cols-12 gap-6">
         <aside className="col-span-12 md:col-span-3">
-          <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="glass-card p-4 animate-fade-in">
             <div className="mb-4">
               <div className="flex items-center gap-2 text-indigo-700 font-semibold">
                 <Logo size={28} />
@@ -91,17 +91,17 @@ export default function AdminAppointments() {
           </div>
         </aside>
 
-        <main className="col-span-12 md:col-span-9">
+        <main className="col-span-12 md:col-span-9 animate-fade-in">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-3xl font-semibold">All Appointments</h1>
             <button
               onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); }}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full"
+              className="btn-gradient"
             >
               Logout
             </button>
           </div>
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div className="glass-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead className="bg-slate-50 text-slate-700">
