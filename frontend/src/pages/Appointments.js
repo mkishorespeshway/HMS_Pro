@@ -909,7 +909,7 @@ export default function Appointments() {
                       {a.prescriptionText && (
                         <>
                           <button
-                            onClick={() => window.open(`/prescription/${a._id || a.id}`, '_blank')}
+                            onClick={() => nav(`/prescription/${a._id || a.id}`)}
                             className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md"
                           >
                             View Prescription

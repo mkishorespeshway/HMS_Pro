@@ -782,7 +782,7 @@ export default function DoctorDashboard() {
                       </div>
                       <div className="flex items-center gap-2">
                         {a.prescriptionText ? (
-                          <button onClick={() => window.open(`/prescription/${a._id || a.id}`, '_blank')} className="px-2 py-1 rounded-md border border-indigo-600 text-indigo-700 text-xs">Prescription</button>
+                          <button onClick={() => nav(`/prescription/${a._id || a.id}`)} className="px-2 py-1 rounded-md border border-indigo-600 text-indigo-700 text-xs">Prescription</button>
                         ) : (
                           <span className="text-xs text-slate-600">No prescription</span>
                         )}

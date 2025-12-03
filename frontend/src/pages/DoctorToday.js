@@ -1028,7 +1028,7 @@ export default function DoctorToday() {
                               <div className="text-xs text-slate-600">{x.date} {x.startTime}</div>
                               <div className="text-sm text-slate-700 truncate">{x.prescriptionText}</div>
                               <div className="mt-1">
-                                <button onClick={() => window.open(`/prescription/${x._id || x.id}`, '_blank')} className="px-2 py-1 rounded-md border border-indigo-600 text-indigo-700 text-xs">Open</button>
+                                <button onClick={() => nav(`/prescription/${x._id || x.id}`)} className="px-2 py-1 rounded-md border border-indigo-600 text-indigo-700 text-xs">Open</button>
                               </div>
                             </div>
                           ))
@@ -1206,7 +1206,7 @@ export default function DoctorToday() {
                         Save & Send to Patient
                       </button>
                       <button
-                        onClick={() => { window.open(`/prescription/${consult._id || consult.id}`, '_blank'); }}
+                        onClick={() => { nav(`/prescription/${consult._id || consult.id}`); }}
                         className="px-3 py-2 rounded-md border border-slate-300"
                       >
                         View
@@ -1320,7 +1320,7 @@ export default function DoctorToday() {
                         <div className="text-xs text-slate-600">{x.date} {x.startTime}</div>
                         <div className="text-sm text-slate-700 truncate">{x.prescriptionText}</div>
                         <div className="mt-1">
-                          <button onClick={() => window.open(`/prescription/${x._id || x.id}`, '_blank')} className="px-2 py-1 rounded-md border border-indigo-600 text-indigo-700 text-xs">Open</button>
+                          <button onClick={() => nav(`/prescription/${x._id || x.id}`)} className="px-2 py-1 rounded-md border border-indigo-600 text-indigo-700 text-xs">Open</button>
                         </div>
                       </div>
                     ));
