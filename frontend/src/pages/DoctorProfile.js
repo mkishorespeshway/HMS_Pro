@@ -7,9 +7,22 @@ export default function DoctorProfile() {
   const nav = useNavigate();
   const [profile, setProfile] = useState(null);
   const [online, setOnline] = useState(() => {
+    const uid = localStorage.getItem("userId") || "";
+    const byId = uid ? localStorage.getItem(`doctorOnlineById_${uid}`) : null;
+    if (byId !== null) return byId === "1";
     const v = localStorage.getItem("doctorOnline");
     return v === null ? true : v === "1";
   });
+  const [busy, setBusy] = useState(() => {
+    const uid = localStorage.getItem("userId") || "";
+    const byId = uid ? localStorage.getItem(`doctorBusyById_${uid}`) : null;
+    return byId === "1";
+  });
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelItems, setPanelItems] = useState([]);
+  const [panelLoading, setPanelLoading] = useState(false);
+  const [panelUnread, setPanelUnread] = useState(0);
+  const [bellCount, setBellCount] = useState(0);
   
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
@@ -31,8 +44,10 @@ export default function DoctorProfile() {
       try {
         const { data } = await API.get("/doctors", { params: { user: id } });
         setProfile(data?.[0] || null);
-        const byId = localStorage.getItem(`doctorOnlineById_${id}`);
-        if (byId !== null) setOnline(byId === "1");
+        const onlineById = localStorage.getItem(`doctorOnlineById_${id}`);
+        if (onlineById !== null) setOnline(onlineById === "1");
+        const busyById = localStorage.getItem(`doctorBusyById_${id}`);
+        if (busyById !== null) setBusy(busyById === "1");
       } catch (e) {}
       
     };
@@ -44,6 +59,44 @@ export default function DoctorProfile() {
     const id = localStorage.getItem("userId");
     if (id) localStorage.setItem(`doctorOnlineById_${id}`, online ? "1" : "0");
   }, [online]);
+  useEffect(() => {
+    const id = localStorage.getItem("userId");
+    if (id) localStorage.setItem(`doctorBusyById_${id}`, busy ? "1" : "0");
+  }, [busy]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await API.get('/notifications', { params: { unread: 1 } });
+        const items = Array.isArray(data) ? data : [];
+        const unread = items.filter((x) => !x.read).length;
+        setBellCount(unread);
+      } catch (_) {}
+    })();
+  }, []);
+
+  const setStatus = async (status) => {
+    const uid = localStorage.getItem("userId") || "";
+    if (status === "online") {
+      localStorage.setItem(`doctorOnlineById_${uid}`, "1");
+      localStorage.setItem(`doctorBusyById_${uid}`, "0");
+      setOnline(true);
+      setBusy(false);
+      try { await API.put('/doctors/me/status', { isOnline: true, isBusy: false }); } catch (_) {}
+    } else if (status === "offline") {
+      localStorage.setItem(`doctorOnlineById_${uid}`, "0");
+      localStorage.setItem(`doctorBusyById_${uid}`, "0");
+      setOnline(false);
+      setBusy(false);
+      try { await API.put('/doctors/me/status', { isOnline: false, isBusy: false }); } catch (_) {}
+    } else {
+      localStorage.setItem(`doctorBusyById_${uid}`, "1");
+      localStorage.setItem(`doctorOnlineById_${uid}`, "1");
+      setOnline(true);
+      setBusy(true);
+      try { await API.put('/doctors/me/status', { isOnline: true, isBusy: true }); } catch (_) {}
+    }
+  };
 
   const name = profile?.user?.name || "";
   const specs = (profile?.specializations || []).join(", ");
@@ -100,32 +153,119 @@ export default function DoctorProfile() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 mt-8">
-      <div className="grid grid-cols-12 gap-6">
-        <aside className="col-span-12 md:col-span-3">
-          <div className="bg-white border border-slate-200 rounded-xl p-4">
-            <div className="mb-4">
-              <div className="flex items-center gap-2 text-indigo-700 font-semibold">
-                <Logo size={24} />
-                <span>HospoZen</span>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Link to="/doctor/dashboard" className="flex items-center gap-2 text-indigo-700">
+            <Logo size={24} />
+            <span className="font-semibold">HospoZen</span>
+          </Link>
+          <nav className="flex items-center gap-6 ml-6 text-slate-700">
+            <Link to="/doctor/dashboard" className="nav-link">Dashboard</Link>
+            <Link to="/doctor/appointments" className="nav-link">Appointments</Link>
+            <Link to="/doctor/profile" className="nav-link text-indigo-700 font-semibold">Profile</Link>
+          </nav>
+        </div>
+        <div className="relative flex items-center gap-3">
+          <span className={`inline-block text-xs px-2 py-1 rounded ${busy ? 'bg-amber-100 text-amber-700' : (online ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}`}>{busy ? 'Busy' : (online ? 'Online' : 'Offline')}</span>
+          <div className="flex rounded-full border border-slate-300 overflow-hidden">
+            <button onClick={() => setStatus('online')} className={`px-3 py-1 text-xs ${online && !busy ? 'bg-green-600 text-white' : 'bg-white text-green-700'}`}>Online</button>
+            <button onClick={() => setStatus('offline')} className={`px-3 py-1 text-xs ${(!online && !busy) ? 'bg-red-600 text-white' : 'bg-white text-red-700'}`}>Offline</button>
+            <button onClick={() => setStatus('busy')} className={`px-3 py-1 text-xs ${busy ? 'bg-amber-500 text-white' : 'bg-white text-amber-700'}`}>Busy</button>
+          </div>
+          <button
+            onClick={async () => {
+              try {
+                setPanelOpen((v) => !v);
+                if (!panelOpen) {
+                  setPanelLoading(true);
+                  const { data } = await API.get('/notifications');
+                  const items = Array.isArray(data) ? data : [];
+                  setPanelItems(items);
+                  const unread = items.filter((x) => !x.read).length;
+                  setPanelUnread(unread);
+                  setBellCount(unread);
+                  setPanelLoading(false);
+                }
+              } catch (_) { setPanelLoading(false); }
+            }}
+            className="relative h-9 w-9 rounded-full border border-slate-300 flex items-center justify-center"
+            title="Notifications"
+          >
+            <span role="img" aria-label="bell">🔔</span>
+            {bellCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1">{bellCount}</span>
+            )}
+          </button>
+          {panelOpen && (
+            <div className="absolute right-0 top-12 w-96 bg-white rounded-xl shadow-2xl border border-slate-200 z-50">
+              <div className="bg-indigo-700 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
+                <div className="font-semibold">Your Notifications</div>
+                <div className="text-xs bg-green-500 text-white rounded-full px-2 py-0.5">{panelUnread} New</div>
+              </div>
+              <div className="px-4 py-2 flex items-center justify-between border-b">
+                <button onClick={() => nav('/doctor/appointments')} className="text-indigo-700 text-sm">View All</button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={async () => {
+                      try { await API.delete('/notifications'); setPanelItems([]); setPanelUnread(0); setBellCount(0); } catch(_) {}
+                    }}
+                    className="text-white bg-indigo-700 rounded-md px-2 py-1 text-xs"
+                  >
+                    Clear All
+                  </button>
+                </div>
+              </div>
+              <div className="max-h-[60vh] overflow-y-auto">
+                {panelLoading ? (
+                  <div className="p-4 text-sm text-slate-600">Loading…</div>
+                ) : panelItems.length === 0 ? (
+                  <div className="p-4 text-sm text-slate-600">No notifications</div>
+                ) : (
+                  panelItems.map((n) => (
+                    <div key={n._id || n.id} className="px-4 py-3 border-b hover:bg-slate-50">
+                      <div className="flex items-start justify-between">
+                        <button
+                          onClick={async () => {
+                            try {
+                              if (n.type === 'appointment') {
+                                nav('/doctor/appointments');
+                              } else if (n.link) {
+                                nav(n.link);
+                              }
+                              setPanelOpen(false);
+                              try { await API.put(`/notifications/${n._id || n.id}/read`); } catch(_) {}
+                              setPanelItems((prev) => prev.map((x) => (String(x._id || x.id) === String(n._id || n.id) ? { ...x, read: true } : x)));
+                              setPanelUnread((c) => Math.max(0, c - 1));
+                              setBellCount((c) => Math.max(0, c - 1));
+                            } catch(_) {}
+                          }}
+                          className="text-left text-sm text-slate-900"
+                        >
+                          {n.message}
+                        </button>
+                        {!n.read && (
+                          <button onClick={async () => { try { await API.put(`/notifications/${n._id || n.id}/read`); setPanelItems((prev) => prev.map((x) => (String(x._id || x.id) === String(n._id || n.id) ? { ...x, read: true } : x))); setPanelUnread((c) => Math.max(0, c - 1)); } catch(_) {} }} className="text-xs text-slate-600">Mark As Read</button>
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">{new Date(n.createdAt).toLocaleString()}</div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
-            <nav className="space-y-2 text-slate-700">
-              <Link to="/doctor/dashboard" className="block px-3 py-2 rounded-md hover:bg-slate-50">Dashboard</Link>
-              <Link to="/doctor/appointments" className="block px-3 py-2 rounded-md hover:bg-slate-50">Appointments</Link>
-              <div className="px-3 py-2 rounded-md bg-indigo-50 text-indigo-700">Profile</div>
-            </nav>
-          </div>
-        </aside>
-
-        <main className="col-span-12 md:col-span-9">
-          <div className="flex items-center justify-between mb-6">
+          )}
+          <button
+            onClick={() => { localStorage.removeItem("token"); nav("/doctor/login"); }}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+      <div className="grid grid-cols-12 gap-6">
+        <main className="col-span-12">
+          <div className="mb-6">
             <h1 className="text-3xl font-semibold">Doctor Profile</h1>
-            <button
-              onClick={() => { localStorage.removeItem("token"); nav("/doctor/login"); }}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full"
-            >
-              Logout
-            </button>
           </div>
 
           <div className="bg-white border border-slate-200 rounded-xl p-6">
