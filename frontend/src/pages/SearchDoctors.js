@@ -141,10 +141,10 @@ export default function SearchDoctors() {
 
   if (isAdmin) {
     return (
-      <div className="max-w-7xl mx-auto mt-8 px-4">
+      <div className="max-w-7xl mx-auto mt-8 px-4 animate-fade-in">
         <div className="grid grid-cols-12 gap-6">
-          <aside className="col-span-12 md:col-span-3">
-            <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <aside className="col-span-12 md:col-span-3 animate-slide-in-left">
+            <div className="bg-white border border-slate-200 rounded-xl p-4 hover:scale-105 transition-transform duration-300">
             <div className="mb-4">
               <div className="flex items-center gap-2 text-indigo-700 font-semibold">
                 <Logo size={24} />
@@ -152,56 +152,56 @@ export default function SearchDoctors() {
               </div>
             </div>
               <nav className="space-y-2 text-slate-700">
-                <Link to="/admin/dashboard" className="block px-3 py-2 rounded-md hover:bg-slate-50">Dashboard</Link>
-                <Link to="/admin/appointments" className="block px-3 py-2 rounded-md hover:bg-slate-50">Appointments</Link>
-                <Link to="/admin/add-doctor" className="block px-3 py-2 rounded-md hover:bg-slate-50">Add Doctor</Link>
-                
-                <div className="px-3 py-2 rounded-md bg-indigo-50 text-indigo-700">Doctors List</div>
+                <Link to="/admin/dashboard" className="block px-3 py-2 rounded-md hover:bg-slate-50 hover:scale-105 transition-transform duration-300">Dashboard</Link>
+                <Link to="/admin/appointments" className="block px-3 py-2 rounded-md hover:bg-slate-50 hover:scale-105 transition-transform duration-300">Appointments</Link>
+                <Link to="/admin/add-doctor" className="block px-3 py-2 rounded-md hover:bg-slate-50 hover:scale-105 transition-transform duration-300">Add Doctor</Link>
+
+                <div className="px-3 py-2 rounded-md bg-indigo-50 text-indigo-700 animate-fade-in" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>Doctors List</div>
               </nav>
             </div>
           </aside>
-          <main className="col-span-12 md:col-span-9">
+          <main className="col-span-12 md:col-span-9 animate-fade-in" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-3xl font-semibold">Doctors List</h2>
+              <h2 className="text-3xl font-semibold animate-slide-in-left">Doctors List</h2>
               <button
                 onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); }}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full hover:scale-105 transition-transform duration-300"
               >
                 Logout
               </button>
             </div>
-            {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
+            {error && <div className="mb-4 text-sm text-red-600 animate-fade-in">{error}</div>}
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {list.map((d) => (
-                <div key={d._id} className="bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm overflow-hidden">
+              {list.map((d, index) => (
+                <div key={d._id} className="bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm overflow-hidden hover:scale-105 transition-transform duration-300 animate-zoom-in opacity-0" style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'forwards' }}>
                   <div className="relative">
                   {photoOf(d) ? (
                     <img
                       src={photoOf(d)}
                       alt="Doctor"
-                      className="w-full h-56 object-cover"
+                      className="w-full h-56 object-cover hover:scale-110 transition-transform duration-500"
                     />
                   ) : (
-                    <div className="w-full h-56 bg-white" />
+                    <div className="w-full h-56 bg-white hover:scale-110 transition-transform duration-500" />
                   )}
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-2 right-2 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.3}s`, animationFillMode: 'forwards' }}>
                   {(() => {
                       const online = typeof d.isOnline === 'boolean' ? d.isOnline : null;
                       const busy = typeof d.isBusy === 'boolean' ? d.isBusy : null;
                       if (online === null && busy === null) return null;
                       const cls = busy ? 'bg-amber-100 text-amber-700' : (online ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
                       const txt = busy ? 'Busy' : (online ? 'Online' : 'Offline');
-                      return <span className={`inline-block text-xs px-2 py-1 rounded ${cls}`}>{txt}</span>;
+                      return <span className={`inline-block text-xs px-2 py-1 rounded ${cls} hover:scale-105 transition-transform duration-300`}>{txt}</span>;
                     })()}
                   </div>
                   </div>
-                  <div className="p-4">
+                  <div className="p-4 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
                     <h3 className="text-base font-semibold">{`Dr. ${d.user?.name || ''}`}</h3>
                     <p className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || ""}</p>
                     {typeof d.consultationFees === 'number' && (
                       <div className="text-sm text-slate-700">Fee: ₹{d.consultationFees}</div>
                     )}
-                    <Link to={`/admin/doctors/${d.user._id}`} className="mt-3 inline-block text-indigo-600 hover:text-indigo-800">View Profile</Link>
+                    <Link to={`/admin/doctors/${d.user._id}`} className="mt-3 inline-block text-indigo-600 hover:text-indigo-800 hover:scale-105 transition-transform duration-300">View Profile</Link>
                   </div>
                 </div>
               ))}
@@ -213,16 +213,16 @@ export default function SearchDoctors() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto mt-8 px-4">
-      <h2 className="text-3xl font-semibold mb-6">All Doctors</h2>
-      <div className="bg-white rounded-lg border border-slate-200 p-4 mb-6">
+    <div className="max-w-7xl mx-auto mt-8 px-4 animate-fade-in">
+      <h2 className="text-3xl font-semibold mb-6 animate-slide-in-left">All Doctors</h2>
+      <div className="bg-white rounded-lg border border-slate-200 p-4 mb-6 animate-slide-in-left opacity-0" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
         <div className="grid sm:grid-cols-3 gap-3 items-end">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Specialty</label>
             <select
               value={specialization}
               onChange={(e) => setSpecialization(e.target.value)}
-              className="border border-slate-300 rounded-md p-2 w-full"
+              className="border border-slate-300 rounded-md p-2 w-full hover:scale-105 transition-transform duration-300"
             >
               <option value="">All Specialties</option>
               {SPECIALTIES.map((s) => (
@@ -234,16 +234,16 @@ export default function SearchDoctors() {
             <label className="block text-sm font-medium text-slate-700 mb-1">Search</label>
             <div className="flex gap-2">
               <input
-                className="flex-1 border border-slate-300 rounded-md p-2"
+                className="flex-1 border border-slate-300 rounded-md p-2 hover:scale-105 transition-transform duration-300"
                 placeholder="Search doctor or specialization"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') search(); }}
               />
-              <button onClick={search} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white">Search</button>
+              <button onClick={search} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white hover:scale-105 transition-transform duration-300">Search</button>
               <button
                 onClick={() => { setQ(''); setSpecialization(''); search(); }}
-                className="px-4 py-2 rounded-md border border-slate-300"
+                className="px-4 py-2 rounded-md border border-slate-300 hover:scale-105 transition-transform duration-300"
               >
                 Clear
               </button>
@@ -253,38 +253,38 @@ export default function SearchDoctors() {
       </div>
       <div className="grid grid-cols-1 gap-6">
         <main>
-          {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
+          {error && <div className="mb-4 text-sm text-red-600 animate-fade-in">{error}</div>}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {list.map((d) => (
-              <div key={d._id} className="bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm overflow-hidden">
+            {list.map((d, index) => (
+              <div key={d._id} className="bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm overflow-hidden hover:scale-105 transition-transform duration-300 animate-zoom-in opacity-0" style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'forwards' }}>
                 <div className="relative">
                   {photoOf(d) ? (
                     <img
                       src={photoOf(d)}
                       alt="Doctor"
-                      className="w-full h-56 object-cover"
+                      className="w-full h-56 object-cover hover:scale-110 transition-transform duration-500"
                     />
                   ) : (
-                    <div className="w-full h-56 bg-white" />
+                    <div className="w-full h-56 bg-white hover:scale-110 transition-transform duration-500" />
                   )}
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-2 right-2 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.3}s`, animationFillMode: 'forwards' }}>
                     {(() => {
                       const online = typeof d.isOnline === 'boolean' ? d.isOnline : null;
                       const busy = typeof d.isBusy === 'boolean' ? d.isBusy : null;
                       if (online === null && busy === null) return null;
                       const cls = busy ? 'bg-amber-100 text-amber-700' : (online ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
                       const txt = busy ? 'Busy' : (online ? 'Online' : 'Offline');
-                      return <span className={`inline-block text-xs px-2 py-1 rounded ${cls}`}>{txt}</span>;
+                      return <span className={`inline-block text-xs px-2 py-1 rounded ${cls} hover:scale-105 transition-transform duration-300`}>{txt}</span>;
                     })()}
                   </div>
                 </div>
-                <div className="p-4">
+                <div className="p-4 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
                   <h3 className="text-base font-semibold">{`Dr. ${d.user?.name || ''}`}</h3>
                   <p className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || ""}</p>
                   {typeof d.consultationFees === 'number' && (
                     <div className="text-sm text-slate-700">Fee: ₹{d.consultationFees}</div>
                   )}
-                  <Link to={`/doctor/${d.user._id}`} className="mt-3 inline-block text-indigo-600 hover:text-indigo-800">View Profile</Link>
+                  <Link to={`/doctor/${d.user._id}`} className="mt-3 inline-block text-indigo-600 hover:text-indigo-800 hover:scale-105 transition-transform duration-300">View Profile</Link>
                 </div>
               </div>
             ))}
