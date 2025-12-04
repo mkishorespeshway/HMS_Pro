@@ -46,6 +46,10 @@ export default function DoctorToday() {
   const [summaryId, setSummaryId] = useState("");
   const [filePreview, setFilePreview] = useState(null);
   const [isFullPreview, setIsFullPreview] = useState(false);
+  const linkClass = (active) =>
+    active
+      ? "relative px-4 py-2 text-blue-700 font-bold bg-blue-50 rounded-xl border-2 border-blue-200 shadow-sm"
+      : "relative px-4 py-2 text-gray-600 hover:text-blue-600 font-medium rounded-xl hover:bg-blue-50/50 transition-all duration-300 hover:scale-105";
 
   const load = async () => {
     setLoading(true);
@@ -500,12 +504,12 @@ export default function DoctorToday() {
   };
 
   const rows = list.map((a, i) => (
-    <tr key={a._id} className="border-t">
+    <tr key={a._id} className="border-t border-slate-100/60 hover:bg-indigo-50/40 transition-colors">
       <td className="px-4 py-3">{i + 1}</td>
       <td className="px-4 py-3">{a.patient?.name || ""}</td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="inline-block text-xs px-2 py-1 rounded bg-slate-100 text-slate-700">{a.type === "offline" ? "Clinic" : "Online"}</span>
+          <span className={`inline-block text-xs px-2 py-1 rounded ${a.type === 'offline' ? 'bg-indigo-100 text-indigo-700' : 'bg-cyan-100 text-cyan-700'}`}>{a.type === "offline" ? "Clinic" : "Online"}</span>
           <span className={`inline-block text-xs px-2 py-1 rounded ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}</span>
           {(() => {
             try {
@@ -514,7 +518,7 @@ export default function DoctorToday() {
               d.setHours(hh, mm, 0, 0);
               const diff = d.getTime() - Date.now();
               const within10 = a.type === 'online' && String(a.status).toUpperCase() === 'CONFIRMED' && diff <= 10 * 60 * 1000 && diff > 0;
-              if (within10) return <span className="inline-block text-xs px-2 py-1 rounded bg-indigo-100 text-indigo-700">Patient waiting</span>;
+              if (within10) return <span className="inline-block text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">Patient waiting</span>;
             } catch(_) {}
             return null;
           })()}
@@ -558,7 +562,7 @@ export default function DoctorToday() {
                   type="button"
                   onClick={() => accept(a._id || a.id, a.date, a.startTime)}
                   disabled={!(a?._id || a?.id)}
-                  className={`h-7 w-7 rounded-full flex items-center justify-center ${(a?._id || a?.id) ? "bg-green-600 hover:bg-green-700 text-white" : "bg-slate-200 text-slate-500"}`}
+                  className={`h-7 w-7 rounded-full flex items-center justify-center ${(a?._id || a?.id) ? "bg-green-600 hover:bg-green-700 text-white shadow-sm" : "bg-slate-200 text-slate-500"}`}
                   title="Accept"
                 >
                   ✓
@@ -568,7 +572,7 @@ export default function DoctorToday() {
                     type="button"
                     onClick={() => reject(a._id || a.id, a.date, a.startTime)}
                     disabled={!(a?._id || a?.id)}
-                    className={`h-7 w-7 rounded-full flex items-center justify-center ${(a?._id || a?.id) ? "bg-red-600 hover:bg-red-700 text-white" : "bg-slate-200 text-slate-500"}`}
+                    className={`h-7 w-7 rounded-full flex items-center justify-center ${(a?._id || a?.id) ? "bg-red-600 hover:bg-red-700 text-white shadow-sm" : "bg-slate-200 text-slate-500"}`}
                     title="Reject"
                   >
                     ✕
@@ -590,7 +594,7 @@ export default function DoctorToday() {
                 <button
                   type="button"
                   onClick={() => { const id = String(a._id || a.id || ''); if (id) { setSummaryId(id); setSummaryOpen(true); } }}
-                  className="px-3 py-1 rounded-md border border-indigo-600 text-indigo-700"
+                  className="px-3 py-1 rounded-md border border-indigo-600 text-indigo-700 hover:bg-indigo-50"
                 >
                   View Summary
                 </button>
@@ -627,7 +631,7 @@ export default function DoctorToday() {
                 <button
                   type="button"
                   onClick={() => reject(a._id || a.id, a.date, a.startTime)}
-                  className="px-3 py-1 rounded-md border border-red-600 text-red-700"
+                  className="px-3 py-1 rounded-md border border-red-600 text-red-700 hover:bg-red-50"
                   title="Reject"
                 >
                   Reject
@@ -644,7 +648,7 @@ export default function DoctorToday() {
                     setDetailsAppt(a);
                   }
                 }}
-                className="px-3 py-1 rounded-md border border-slate-600 text-slate-700"
+                className="px-3 py-1 rounded-md border border-purple-600 text-purple-700 hover:bg-purple-50"
               >
                 View Documents
               </button>
@@ -670,7 +674,7 @@ export default function DoctorToday() {
                           setFuFiles(Array.isArray(files) ? files : []);
                         } catch (_) { setFuChat([]); setFuFiles([]); }
                       }}
-                      className="px-3 py-1 rounded-md border border-green-600 text-green-700"
+                      className="px-3 py-1 rounded-md border border-green-600 text-green-700 hover:bg-green-50"
                     >
                       Follow-up
                     </button>
@@ -716,8 +720,8 @@ export default function DoctorToday() {
   ));
 
   return (
-    <div className="max-w-7xl mx-auto px-4 mt-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-7xl mx-auto px-4 mt-8 page-gradient">
+      <div className="flex items-center justify-between mb-6 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50 rounded-xl px-6 py-4">
         <div className="flex items-center gap-3">
           <Link to="/doctor/dashboard" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-white/20">
@@ -732,10 +736,26 @@ export default function DoctorToday() {
              
             </div>
           </Link>
-          <nav className="flex items-center gap-6 ml-6 text-slate-700">
-            <Link to="/doctor/dashboard" className="nav-link">Dashboard</Link>
-            <Link to="/doctor/appointments" className="nav-link text-indigo-700 font-semibold">Appointments</Link>
-            <Link to="/doctor/profile" className="nav-link">Profile</Link>
+          <nav className="hidden lg:flex items-center space-x-10 ml-6">
+            {(() => {
+              const p = window.location.pathname;
+              return (
+                <>
+                  <Link to="/doctor/dashboard" className={linkClass(p === "/doctor/dashboard")}>
+                    <span className="relative z-10">Dashboard</span>
+                    {p === "/doctor/dashboard" && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                  </Link>
+                  <Link to="/doctor/appointments" className={linkClass(p.startsWith("/doctor/appointments"))}>
+                    <span className="relative z-10">Appointments</span>
+                    {p.startsWith("/doctor/appointments") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                  </Link>
+                  <Link to="/doctor/profile" className={linkClass(p.startsWith("/doctor/profile"))}>
+                    <span className="relative z-10">Profile</span>
+                    {p.startsWith("/doctor/profile") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                  </Link>
+                </>
+              );
+            })()}
           </nav>
         </div>
         <div className="flex items-center gap-3">
@@ -748,7 +768,7 @@ export default function DoctorToday() {
               localStorage.removeItem("token");
               nav("/doctor/login");
             }}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full"
+            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 border-2 border-white/20"
           >
             Logout
           </button>
@@ -759,10 +779,10 @@ export default function DoctorToday() {
           <div className="mb-4">
             <h1 className="text-3xl font-semibold">Doctor Appointments</h1>
           </div>
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div className="glass-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
-                <thead className="bg-slate-50 text-slate-700">
+                <thead className="bg-white/70 backdrop-blur-sm text-slate-700">
                   <tr>
                     <th className="px-4 py-3 text-left">#</th>
                     <th className="px-4 py-3 text-left">Patient</th>

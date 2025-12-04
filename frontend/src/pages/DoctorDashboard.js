@@ -30,6 +30,11 @@ export default function DoctorDashboard() {
   const [panelItems, setPanelItems] = useState([]);
   const [panelLoading, setPanelLoading] = useState(false);
   const [panelUnread, setPanelUnread] = useState(0);
+  const linkClass = (active) =>
+    active
+      ? "relative px-4 py-2 text-blue-700 font-bold bg-blue-50 rounded-xl border-2 border-blue-200 shadow-sm"
+      : "relative px-4 py-2 text-gray-600 hover:text-blue-600 font-medium rounded-xl hover:bg-blue-50/50 transition-all duration-300 hover:scale-105";
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -615,8 +620,8 @@ export default function DoctorDashboard() {
   }, [list, latestToday]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 mt-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-7xl mx-auto px-4 mt-8 page-gradient">
+      <div className="flex items-center justify-between mb-6 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50 rounded-xl px-6 py-4 sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <Link to="/doctor/dashboard" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-white/20">
@@ -631,19 +636,29 @@ export default function DoctorDashboard() {
               
             </div>
           </Link>
-          <nav className="flex items-center gap-6 ml-6 text-slate-700">
-            <Link to="/doctor/dashboard" className="nav-link text-indigo-700 font-semibold">Dashboard</Link>
-            <Link to="/doctor/appointments" className="nav-link">Appointments</Link>
-            <Link to="/doctor/profile" className="nav-link">Profile</Link>
+          <nav className="hidden lg:flex items-center space-x-10 ml-6">
+            {(() => {
+              const p = window.location.pathname;
+              return (
+                <>
+                  <Link to="/doctor/dashboard" className={linkClass(p === "/doctor/dashboard")}>
+                    <span className="relative z-10">Dashboard</span>
+                    {p === "/doctor/dashboard" && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                  </Link>
+                  <Link to="/doctor/appointments" className={linkClass(p.startsWith("/doctor/appointments"))}>
+                    <span className="relative z-10">Appointments</span>
+                    {p.startsWith("/doctor/appointments") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                  </Link>
+                  <Link to="/doctor/profile" className={linkClass(p.startsWith("/doctor/profile"))}>
+                    <span className="relative z-10">Profile</span>
+                    {p.startsWith("/doctor/profile") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                  </Link>
+                </>
+              );
+            })()}
           </nav>
         </div>
         <div className="relative flex items-center gap-3">
-          <span className={`inline-block text-xs px-2 py-1 rounded ${busy ? 'bg-amber-100 text-amber-700' : (online ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}`}>{busy ? 'Busy' : (online ? 'Online' : 'Offline')}</span>
-          <div className="flex rounded-full border border-slate-300 overflow-hidden">
-            <button onClick={() => setStatus('online')} className={`px-3 py-1 text-xs ${online && !busy ? 'bg-green-600 text-white' : 'bg-white text-green-700'}`}>Online</button>
-            <button onClick={() => setStatus('offline')} className={`px-3 py-1 text-xs ${(!online && !busy) ? 'bg-red-600 text-white' : 'bg-white text-red-700'}`}>Offline</button>
-            <button onClick={() => setStatus('busy')} className={`px-3 py-1 text-xs ${busy ? 'bg-amber-500 text-white' : 'bg-white text-amber-700'}`}>Busy</button>
-          </div>
           <button
             onClick={async () => {
               try {
@@ -747,7 +762,7 @@ export default function DoctorDashboard() {
               localStorage.removeItem("token");
               nav("/doctor/login");
             }}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full"
+            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 border-2 border-white/20"
           >
             Logout
           </button>
@@ -787,8 +802,50 @@ export default function DoctorDashboard() {
             <h1 className="text-3xl font-semibold">Doctor Dashboard</h1>
           </div>
 
+          <div className="flex flex-wrap gap-4 mb-6">
+            <div className="relative flex-1 min-w-[160px] bg-white border border-slate-200 rounded-xl p-4 transition-transform duration-300 hover:scale-105 hover:shadow-lg hover:bg-indigo-50">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-md bg-indigo-50 border border-indigo-100 flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 1C6.477 1 2 5.477 2 11s4.477 10 10 10 10-4.477 10-10S17.523 1 12 1zm1 5v2h2a1 1 0 110 2h-2v2h2a1 1 0 110 2h-2v2a1 1 0 11-2 0v-2H9a1 1 0 110-2h2V10H9a1 1 0 110-2h2V6a1 1 0 112 0z" fill="#4F46E5"/>
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600">Earnings</div>
+                  <div className="text-2xl font-semibold">₹{stats.earnings}</div>
+                </div>
+              </div>
+            </div>
+            <div className="relative flex-1 min-w-[160px] bg-white border border-slate-200 rounded-xl p-4 transition-transform duration-300 hover:scale-105 hover:shadow-lg hover:bg-indigo-50">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-md bg-blue-50 border border-blue-100 flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 2a1 1 0 000 2h1v2h8V4h1a1 1 0 100-2H7zM5 8a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2H5zm3 3h8v2H8v-2zm0 4h8v2H8v-2z" fill="#0EA5E9"/>
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600">Appointments</div>
+                  <div className="text-2xl font-semibold">{stats.appointments}</div>
+                </div>
+              </div>
+            </div>
+            <div className="relative flex-1 min-w-[160px] bg-white border border-slate-200 rounded-xl p-4 transition-transform duration-300 hover:scale-105 hover:shadow-lg hover:bg-indigo-50">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-md bg-cyan-50 border border-cyan-100 flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 9a7 7 0 0114 0H5z" fill="#06B6D4"/>
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600">Patients</div>
+                  <div className="text-2xl font-semibold">{stats.patients}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="grid md:grid-cols-2 gap-4 mb-6">
-            <div className="bg-white border border-slate-200 rounded-xl p-4">
+            <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 shadow-lg">
               <div className="flex items-center gap-2 text-slate-700 mb-3">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M7 2a1 1 0 000 2h1v2h8V4h1a1 1 0 100-2H7zM5 8a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2H5zm3 3h8v2H8v-2zm0 4h8v2H8v-2z" fill="#4B5563"/>
@@ -800,7 +857,7 @@ export default function DoctorDashboard() {
               ) : (
                 <div className="space-y-2">
                   {upcoming.map((a) => (
-                    <div key={a._id} className="flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2">
+                    <div key={a._id} className="flex items-center justify-between bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-lg px-3 py-2 hover:shadow-sm">
                       <div>
                         <div className="font-semibold text-slate-900">{a.patient?.name || 'Patient'}</div>
                         <div className="text-xs text-slate-600">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
@@ -833,7 +890,7 @@ export default function DoctorDashboard() {
                 </div>
               )}
             </div>
-            <div className="bg-white border border-slate-200 rounded-xl p-4">
+            <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 shadow-lg">
               <div className="flex items-center gap-2 text-slate-700 mb-3">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 2a7 7 0 00-7 7v3l-2 3h18l-2-3V9a7 7 0 00-7-7zm0 20a3 3 0 003-3H9a3 3 0 003 3z" fill="#16A34A"/>
@@ -845,7 +902,7 @@ export default function DoctorDashboard() {
               ) : (
                 <div className="space-y-2">
                   {completed.map((a) => (
-                    <div key={a._id} className="flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2">
+                    <div key={a._id} className="flex items-center justify-between bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-lg px-3 py-2 hover:shadow-sm">
                       <div>
                         <div className="font-semibold text-slate-900">{a.patient?.name || 'Patient'}</div>
                         <div className="text-xs text-slate-600">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
@@ -881,57 +938,31 @@ export default function DoctorDashboard() {
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6">
+          <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-2xl p-6 mb-6 shadow-lg">
             <div className="flex items-center gap-2 text-slate-700 mb-3">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 9a7 7 0 0114 0H5z" fill="#06B6D4"/>
               </svg>
               <span>Hospital / Clinic Details</span>
             </div>
-            <div className="space-y-1 text-sm">
-              <div className="text-slate-700">Name: <span className="text-slate-900">{String(profile?.clinic?.name || '').trim() || '--'}</span></div>
-              <div className="text-slate-700">City: <span className="text-slate-900">{String(profile?.clinic?.city || '').trim() || '--'}</span></div>
-              <div className="text-slate-700">Address: <span className="text-slate-900">{String(profile?.clinic?.address || '').trim() || '--'}</span></div>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-4 mb-6">
-            <div className="flex-1 min-w-[160px] bg-white border border-slate-200 rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-md bg-indigo-50 border border-indigo-100 flex items-center justify-center">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 1C6.477 1 2 5.477 2 11s4.477 10 10 10 10-4.477 10-10S17.523 1 12 1zm1 5v2h2a1 1 0 110 2h-2v2h2a1 1 0 110 2h-2v2a1 1 0 11-2 0v-2H9a1 1 0 110-2h2V10H9a1 1 0 110-2h2V6a1 1 0 112 0z" fill="#4F46E5"/>
-                  </svg>
-                </div>
-                <div>
-                  <div className="text-sm text-slate-600">Earnings</div>
-                  <div className="text-2xl font-semibold">₹{stats.earnings}</div>
-                </div>
+            <div className="grid gap-3 md:grid-cols-2 text-sm">
+              <div className="flex items-center gap-2 text-slate-700">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 9a7 7 0 0114 0H5z" fill="#4B5563"/>
+                </svg>
+                <div>Name: <span className="text-slate-900">{String(profile?.clinic?.name || '').trim() || '--'}</span></div>
               </div>
-            </div>
-            <div className="flex-1 min-w-[160px] bg-white border border-slate-200 rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-md bg-blue-50 border border-blue-100 flex items-center justify-center">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M7 2a1 1 0 000 2h1v2h8V4h1a1 1 0 100-2H7zM5 8a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2H5zm3 3h8v2H8v-2zm0 4h8v2H8v-2z" fill="#0EA5E9"/>
-                  </svg>
-                </div>
-                <div>
-                  <div className="text-sm text-slate-600">Appointments</div>
-                  <div className="text-2xl font-semibold">{stats.appointments}</div>
-                </div>
+              <div className="flex items-center gap-2 text-slate-700">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 3a2 2 0 00-2 2v14l9-4 9 4V5a2 2 0 00-2-2H5z" fill="#0EA5E9"/>
+                </svg>
+                <div>City: <span className="text-slate-900">{String(profile?.clinic?.city || '').trim() || '--'}</span></div>
               </div>
-            </div>
-            <div className="flex-1 min-w-[160px] bg-white border border-slate-200 rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-md bg-cyan-50 border border-cyan-100 flex items-center justify-center">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 9a7 7 0 0114 0H5z" fill="#06B6D4"/>
-                  </svg>
-                </div>
-                <div>
-                  <div className="text-sm text-slate-600">Patients</div>
-                  <div className="text-2xl font-semibold">{stats.patients}</div>
-                </div>
+              <div className="md:col-span-2 flex items-center gap-2 text-slate-700">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 11h18v10H3V11zm2-8h14v6H5V3z" fill="#06B6D4"/>
+                </svg>
+                <div>Address: <span className="text-slate-900">{String(profile?.clinic?.address || '').trim() || '--'}</span></div>
               </div>
             </div>
           </div>

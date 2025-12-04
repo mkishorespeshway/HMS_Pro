@@ -6,6 +6,10 @@ import Logo from "../components/Logo";
 export default function DoctorProfile() {
   const nav = useNavigate();
   const [profile, setProfile] = useState(null);
+  const linkClass = (active) =>
+    active
+      ? "relative px-4 py-2 text-blue-700 font-bold bg-blue-50 rounded-xl border-2 border-blue-200 shadow-sm"
+      : "relative px-4 py-2 text-gray-600 hover:text-blue-600 font-medium rounded-xl hover:bg-blue-50/50 transition-all duration-300 hover:scale-105";
   const [online, setOnline] = useState(() => {
     const uid = localStorage.getItem("userId") || "";
     const byId = uid ? localStorage.getItem(`doctorOnlineById_${uid}`) : null;
@@ -148,6 +152,8 @@ export default function DoctorProfile() {
     }
   };
 
+  
+
   const name = profile?.user?.name || "";
   const specs = (profile?.specializations || []).join(", ");
   const about = profile?.about || "";
@@ -202,8 +208,8 @@ export default function DoctorProfile() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 mt-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-7xl mx-auto px-4 mt-8 page-gradient">
+      <div className="flex items-center justify-between mb-6 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50 rounded-xl px-6 py-4 sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <Link to="/doctor/dashboard" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-white/20">
@@ -218,16 +224,32 @@ export default function DoctorProfile() {
               
             </div>
           </Link>
-          <nav className="flex items-center gap-6 ml-6 text-slate-700">
-            <Link to="/doctor/dashboard" className="nav-link">Dashboard</Link>
-            <Link to="/doctor/appointments" className="nav-link">Appointments</Link>
-            <Link to="/doctor/profile" className="nav-link text-indigo-700 font-semibold">Profile</Link>
+          <nav className="hidden lg:flex items-center space-x-10 ml-6">
+            {(() => {
+              const p = window.location.pathname;
+              return (
+                <>
+                  <Link to="/doctor/dashboard" className={linkClass(p === "/doctor/dashboard")}> 
+                    <span className="relative z-10">Dashboard</span>
+                    {p === "/doctor/dashboard" && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                  </Link>
+                  <Link to="/doctor/appointments" className={linkClass(p.startsWith("/doctor/appointments"))}> 
+                    <span className="relative z-10">Appointments</span>
+                    {p.startsWith("/doctor/appointments") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                  </Link>
+                  <Link to="/doctor/profile" className={linkClass(p.startsWith("/doctor/profile"))}> 
+                    <span className="relative z-10">Profile</span>
+                    {p.startsWith("/doctor/profile") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                  </Link>
+                </>
+              );
+            })()}
           </nav>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => { localStorage.removeItem("token"); nav("/doctor/login"); }}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full"
+            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 border-2 border-white/20"
           >
             Logout
           </button>
@@ -236,75 +258,92 @@ export default function DoctorProfile() {
       <div className="grid grid-cols-12 gap-6">
         <main className="col-span-12">
           <div className="mb-6">
-            <h1 className="text-3xl font-semibold">Doctor Profile</h1>
+            <h1 className="text-4xl font-bold text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Doctor Profile</h1>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl p-6">
-            <div className="grid sm:grid-cols-3 gap-6">
+          <div className="max-w-5xl mx-auto bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl p-8 mb-8">
+            <div className="grid md:grid-cols-3 gap-8">
               <div>
-                {String(profile?.photoBase64 || "").startsWith("data:image") ? (
-                  <img
-                    src={profile?.photoBase64}
-                    alt="Doctor"
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                ) : (
-                  <div className="w-full h-48 rounded-lg border bg-white" />
-                )}
-              </div>
-              <div className="sm:col-span-2">
-                <div className="text-xl font-semibold">{name}</div>
-                <div className="text-sm text-slate-600">{specs}</div>
-                <p className="mt-3 text-sm text-slate-700">{about}</p>
-                {fee !== "" && (<div className="mt-4 text-sm text-slate-700">Appointment Fee: ₹{fee}</div>)}
-                <div className="mt-1 text-sm text-slate-700">Address: {address}</div>
-                <div className="mt-1 text-sm text-slate-700">City: {city}</div>
-                <div className="mt-3 flex items-center gap-3">
-                  <span className={`inline-block text-xs px-2 py-1 rounded ${online ? "bg-green-100 text-green-700" : "bg-slate-200 text-slate-700"}`}>{online ? "Online" : "Offline"}</span>
-                  <button
-                    onClick={() => setStatus(online ? "offline" : "online")}
-                    className={`text-xs px-3 py-1 rounded-full border ${online ? "border-green-600 text-green-700" : "border-slate-600 text-slate-700"}`}
-                  >
-                    {online ? "Go Offline" : "Go Online"}
-                  </button>
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl p-6 hover:scale-105 hover:shadow-2xl transition-all duration-500">
+                  {String(profile?.photoBase64 || "").startsWith("data:image") ? (
+                    <img src={profile?.photoBase64} alt="Doctor" className="w-32 h-32 md:w-40 md:h-40 object-cover rounded-xl border-2 border-indigo-200 mx-auto" />
+                  ) : (
+                    <div className="w-32 h-32 md:w-40 md:h-40 rounded-xl border-2 border-slate-300 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center mx-auto">
+                      <div className="text-6xl text-slate-400">👤</div>
+                    </div>
+                  )}
+                  <div className="text-center mt-4">
+                    <div className="text-2xl font-bold bg-gradient-to-r from-indigo-700 via-purple-700 to-blue-800 bg-clip-text text-transparent">{name}</div>
+                    <div className="text-sm text-slate-600">{specs}</div>
+                    
+                  </div>
                 </div>
-                <button onClick={startEdit} className="mt-3 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md">Edit</button>
+              </div>
+              <div className="md:col-span-2">
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl p-6 hover:scale-105 hover:shadow-2xl transition-all duration-500">
+                  <div className="text-xl font-bold text-slate-800 mb-4">Doctor Information</div>
+                  <div className="space-y-3 text-sm">
+                    <p className="text-slate-700">{about}</p>
+                    {fee !== "" && (<div className="text-slate-700">Appointment Fee: <span className="font-medium">₹{fee}</span></div>)}
+                  </div>
+                </div>
+                <div className="mt-6 bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl p-6 hover:scale-105 hover:shadow-2xl transition-all duration-500">
+                  <div className="text-xl font-bold text-slate-800 mb-4">Clinic Details</div>
+                  <div className="space-y-4 text-sm">
+                    <div className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-indigo-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <div> Address: <div className="whitespace-pre-wrap text-slate-700 font-medium">{address}</div></div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 21.5l-7-7a4.95 4.95 0 117-7l7 7a4.95 4.95 0 11-7 7z" />
+                      </svg>
+                      <div> City: <span className="text-slate-700 font-medium">{city}</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-6 flex justify-center">
+                  <button onClick={startEdit} className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300">Edit</button>
+                </div>
               </div>
             </div>
           </div>
 
           {editing && (
-            <div className="mt-6 bg-white border border-slate-200 rounded-xl p-6">
+            <div className="mt-6 bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl p-8">
               <h2 className="text-xl font-semibold mb-4">Edit Profile</h2>
               {error && <div className="text-red-600 mb-3 text-sm">{error}</div>}
-              <form onSubmit={save} className="grid gap-3 sm:grid-cols-2">
+              <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Specializations</label>
-                  <input name="specializations" value={form.specializations} onChange={onChange} className="border border-slate-300 rounded-md p-2 w-full" placeholder="e.g., Cardiology, Dermatology" />
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Specializations</label>
+                  <input name="specializations" value={form.specializations} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" placeholder="e.g., Cardiology, Dermatology" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Clinic Name</label>
-                  <input name="clinicName" value={form.clinicName} onChange={onChange} className="border border-slate-300 rounded-md p-2 w-full" />
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Clinic Name</label>
+                  <input name="clinicName" value={form.clinicName} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">City</label>
-                  <input name="clinicCity" value={form.clinicCity} onChange={onChange} className="border border-slate-300 rounded-md p-2 w-full" />
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">City</label>
+                  <input name="clinicCity" value={form.clinicCity} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
-                  <input name="clinicAddress" value={form.clinicAddress} onChange={onChange} className="border border-slate-300 rounded-md p-2 w-full" />
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Address</label>
+                  <input name="clinicAddress" value={form.clinicAddress} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Consultation Fees</label>
-                  <input name="consultationFees" value={form.consultationFees} onChange={onChange} className="border border-slate-300 rounded-md p-2 w-full" />
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Consultation Fees</label>
+                  <input name="consultationFees" value={form.consultationFees} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Slot Duration (mins)</label>
-                  <input name="slotDurationMins" value={form.slotDurationMins} onChange={onChange} className="border border-slate-300 rounded-md p-2 w-full" />
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Slot Duration (mins)</label>
+                  <input name="slotDurationMins" value={form.slotDurationMins} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
                 </div>
                 <div className="sm:col-span-2 flex gap-3 mt-2">
-                  <button disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md">{saving ? "Saving..." : "Save"}</button>
-                  <button type="button" onClick={() => setEditing(false)} className="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-md">Cancel</button>
+                  <button disabled={saving} className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all">{saving ? "Saving..." : "Save"}</button>
+                  <button type="button" onClick={() => setEditing(false)} className="bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all">Cancel</button>
                 </div>
               </form>
             </div>
