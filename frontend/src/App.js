@@ -248,7 +248,7 @@ function Header() {
           </Link>
 
           {/* Enhanced Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-10">
+          <nav className="absolute left-1/2 -translate-x-1/2 hidden lg:flex items-center space-x-10">
             {(() => {
               const p = location.pathname;
               const linkClass = (active) =>

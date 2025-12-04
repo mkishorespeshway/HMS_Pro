@@ -620,152 +620,155 @@ export default function DoctorDashboard() {
   }, [list, latestToday]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 mt-8 page-gradient">
-      <div className="flex items-center justify-between mb-6 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50 rounded-xl px-6 py-4 sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <Link to="/doctor/dashboard" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-white/20">
-              <div className="text-white">
-                <Logo size={20} />
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
-                HospoZen
-              </span>
-              
-            </div>
-          </Link>
-          <nav className="hidden lg:flex items-center space-x-10 ml-6">
-            {(() => {
-              const p = window.location.pathname;
-              return (
-                <>
-                  <Link to="/doctor/dashboard" className={linkClass(p === "/doctor/dashboard")}>
-                    <span className="relative z-10">Dashboard</span>
-                    {p === "/doctor/dashboard" && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
-                  </Link>
-                  <Link to="/doctor/appointments" className={linkClass(p.startsWith("/doctor/appointments"))}>
-                    <span className="relative z-10">Appointments</span>
-                    {p.startsWith("/doctor/appointments") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
-                  </Link>
-                  <Link to="/doctor/profile" className={linkClass(p.startsWith("/doctor/profile"))}>
-                    <span className="relative z-10">Profile</span>
-                    {p.startsWith("/doctor/profile") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
-                  </Link>
-                </>
-              );
-            })()}
-          </nav>
-        </div>
-        <div className="relative flex items-center gap-3">
-          <button
-            onClick={async () => {
-              try {
-                setPanelOpen((v) => !v);
-                if (!panelOpen) {
-                  setPanelLoading(true);
-                  const { data } = await API.get('/notifications');
-                  const items = Array.isArray(data) ? data : [];
-                  setPanelItems(items);
-                  const unread = items.filter((x) => !x.read).length;
-                  setPanelUnread(unread);
-                  setBellCount(unread);
-                  setPanelLoading(false);
-                }
-              } catch (_) { setPanelLoading(false); }
-            }}
-            className="relative h-9 w-9 rounded-full border border-slate-300 flex items-center justify-center"
-            title="Notifications"
-          >
-            <span role="img" aria-label="bell">🔔</span>
-            {bellCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1">{bellCount}</span>
-            )}
-          </button>
-            {panelOpen && (
-              <div className="absolute right-0 top-12 w-96 bg-white rounded-xl shadow-2xl border border-slate-200 z-50">
-              <div className="bg-indigo-700 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
-                <div className="font-semibold">Your Notifications</div>
-                <div className="text-xs bg-green-500 text-white rounded-full px-2 py-0.5">{panelUnread} New</div>
-              </div>
-              <div className="px-4 py-2 flex items-center justify-between border-b">
-                <button onClick={() => nav('/doctor/dashboard')} className="text-indigo-700 text-sm">View All</button>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={async () => {
-                      try { await API.delete('/notifications'); setPanelItems([]); setPanelUnread(0); setBellCount(0); } catch(_) {}
-                    }}
-                    className="text-white bg-indigo-700 rounded-md px-2 py-1 text-xs"
-                  >
-                    Clear All
-                  </button>
+    <div className="max-w-7xl mx-auto px-4 pt-16 page-gradient">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50">
+        <div className="max-w-7xl mx-auto px-6 relative">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <Link to="/doctor/dashboard" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-white/20">
+                  <div className="text-white">
+                    <Logo size={20} />
+                  </div>
                 </div>
-              </div>
-              <div className="max-h-[60vh] overflow-y-auto">
-                {panelLoading ? (
-                  <div className="p-4 text-sm text-slate-600">Loading…</div>
-                ) : panelItems.length === 0 ? (
-                  <div className="p-4 text-sm text-slate-600">No notifications</div>
-                ) : (
-                  panelItems.map((n) => (
-                    <div key={n._id || n.id} className="px-4 py-3 border-b hover:bg-slate-50">
-                      <div className="flex items-start justify-between">
-                        <button
-                          onClick={async () => {
-                            try {
-                              if (n.type === 'chat') {
-                                const id = String(n.apptId || '');
-                                if (id) {
-                                  try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
-                                  const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id) || null;
-                                  setChatAppt(a || { _id: id, id, patient: { name: '' } });
-                                }
-                              } else if (n.type === 'meet' && n.apptId) {
-                                await openMeetFor(n.apptId);
-                              } else if (n.type === 'appointment') {
-                                nav('/doctor/appointments');
-                              } else if (n.link) {
-                                nav(n.link);
-                              }
-                              setPanelOpen(false);
-                              try { await API.put(`/notifications/${n._id || n.id}/read`); } catch(_) {}
-                              setPanelItems((prev) => prev.map((x) => (String(x._id || x.id) === String(n._id || n.id) ? { ...x, read: true } : x)));
-                              setPanelUnread((c) => Math.max(0, c - 1));
-                              setBellCount((c) => Math.max(0, c - 1));
-                            } catch(_) {}
-                          }}
-                          className="text-left text-sm text-slate-900"
-                        >
-                          {n.message}
-                        </button>
-                        {!n.read && (
-                          <button onClick={async () => { try { await API.put(`/notifications/${n._id || n.id}/read`); setPanelItems((prev) => prev.map((x) => (String(x._id || x.id) === String(n._id || n.id) ? { ...x, read: true } : x))); setPanelUnread((c) => Math.max(0, c - 1)); } catch(_) {} }} className="text-xs text-slate-600">Mark As Read</button>
-                        )}
-                      </div>
-                      <div className="text-xs text-slate-500 mt-1">{new Date(n.createdAt).toLocaleString()}</div>
-                    </div>
-                  ))
+                <div className="flex flex-col">
+                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                    HospoZen
+                  </span>
+                </div>
+              </Link>
+            </div>
+            <nav className="absolute left-1/2 -translate-x-1/2 hidden lg:flex items-center space-x-10">
+              {(() => {
+                const p = window.location.pathname;
+                return (
+                  <>
+                    <Link to="/doctor/dashboard" className={linkClass(p === "/doctor/dashboard")}>
+                      <span className="relative z-10">Dashboard</span>
+                      {p === "/doctor/dashboard" && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                    </Link>
+                    <Link to="/doctor/appointments" className={linkClass(p.startsWith("/doctor/appointments"))}>
+                      <span className="relative z-10">Appointments</span>
+                      {p.startsWith("/doctor/appointments") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                    </Link>
+                    <Link to="/doctor/profile" className={linkClass(p.startsWith("/doctor/profile"))}>
+                      <span className="relative z-10">Profile</span>
+                      {p.startsWith("/doctor/profile") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                    </Link>
+                  </>
+                );
+              })()}
+            </nav>
+            <div className="relative flex items-center gap-3">
+              <button
+                onClick={async () => {
+                  try {
+                    setPanelOpen((v) => !v);
+                    if (!panelOpen) {
+                      setPanelLoading(true);
+                      const { data } = await API.get('/notifications');
+                      const items = Array.isArray(data) ? data : [];
+                      setPanelItems(items);
+                      const unread = items.filter((x) => !x.read).length;
+                      setPanelUnread(unread);
+                      setBellCount(unread);
+                      setPanelLoading(false);
+                    }
+                  } catch (_) { setPanelLoading(false); }
+                }}
+                className="relative h-9 w-9 rounded-full border border-slate-300 flex items-center justify-center"
+                title="Notifications"
+              >
+                <span role="img" aria-label="bell">🔔</span>
+                {bellCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1">{bellCount}</span>
                 )}
-              </div>
-              </div>
-            )}
-          <button
-            onClick={() => {
-              try {
-                const uid = localStorage.getItem("userId") || "";
-                if (uid) {
-                  localStorage.setItem(`doctorOnlineById_${uid}`, "0");
-                  localStorage.setItem(`doctorBusyById_${uid}`, "0");
-                }
-              } catch (_) {}
-              localStorage.removeItem("token");
-              nav("/doctor/login");
-            }}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 border-2 border-white/20"
-          >
-            Logout
-          </button>
+              </button>
+              {panelOpen && (
+                <div className="absolute right-0 top-12 w-96 bg-white rounded-xl shadow-2xl border border-slate-200 z-50">
+                  <div className="bg-indigo-700 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
+                    <div className="font-semibold">Your Notifications</div>
+                    <div className="text-xs bg-green-500 text-white rounded-full px-2 py-0.5">{panelUnread} New</div>
+                  </div>
+                  <div className="px-4 py-2 flex items-center justify-between border-b">
+                    <button onClick={() => nav('/doctor/dashboard')} className="text-indigo-700 text-sm">View All</button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={async () => {
+                          try { await API.delete('/notifications'); setPanelItems([]); setPanelUnread(0); setBellCount(0); } catch(_) {}
+                        }}
+                        className="text-white bg-indigo-700 rounded-md px-2 py-1 text-xs"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+                  <div className="max-h-[60vh] overflow-y-auto">
+                    {panelLoading ? (
+                      <div className="p-4 text-sm text-slate-600">Loading…</div>
+                    ) : panelItems.length === 0 ? (
+                      <div className="p-4 text-sm text-slate-600">No notifications</div>
+                    ) : (
+                      panelItems.map((n) => (
+                        <div key={n._id || n.id} className="px-4 py-3 border-b hover:bg-slate-50">
+                          <div className="flex items-start justify-between">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  if (n.type === 'chat') {
+                                    const id = String(n.apptId || '');
+                                    if (id) {
+                                      try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
+                                      const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id) || null;
+                                      setChatAppt(a || { _id: id, id, patient: { name: '' } });
+                                    }
+                                  } else if (n.type === 'meet' && n.apptId) {
+                                    await openMeetFor(n.apptId);
+                                  } else if (n.type === 'appointment') {
+                                    nav('/doctor/appointments');
+                                  } else if (n.link) {
+                                    nav(n.link);
+                                  }
+                                  setPanelOpen(false);
+                                  try { await API.put(`/notifications/${n._id || n.id}/read`); } catch(_) {}
+                                  setPanelItems((prev) => prev.map((x) => (String(x._id || x.id) === String(n._id || n.id) ? { ...x, read: true } : x)));
+                                  setPanelUnread((c) => Math.max(0, c - 1));
+                                  setBellCount((c) => Math.max(0, c - 1));
+                                } catch(_) {}
+                              }}
+                              className="text-left text-sm text-slate-900"
+                            >
+                              {n.message}
+                            </button>
+                            {!n.read && (
+                              <button onClick={async () => { try { await API.put(`/notifications/${n._id || n.id}/read`); setPanelItems((prev) => prev.map((x) => (String(x._id || x.id) === String(n._id || n.id) ? { ...x, read: true } : x))); setPanelUnread((c) => Math.max(0, c - 1)); } catch(_) {} }} className="text-xs text-slate-600">Mark As Read</button>
+                            )}
+                          </div>
+                          <div className="text-xs text-slate-500 mt-1">{new Date(n.createdAt).toLocaleString()}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  try {
+                    const uid = localStorage.getItem("userId") || "";
+                    if (uid) {
+                      localStorage.setItem(`doctorOnlineById_${uid}`, "0");
+                      localStorage.setItem(`doctorBusyById_${uid}`, "0");
+                    }
+                  } catch (_) {}
+                  localStorage.removeItem("token");
+                  nav("/doctor/login");
+                }}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 border-2 border-white/20"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       <div className="grid grid-cols-12 gap-6">

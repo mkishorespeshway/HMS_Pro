@@ -208,51 +208,54 @@ export default function DoctorProfile() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 mt-8 page-gradient">
-      <div className="flex items-center justify-between mb-6 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50 rounded-xl px-6 py-4 sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <Link to="/doctor/dashboard" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-white/20">
-              <div className="text-white">
-                <Logo size={20} />
-              </div>
+    <div className="max-w-7xl mx-auto px-4 pt-16 page-gradient">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50">
+        <div className="max-w-7xl mx-auto px-6 relative">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <Link to="/doctor/dashboard" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-white/20">
+                  <div className="text-white">
+                    <Logo size={20} />
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                    HospoZen
+                  </span>
+                </div>
+              </Link>
             </div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
-                HospoZen
-              </span>
-              
+            <nav className="absolute left-1/2 -translate-x-1/2 hidden lg:flex items-center space-x-10">
+              {(() => {
+                const p = window.location.pathname;
+                return (
+                  <>
+                    <Link to="/doctor/dashboard" className={linkClass(p === "/doctor/dashboard")}>
+                      <span className="relative z-10">Dashboard</span>
+                      {p === "/doctor/dashboard" && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                    </Link>
+                    <Link to="/doctor/appointments" className={linkClass(p.startsWith("/doctor/appointments"))}>
+                      <span className="relative z-10">Appointments</span>
+                      {p.startsWith("/doctor/appointments") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                    </Link>
+                    <Link to="/doctor/profile" className={linkClass(p.startsWith("/doctor/profile"))}>
+                      <span className="relative z-10">Profile</span>
+                      {p.startsWith("/doctor/profile") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                    </Link>
+                  </>
+                );
+              })()}
+            </nav>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => { localStorage.removeItem("token"); nav("/doctor/login"); }}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 border-2 border-white/20"
+              >
+                Logout
+              </button>
             </div>
-          </Link>
-          <nav className="hidden lg:flex items-center space-x-10 ml-6">
-            {(() => {
-              const p = window.location.pathname;
-              return (
-                <>
-                  <Link to="/doctor/dashboard" className={linkClass(p === "/doctor/dashboard")}> 
-                    <span className="relative z-10">Dashboard</span>
-                    {p === "/doctor/dashboard" && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
-                  </Link>
-                  <Link to="/doctor/appointments" className={linkClass(p.startsWith("/doctor/appointments"))}> 
-                    <span className="relative z-10">Appointments</span>
-                    {p.startsWith("/doctor/appointments") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
-                  </Link>
-                  <Link to="/doctor/profile" className={linkClass(p.startsWith("/doctor/profile"))}> 
-                    <span className="relative z-10">Profile</span>
-                    {p.startsWith("/doctor/profile") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
-                  </Link>
-                </>
-              );
-            })()}
-          </nav>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => { localStorage.removeItem("token"); nav("/doctor/login"); }}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 border-2 border-white/20"
-          >
-            Logout
-          </button>
+          </div>
         </div>
       </div>
       <div className="grid grid-cols-12 gap-6">
