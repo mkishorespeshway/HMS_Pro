@@ -686,7 +686,11 @@ export default function DoctorToday() {
                       setList((prev) => prev.map((x) => (String(x._id || x.id) === String(a._id || a.id) ? { ...x, status: 'COMPLETED' } : x)));
                       try {
                         const uid = localStorage.getItem('userId') || '';
-                        if (uid) localStorage.setItem(`doctorBusyById_${uid}`, '0');
+                        if (uid) {
+                          localStorage.setItem(`doctorBusyById_${uid}`, '0');
+                          localStorage.setItem(`doctorOnlineById_${uid}`, '1');
+                        }
+                        try { await API.put('/doctors/me/status', { isOnline: true, isBusy: false }); } catch(_) {}
                       } catch(_) {}
                       try {
                         const w = window;

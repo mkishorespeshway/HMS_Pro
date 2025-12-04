@@ -208,6 +208,29 @@ export default function DoctorDashboard() {
       } catch(_) {}
     } catch(_) {}
   };
+  const leaveMeetFor = (apptId) => {
+    try {
+      const id = String(apptId || '');
+      if (!id) return;
+      try { localStorage.setItem(`leftDoctor_${id}`, '1'); } catch(_) {}
+      try { localStorage.removeItem(`joinedByDoctor_${id}`); } catch(_) {}
+      try {
+        const uid = localStorage.getItem('userId') || '';
+        if (uid) {
+          localStorage.setItem(`doctorBusyById_${uid}`, '0');
+          API.put('/doctors/me/status', { isOnline: true, isBusy: false }).catch(() => {});
+        }
+      } catch(_) {}
+      setBusy(false);
+      setOnline(true);
+      try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'exit' }); } catch(_) {}
+      try {
+        if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; }
+        if (meetWinRef.current && !meetWinRef.current.closed) { meetWinRef.current.close(); }
+        meetWinRef.current = null;
+      } catch(_) {}
+    } catch(_) {}
+  };
 
   const addNotif = (text, apptId, link) => {
     const id = String(Date.now()) + String(Math.random());
@@ -1068,32 +1091,14 @@ export default function DoctorDashboard() {
                           const id = String(a._id || a.id || '');
                           const joinedDoc = id ? localStorage.getItem(`joinedByDoctor_${id}`) === '1' : false;
                           const joinedPat = id ? localStorage.getItem(`joinedByPatient_${id}`) === '1' : false;
-                          const joined = joinedDoc || joinedPat;
+                          const joined = joinedDoc;
                           const leftDoc = id ? localStorage.getItem(`leftDoctor_${id}`) === '1' : false;
                           if (joined) {
                             return (
                               <div className="flex items-center gap-2">
                                 <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Joined</span>
                                 <button
-                                  onClick={() => {
-                                    try { localStorage.setItem(`leftDoctor_${id}`, '1'); } catch(_) {}
-                                    try { localStorage.removeItem(`joinedByDoctor_${id}`); } catch(_) {}
-                                    try {
-                                      const uid = localStorage.getItem('userId') || '';
-                                      if (uid) {
-                                        localStorage.setItem(`doctorBusyById_${uid}`, '0');
-                                        API.put('/doctors/me/status', { isOnline: true, isBusy: false }).catch(() => {});
-                                      }
-                                    } catch(_) {}
-                                    setBusy(false);
-                                    setOnline(true);
-                                    try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'exit' }); } catch(_) {}
-                                    try {
-                                      if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; }
-                                      if (meetWinRef.current && !meetWinRef.current.closed) { meetWinRef.current.close(); }
-                                      meetWinRef.current = null;
-                                    } catch(_) {}
-                                  }}
+                                  onClick={() => leaveMeetFor(id)}
                                   className="px-3 py-1 rounded-md border border-red-600 text-red-700"
                                 >
                                   Leave
@@ -1105,56 +1110,7 @@ export default function DoctorDashboard() {
                             return (
                               <div className="flex items-center gap-2">
                                 <button
-                                  onClick={async () => {
-                                    if (!online) { alert('You are offline. Set status to ONLINE to rejoin consultation.'); return; }
-                                    const stored = id ? localStorage.getItem(`meetlink_${id}`) : '';
-                                    let pick = (stored && /^https?:\/\//.test(stored)) ? stored : String(a.meetingLink || '');
-                                    let url = String(pick).replace(/[`'\"]/g, '').trim();
-                                    if (!url || !/^https?:\/\//.test(url)) {
-                                      try {
-                                        const resp = await API.post(`/appointments/${id}/meet-link/generate`);
-                                        url = String(resp?.data?.url || '').trim();
-                                        if (!/^https?:\/\//.test(url)) { alert('Failed to generate meeting link'); return; }
-                                        try { localStorage.setItem(`meetlink_${id}`, url); } catch(_) {}
-                                      } catch (e) {
-                                        alert(e.response?.data?.message || e.message || 'Failed to generate meeting link');
-                                        return;
-                                      }
-                                    } else {
-                                      try { await API.put(`/appointments/${id}/meet-link`, { url }); } catch(_) {}
-                                    }
-                                    try { localStorage.removeItem(`leftDoctor_${id}`); } catch(_) {}
-                                    try { localStorage.setItem(`joinedByDoctor_${id}`, '1'); } catch(_) {}
-                                    try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'join' }); } catch(_) {}
-                                    try {
-                                      const uid = localStorage.getItem('userId') || '';
-                                      if (uid) {
-                                        localStorage.setItem(`doctorBusyById_${uid}`, '1');
-                                        API.put('/doctors/me/status', { isOnline: true, isBusy: true }).catch(() => {});
-                                      }
-                                    } catch(_) {}
-                                    setOnline(true);
-                                    setBusy(true);
-                                    try {
-                                      meetWinRef.current = window.open(url, '_blank');
-                                      meetMonitorRef.current = setInterval(() => {
-                                        if (!meetWinRef.current || meetWinRef.current.closed) {
-                                          if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; }
-                                          try { localStorage.removeItem(`joinedByDoctor_${id}`); } catch(_) {}
-                                          try {
-                                            const uid = localStorage.getItem('userId') || '';
-                                            if (uid) {
-                                              localStorage.setItem(`doctorBusyById_${uid}`, '0');
-                                              API.put('/doctors/me/status', { isOnline: true, isBusy: false }).catch(() => {});
-                                            }
-                                          } catch(_) {}
-                                          setBusy(false);
-                                          setOnline(true);
-                                          try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'exit' }); } catch(_) {}
-                                        }
-                                      }, 1000);
-                                    } catch(_) {}
-                                  }}
+                                  onClick={() => openMeetFor(id)}
                                   className="px-3 py-1 rounded-md border border-indigo-600 text-indigo-700"
                                 >
                                   Rejoin
@@ -1165,67 +1121,7 @@ export default function DoctorDashboard() {
                           return (
                             <div className="flex items-center gap-2">
                               <button
-                                onClick={async () => {
-                                  if (!online) { alert('You are offline. Set status to ONLINE to start consultation.'); return; }
-                                  const stored = id ? localStorage.getItem(`meetlink_${id}`) : '';
-                                  let pick = (stored && /^https?:\/\//.test(stored)) ? stored : String(a.meetingLink || '');
-                                  let url = String(pick).replace(/[`'\"]/g, '').trim();
-                                  if (!url || !/^https?:\/\//.test(url)) {
-                                    try {
-                                      const resp = await API.post(`/appointments/${id}/meet-link/generate`);
-                                      url = String(resp?.data?.url || '').trim();
-                                      if (!/^https?:\/\//.test(url)) { alert('Failed to generate meeting link'); return; }
-                                      try { localStorage.setItem(`meetlink_${id}`, url); } catch(_) {}
-                                    } catch (e) {
-                                      alert(e.response?.data?.message || e.message || 'Failed to generate meeting link');
-                                      return;
-                                    }
-                                  } else {
-                                    try { await API.put(`/appointments/${id}/meet-link`, { url }); } catch(_) {}
-                                  }
-                                  try {
-                                    const chan = new BroadcastChannel('meetlink');
-                                    chan.postMessage({ id, url });
-                                    try { chan.close(); } catch(_) {}
-                                  } catch (_) {}
-                                  try {
-                                    const key = `wr_${id}_chat`;
-                                    const chat = JSON.parse(localStorage.getItem(key) || '[]');
-                                    const next = Array.isArray(chat) ? [...chat, String(url)] : [String(url)];
-                                    localStorage.setItem(key, JSON.stringify(next));
-                                  } catch (_) {}
-                                  try {
-                                    const uid = localStorage.getItem('userId') || '';
-                                    if (uid) {
-                                      localStorage.setItem(`doctorBusyById_${uid}`, '1');
-                                      API.put('/doctors/me/status', { isOnline: true, isBusy: true }).catch(() => {});
-                                    }
-                                    setOnline(true);
-                                    setBusy(true);
-                                  } catch(_) {}
-                                  try { localStorage.removeItem(`leftDoctor_${id}`); } catch(_) {}
-                                  try { if (id) localStorage.setItem(`joinedByDoctor_${id}`, '1'); } catch(_) {}
-                                  try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'join' }); } catch(_) {}
-                                  try {
-                                    meetWinRef.current = window.open(url, '_blank');
-                                    meetMonitorRef.current = setInterval(() => {
-                                      if (!meetWinRef.current || meetWinRef.current.closed) {
-                                        if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; }
-                                        try {
-                                          if (id) localStorage.removeItem(`joinedByDoctor_${id}`);
-                                          const uid = localStorage.getItem('userId') || '';
-                                          if (uid) {
-                                            localStorage.setItem(`doctorBusyById_${uid}`, '0');
-                                            API.put('/doctors/me/status', { isOnline: true, isBusy: false }).catch(() => {});
-                                          }
-                                        } catch(_) {}
-                                        setBusy(false);
-                                        setOnline(true);
-                                        try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'exit' }); } catch(_) {}
-                                      }
-                                    }, 1000);
-                                  } catch(_) {}
-                                }}
+                                onClick={() => openMeetFor(id)}
                                 className="px-3 py-1 rounded-md border border-green-600 text-green-700"
                               >
                                 Join

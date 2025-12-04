@@ -128,6 +128,15 @@ export default function SearchDoctors() {
   }, [q, specialization]);
 
   useEffect(() => {
+    try {
+      const qs = new URLSearchParams(location.search || "");
+      const spec = qs.get("specialization") || "";
+      if (spec) setSpecialization(spec);
+    } catch (_) {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
+  useEffect(() => {
     const cleanup = [];
     const initSocket = () => {
       const origin = String(API.defaults.baseURL || "").replace(/\/(api)?$/, "");
