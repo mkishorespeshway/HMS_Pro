@@ -144,6 +144,24 @@ app.use('/api/notifications', notificationRoutes);
 
 app.get('/', (req, res) => res.send('DoctorConnect API'));
 
+// Public stats endpoint
+app.get('/api/stats', async (req, res) => {
+  try {
+    const Appointment = require('./models/Appointment');
+    const User = require('./models/User');
+    const DoctorProfile = require('./models/DoctorProfile');
+    const appointments = await Appointment.countDocuments({});
+    const doctors = await User.countDocuments({ role: 'doctor', isDoctorApproved: true });
+    const distinctSpecs = await DoctorProfile.distinct('specializations');
+    const specialties = (Array.isArray(distinctSpecs) ? distinctSpecs : [])
+      .map((s) => String(s || '').trim())
+      .filter(Boolean).length;
+    res.json({ appointments, doctors, specialties });
+  } catch (e) {
+    res.status(500).json({ message: e.message || 'Failed to fetch stats' });
+  }
+});
+
 
 const PORT = 5000;
 server.listen(PORT, () => console.log(`Server listening on ${PORT}`));

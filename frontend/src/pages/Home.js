@@ -212,7 +212,12 @@ export default function Home() {
             <div className="flex gap-10 animate-scroll-left" style={{ width: `${(specialties.length * 2) * 180}px` }}>
               {/* Duplicate the specialties for seamless infinite scroll */}
               {[...specialties, ...specialties].map((s, i) => (
-                <div key={`${s.label}-${i}`} className="text-center flex-shrink-0" style={{ width: '160px' }}>
+                <Link
+                  key={`${s.label}-${i}`}
+                  to={`/search?specialization=${encodeURIComponent(s.label)}`}
+                  className="text-center flex-shrink-0"
+                  style={{ width: '160px' }}
+                >
                   <div className={`relative w-28 h-28 rounded-3xl ${s.color} flex items-center justify-center text-5xl shadow-xl hover:shadow-3xl transition-all duration-700 hover:scale-125 hover:rotate-12 border-2 border-white/60 backdrop-blur-sm cursor-pointer group-hover:border-white/80`}>
                     <span className="transform group-hover:scale-125 group-hover:rotate-12 transition-all duration-500 drop-shadow-lg">{s.icon}</span>
                     <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -220,7 +225,7 @@ export default function Home() {
                   </div>
                   <div className="mt-6 text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors duration-300 tracking-wide">{s.label}</div>
                   <div className="w-0 h-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mx-auto mt-2 group-hover:w-16 transition-all duration-500"></div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
