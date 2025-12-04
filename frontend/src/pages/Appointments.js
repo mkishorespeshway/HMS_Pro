@@ -960,9 +960,18 @@ export default function Appointments() {
       <div className="mt-8">
         <div className="grid md:grid-cols-3 gap-8 items-start">
           <div>
-            <div className="flex items-center gap-2 text-indigo-700 font-semibold text-lg">
-              <Logo size={24} />
-              <span>HospoZen</span>
+            <div className="flex items-center gap-4 mb-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg border-2 border-white/20">
+                <div className="text-white">
+                  <Logo size={20} />
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                  HospoZen
+                </span>
+                <span className="text-xs text-blue-600 font-medium tracking-wider uppercase">Healthcare Platform</span>
+              </div>
             </div>
             <p className="mt-3 text-slate-600 text-sm">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
           </div>

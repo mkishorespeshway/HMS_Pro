@@ -74,9 +74,18 @@ export default function AdminAppointments() {
     <div className="max-w-7xl mx-auto px-4 mt-8">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Link to="/admin/dashboard" className="flex items-center gap-2 text-indigo-700">
-            <Logo size={28} />
-            <span className="font-semibold">HospoZen</span>
+          <Link to="/admin/dashboard" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-white/20">
+              <div className="text-white">
+                <Logo size={20} />
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                HospoZen
+              </span>
+             
+            </div>
           </Link>
           <nav className="flex items-center gap-6 ml-6 text-slate-700">
             <Link to="/admin/dashboard" className="nav-link">Dashboard</Link>

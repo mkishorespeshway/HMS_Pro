@@ -153,11 +153,18 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 relative z-10">
           <div className="grid md:grid-cols-2 gap-20 items-center">
             <div>
-              <div className="flex items-center gap-3 mb-6 animate-slide-in-down">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white text-xl font-bold">H</span>
+              <div className="flex items-center gap-4 mb-6 animate-slide-in-down">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg border-2 border-white/20">
+                  <div className="text-white">
+                    <Logo size={20} />
+                  </div>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">HospoZen</h2>
+                <div className="flex flex-col">
+                  <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                    HospoZen
+                  </span>
+                  <span className="text-xs text-blue-600 font-medium tracking-wider uppercase">Healthcare Platform</span>
+                </div>
               </div>
 
               <h1 className="text-3xl md:text-4xl font-bold leading-tight animate-slide-in-left text-gray-900 mb-6">
@@ -316,9 +323,18 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8 items-start">
             <div className="animate-slide-in-left">
-              <div className="flex items-center gap-3 text-pink-700 font-bold text-xl mb-4">
-                <Logo size={32} />
-                <span>HospoZen</span>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg border-2 border-white/20">
+                  <div className="text-white">
+                    <Logo size={20} />
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                    HospoZen
+                  </span>
+                  <span className="text-xs text-blue-600 font-medium tracking-wider uppercase">Healthcare Platform</span>
+                </div>
               </div>
               <p className="text-gray-700 text-sm leading-relaxed">
                 Your trusted healthcare companion. Connecting patients with verified medical professionals for seamless healthcare experiences.
