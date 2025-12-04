@@ -228,6 +228,19 @@ export default function DoctorDashboard() {
       if (!id) return;
       const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id) || null;
       if (!a) { nav('/doctor/appointments?joinMeet=' + encodeURIComponent(id)); return; }
+      try {
+        const start = new Date(a.date);
+        const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+        start.setHours(sh, sm, 0, 0);
+        const end = new Date(a.date);
+        const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+        end.setHours(eh, em, 0, 0);
+        if (end.getTime() <= start.getTime()) end.setTime(start.getTime() + 30 * 60 * 1000);
+        const now = Date.now();
+        const windowStart = start.getTime() - 5 * 60 * 1000;
+        if (now >= end.getTime()) { alert('Meeting time is over.'); return; }
+        if (now < windowStart) { alert('Meeting will be available 5 minutes before start.'); return; }
+      } catch (_) {}
       if (!online) { alert('You are offline. Set status to ONLINE to join consultation.'); return; }
       const stored = id ? localStorage.getItem(`meetlink_${id}`) : '';
       let pick = (stored && /^https?:\/\//.test(stored)) ? stored : String(a.meetingLink || '');
