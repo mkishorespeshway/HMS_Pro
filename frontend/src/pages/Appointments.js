@@ -189,7 +189,7 @@ export default function Appointments() {
       const chan = new BroadcastChannel('chatmsg');
       const onMsg = (e) => {
         try {
-          const { apptId, actor } = e.data || {};
+          const { apptId, actor, text } = e.data || {};
           if (!apptId) return;
           if (String(actor || '').toLowerCase() !== 'doctor') return;
           setBellCount((c) => {
@@ -198,6 +198,27 @@ export default function Appointments() {
             return next;
           });
           try { localStorage.setItem('lastChatApptId', String(apptId)); } catch(_) {}
+          try {
+            const id = String(apptId);
+            const t = String(text || '').trim();
+            if (t) {
+              const isFollowOpen = !!(followAppt && String(followAppt._id || followAppt.id) === id);
+              if (isFollowOpen) {
+                const k = `fu_${id}_chat`;
+                const arr = JSON.parse(localStorage.getItem(k) || '[]');
+                const next = (Array.isArray(arr) ? arr : []).concat(t);
+                localStorage.setItem(k, JSON.stringify(next));
+                setFuChat((prev) => prev.concat(t));
+              } else {
+                const k = `wr_${id}_chat`;
+                const arr = JSON.parse(localStorage.getItem(k) || '[]');
+                const next = (Array.isArray(arr) ? arr : []).concat(t);
+                localStorage.setItem(k, JSON.stringify(next));
+                if (waitingAppt && String(waitingAppt._id || waitingAppt.id) === id) setWaitChat((prev) => prev.concat(t));
+                if (detailsAppt && String(detailsAppt._id || detailsAppt.id) === id) setDetChat((prev) => prev.concat(t));
+              }
+            }
+          } catch (_) {}
         } catch (_) {}
       };
       chan.onmessage = onMsg;
@@ -317,7 +338,7 @@ export default function Appointments() {
           });
           socket.on('chat:new', (msg) => {
             try {
-              const { apptId, actor } = msg || {};
+              const { apptId, actor, kind, text } = msg || {};
               const id = String(apptId || '');
               if (!id) return;
               if (String(actor || '').toLowerCase() !== 'doctor') return;
@@ -327,6 +348,38 @@ export default function Appointments() {
                 return next;
               });
               try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
+              try {
+                const t = String(text || '').trim();
+                if (kind === 'pre') {
+                  const k = `wr_${id}_chat`;
+                  const arr = JSON.parse(localStorage.getItem(k) || '[]');
+                  const next = (Array.isArray(arr) ? arr : []).concat(t ? [t] : []);
+                  localStorage.setItem(k, JSON.stringify(next));
+                  if (waitingAppt && String(waitingAppt._id || waitingAppt.id) === id && t) setWaitChat((prev) => prev.concat(t));
+                  if (detailsAppt && String(detailsAppt._id || detailsAppt.id) === id && t) setDetChat((prev) => prev.concat(t));
+                } else if (kind === 'followup') {
+                  const k = `fu_${id}_chat`;
+                  const arr = JSON.parse(localStorage.getItem(k) || '[]');
+                  const next = (Array.isArray(arr) ? arr : []).concat(t ? [t] : []);
+                  localStorage.setItem(k, JSON.stringify(next));
+                  if (followAppt && String(followAppt._id || followAppt.id) === id && t) setFuChat((prev) => prev.concat(t));
+                } else if (kind === 'report') {
+                  const m = t || 'Report shared by doctor';
+                  if (detailsAppt && String(detailsAppt._id || detailsAppt.id) === id) {
+                    const k = `wr_${id}_chat`;
+                    const arr = JSON.parse(localStorage.getItem(k) || '[]');
+                    const next = (Array.isArray(arr) ? arr : []).concat(m);
+                    localStorage.setItem(k, JSON.stringify(next));
+                    setDetChat((prev) => prev.concat(m));
+                  } else {
+                    const k = `fu_${id}_chat`;
+                    const arr = JSON.parse(localStorage.getItem(k) || '[]');
+                    const next = (Array.isArray(arr) ? arr : []).concat(m);
+                    localStorage.setItem(k, JSON.stringify(next));
+                    if (followAppt && String(followAppt._id || followAppt.id) === id) setFuChat((prev) => prev.concat(m));
+                  }
+                }
+              } catch (_) {}
             } catch (_) {}
           });
           socket.on('meet:update', (msg) => {
