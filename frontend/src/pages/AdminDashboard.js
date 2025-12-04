@@ -149,10 +149,12 @@ export default function AdminDashboard() {
           )}
         </div>
       </header>
-      <div className="pt-16 px-6 page-gradient">
-        <div className="max-w-7xl mx-auto">
+      <div className="pt-14 px-6 page-gradient">
+        <div className="relative max-w-7xl mx-auto">
+          <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>
+          <h2 className="text-4xl font-extrabold mb-4 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Dashboard</h2>
           <div className="flex flex-wrap gap-4 mb-6">
-            <div className="relative flex-1 min-w-[160px] bg-white border border-slate-200 rounded-xl p-4 transition-transform duration-300 hover:scale-105 hover:shadow-lg hover:bg-indigo-50">
+            <div className="relative flex-1 min-w-[160px] glass-card p-6 rounded-2xl card-hover">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="h-7 w-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center animate-pulse">👨‍⚕️</div>
@@ -161,7 +163,7 @@ export default function AdminDashboard() {
                 <div className="text-2xl font-semibold animate-pulse">{doctorCount}</div>
               </div>
             </div>
-            <div className="relative flex-1 min-w-[160px] bg-white border border-slate-200 rounded-xl p-4 transition-transform duration-300 hover:scale-105 hover:shadow-lg hover:bg-indigo-50">
+            <div className="relative flex-1 min-w-[160px] glass-card p-6 rounded-2xl card-hover">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="h-7 w-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center animate-pulse">📅</div>
@@ -170,7 +172,7 @@ export default function AdminDashboard() {
                 <div className="text-2xl font-semibold animate-pulse">{appointmentCount}</div>
               </div>
             </div>
-            <div className="relative flex-1 min-w-[160px] bg-white border border-slate-200 rounded-xl p-4 transition-transform duration-300 hover:scale-105 hover:shadow-lg hover:bg-indigo-50">
+            <div className="relative flex-1 min-w-[160px] glass-card p-6 rounded-2xl card-hover">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="h-7 w-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center animate-pulse">👥</div>
@@ -181,7 +183,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="bg-white/85 backdrop-blur-sm rounded-2xl border border-white/30 shadow-2xl p-6">
             <div className="text-slate-900 font-semibold mb-3">Latest Bookings</div>
             {latest && latest.length ? (
               <div className="divide-y">

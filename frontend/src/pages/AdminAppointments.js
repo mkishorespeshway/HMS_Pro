@@ -182,12 +182,11 @@ export default function AdminAppointments() {
           )}
         </div>
       </header>
-      <div className="pt-16 px-6 page-gradient">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-semibold">All Appointments</h1>
-          </div>
-          <div className="glass-card overflow-hidden">
+      <div className="pt-14 px-6 page-gradient">
+        <div className="relative max-w-7xl mx-auto">
+          <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>
+          <h2 className="text-4xl font-extrabold mb-4 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">All Appointments</h2>
+          <div className="bg-white/85 backdrop-blur-sm rounded-2xl border border-white/30 shadow-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead className="bg-slate-50 text-slate-700">
