@@ -115,39 +115,37 @@ export default function AdminPendingDoctors() {
             </div>
           </div>
 
-          {/* Enhanced Mobile Menu */}
+              {/* Enhanced Mobile Menu */}
           {mobileOpen && (
-            <div className="lg:hidden bg-white/98 backdrop-blur-md border-t border-blue-200/50 py-6">
-              <nav className="flex flex-col space-y-4 px-6">
-                {[
-                  { path: '/admin/dashboard', label: 'Dashboard' },
-                  { path: '/admin/appointments', label: 'Appointments' },
-                  { path: '/admin/add-doctor', label: 'Add Doctor' },
-                  { path: '/admin/doctors', label: 'Doctors List' }
-                ].map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-                      window.location.pathname === item.path
-                        ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border-2 border-blue-200 shadow-sm'
-                        : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600 hover:scale-105'
-                    }`}
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
-
-              {/* Mobile Logout Button */}
-              <div className="flex flex-col space-y-3 px-6 mt-6 pt-6 border-t border-blue-200/50">
-                <button
-                  onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); setMobileOpen(false); }}
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-xl text-center border-2 border-white/20"
-                >
-                  Logout
-                </button>
+            <div className="lg:hidden fixed inset-0 z-40" onClick={() => setMobileOpen(false)}>
+              <div className="absolute top-16 left-0 right-0">
+                <div className="mx-3 bg-white/98 backdrop-blur-md rounded-xl shadow-lg border border-blue-200/50 py-2" onClick={(e) => e.stopPropagation()}>
+                  <nav className="flex flex-col space-y-2 px-3">
+                    {[
+                      { path: '/admin/dashboard', label: 'Dashboard' },
+                      { path: '/admin/appointments', label: 'Appointments' },
+                      { path: '/admin/add-doctor', label: 'Add Doctor' },
+                      { path: '/admin/doctors', label: 'Doctors List' }
+                    ].map((item) => (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`px-3 py-2 rounded-lg font-medium text-sm transition-all duration-300 ${
+                          window.location.pathname === item.path
+                            ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border border-blue-200 shadow-sm'
+                            : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600'
+                        }`}
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                    <button
+                      onClick={() => { localStorage.removeItem('token'); nav('/admin/login'); setMobileOpen(false); }}
+                      className="px-3 py-2 rounded-lg text-white text-sm bg-gradient-to-r from-blue-500 to-purple-600"
+                    >Logout</button>
+                  </nav>
+                </div>
               </div>
             </div>
           )}
