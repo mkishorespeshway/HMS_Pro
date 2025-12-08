@@ -179,7 +179,7 @@ export default function SearchDoctors() {
     return (
       <div className="min-h-screen">
         <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50">
-          <div className="max-w-7xl mx-auto px-6 relative">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
             <div className="flex items-center justify-between h-16">
               {/* Enhanced Logo Section */}
               <Link to="/admin/dashboard" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300">
@@ -237,7 +237,7 @@ export default function SearchDoctors() {
                 {/* Logout Button */}
                 <button
                   onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); }}
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 border-2 border-white/20"
+                  className="hidden lg:inline-flex bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 border-2 border-white/20"
                 >
                   Logout
                 </button>
@@ -246,43 +246,41 @@ export default function SearchDoctors() {
 
             {/* Enhanced Mobile Menu */}
             {mobileOpen && (
-              <div className="lg:hidden bg-white/98 backdrop-blur-md border-t border-blue-200/50 py-6">
-                <nav className="flex flex-col space-y-4 px-6">
-                  {[
-                    { path: '/admin/dashboard', label: 'Dashboard' },
-                    { path: '/admin/appointments', label: 'Appointments' },
-                    { path: '/admin/add-doctor', label: 'Add Doctor' },
-                    { path: '/admin/doctors', label: 'Doctors List' }
-                  ].map((item) => (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-                        window.location.pathname === item.path
-                          ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border-2 border-blue-200 shadow-sm'
-                          : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600 hover:scale-105'
-                      }`}
-                      onClick={() => setMobileOpen(false)}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </nav>
-
-                {/* Mobile Logout Button */}
-                <div className="flex flex-col space-y-3 px-6 mt-6 pt-6 border-t border-blue-200/50">
-                  <button
-                    onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); setMobileOpen(false); }}
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-xl text-center border-2 border-white/20"
-                  >
-                    Logout
-                  </button>
+              <div className="lg:hidden fixed inset-0 z-40" onClick={() => setMobileOpen(false)}>
+                <div className="absolute top-16 left-0 right-0">
+                  <div className="mx-3 bg-white/98 backdrop-blur-md rounded-xl shadow-lg border border-blue-200/50 py-2" onClick={(e) => e.stopPropagation()}>
+                    <nav className="flex flex-col space-y-2 px-3">
+                      {[
+                        { path: '/admin/dashboard', label: 'Dashboard' },
+                        { path: '/admin/appointments', label: 'Appointments' },
+                        { path: '/admin/add-doctor', label: 'Add Doctor' },
+                        { path: '/admin/doctors', label: 'Doctors List' }
+                      ].map((item) => (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          className={`px-3 py-2 rounded-lg font-medium text-sm transition-all duration-300 ${
+                            window.location.pathname === item.path
+                              ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border border-blue-200 shadow-sm'
+                              : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600'
+                          }`}
+                          onClick={() => setMobileOpen(false)}
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                      <button
+                        onClick={() => { localStorage.removeItem('token'); nav('/admin/login'); setMobileOpen(false); }}
+                        className="px-3 py-2 rounded-lg text-white text-sm bg-gradient-to-r from-blue-500 to-purple-600"
+                      >Logout</button>
+                    </nav>
+                  </div>
                 </div>
               </div>
             )}
           </div>
         </header>
-        <div className="pt-16 px-6 page-gradient">
+        <div className="pt-16 px-4 sm:px-6 page-gradient">
           <div className="max-w-7xl mx-auto">
             <div className="animate-fade-in" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
               <div className="flex items-center justify-between mb-6">
@@ -342,7 +340,7 @@ export default function SearchDoctors() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="max-w-7xl mx-auto pt-8 px-4 animate-fade-in">
-        <h2 className="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent animate-slide-in-right">Find Your Perfect Doctor</h2>
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-8 text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent animate-slide-in-right">Find Your Perfect Doctor</h2>
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-2xl p-6 mb-8 animate-slide-in-left opacity-0" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
           <div className="grid sm:grid-cols-3 gap-4 items-start">
             <div>
@@ -360,18 +358,18 @@ export default function SearchDoctors() {
             </div>
             <div className="sm:col-span-2">
               <label className="block text-sm font-semibold text-slate-700 mb-2">Search Doctors</label>
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <input
-                  className="flex-1 p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105"
+                  className="w-full sm:flex-1 p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105"
                   placeholder="Search by name, clinic, or specialization..."
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') search(); }}
                 />
-                <button onClick={search} className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">Search</button>
+                <button onClick={search} className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">Search</button>
                 <button
                   onClick={() => { setQ(''); setSpecialization(''); search(); }}
-                  className="px-6 py-3 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 font-semibold transition-all duration-300 hover:scale-105"
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 font-semibold transition-all duration-300 hover:scale-105"
                 >
                   Clear
                 </button>
