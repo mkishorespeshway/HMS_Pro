@@ -542,7 +542,7 @@ export default function Prescription() {
           </div>
           <div className="presc-title">
             <div className="presc-doc-name">{doctorName || 'Dr. Doctor Name'}</div>
-            <div className="presc-qual">{doctorQuals || 'Qualification'}</div>
+            <div className="presc-qual">{doctorSpecs || 'Specializations'}</div>
           </div>
           <div className="presc-hospital-box">
             <div className="presc-hospital">{clinicName || 'Hospital'}</div>

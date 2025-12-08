@@ -370,8 +370,9 @@ input.no-spin[type="number"] {
 .presc-details { margin-top: 6mm; }
 .presc-row { display: flex; gap: 6mm; }
 .presc-half { flex: 1; }
-.presc-line { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #cbd5e1; padding-bottom: 2mm; margin-top: 3mm; font-size: 11pt; }
-.presc-line span:first-child { color: #334155; }
+.presc-line { display: flex; justify-content: flex-start; align-items: baseline; border-bottom: 1px solid #cbd5e1; padding-bottom: 2mm; margin-top: 3mm; font-size: 11pt; }
+.presc-line span:first-child { color: #334155; font-weight: 600; }
+.presc-line span + span { margin-left: 6mm; color: #0f172a; }
 .presc-rx { font-size: 28pt; color: #2563eb; margin-top: 8mm; }
 .presc-table { width: 100%; border-collapse: collapse; margin-top: 4mm; font-size: 10pt; table-layout: fixed; }
 .presc-table th { background-color: #f1f5f9; color: #0f172a; }
