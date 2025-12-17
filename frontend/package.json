@@ -18,6 +18,7 @@
   },
   "scripts": {
     "start": "set PORT=3000 && set CI=true && react-scripts start",
+    "dev": "npm start",
     "sitemap": "node scripts/generate-sitemap.js",
     "build": "npm run sitemap && react-scripts build",
     "test": "react-scripts test",
