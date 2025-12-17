@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API = axios.create({ baseURL: "http://localhost:5000/api" });
+const API = axios.create({ baseURL: (process.env.NODE_ENV === 'production' ? process.env.REACT_APP_API_BASE_URL_PRODUCTION : process.env.REACT_APP_API_BASE_URL_LOCAL) + '/api' });
 API.defaults.timeout = 8000;
 
 API.interceptors.request.use((config) => {

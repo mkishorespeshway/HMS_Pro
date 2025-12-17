@@ -25,8 +25,9 @@ const { notifyChat } = require('./utils/notify');
 
 
 const app = express();
-app.use(cors());
-app.options('*', cors());
+const allowedOrigins = [process.env.CORS_ORIGIN_LOCAL, process.env.CORS_ORIGIN_PRODUCTION];
+app.use(cors({ origin: allowedOrigins }));
+app.options('*', cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
@@ -39,7 +40,7 @@ connectDB();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE']
   }
 });
@@ -166,5 +167,5 @@ app.get('/api/stats', async (req, res) => {
 });
 
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => console.log(`Server listening on ${PORT}`));
