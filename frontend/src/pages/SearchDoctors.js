@@ -144,7 +144,7 @@ export default function SearchDoctors() {
       const w = window;
       const onReady = () => {
         try {
-          const socket = w.io ? w.io(origin, { transports: ["websocket", "polling"] }) : null;
+          const socket = w.io ? w.io(origin, { transports: ["polling", "websocket"] }) : null;
           if (socket) {
             socket.on('doctor:status', (p) => {
               const did = String(p?.doctorId || "");

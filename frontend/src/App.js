@@ -169,7 +169,7 @@ function Header() {
     const cleanup = [];
     const onReady = () => {
       try {
-        const socket = w.io ? w.io(origin, { transports: ['websocket','polling'], auth: { token: localStorage.getItem('token') || '' } }) : null;
+        const socket = w.io ? w.io(origin, { transports: ['polling', 'websocket'], auth: { token: localStorage.getItem('token') || '' } }) : null;
         if (socket) {
           socket.on('notify', (p) => {
             try {

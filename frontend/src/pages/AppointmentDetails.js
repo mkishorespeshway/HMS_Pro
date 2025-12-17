@@ -64,7 +64,7 @@ export default function AppointmentDetails() {
       const w = window;
       const onReady = () => {
         try {
-          const socket = w.io ? w.io(origin, { transports: ["websocket", "polling"] }) : null;
+          const socket = w.io ? w.io(origin, { transports: ["polling", "websocket"] }) : null;
           if (socket) {
             socketRef.current = socket;
             cleanup.push(() => { try { socket.close(); } catch(_) {} });

@@ -60,7 +60,7 @@ export default function FollowUpDetails({ actor = 'patient', backTo = '/appointm
     try {
       const origin = String(API.defaults.baseURL || '').replace(/\/(api)?$/, '');
       const w = window;
-      const socket = w.io ? w.io(origin, { transports: ["websocket", "polling"], auth: { token: localStorage.getItem('token') || '' } }) : null;
+      const socket = w.io ? w.io(origin, { transports: ["polling", "websocket"], auth: { token: localStorage.getItem('token') || '' } }) : null;
       if (socket) {
         socketRef.current = socket;
         const expectedActor = String(actor || '').toLowerCase() === 'doctor' ? 'patient' : 'doctor';

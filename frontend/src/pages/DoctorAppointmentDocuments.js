@@ -77,7 +77,7 @@ export default function DoctorAppointmentDocuments() {
       const w = window;
       const onReady = () => {
         try {
-          const socket = w.io ? w.io(origin, { transports: ['websocket','polling'], auth: { token: localStorage.getItem('token') || '' } }) : null;
+          const socket = w.io ? w.io(origin, { transports: ['polling', 'websocket'], auth: { token: localStorage.getItem('token') || '' } }) : null;
           if (socket) socketRef.current = socket;
         } catch(_) {}
       };
