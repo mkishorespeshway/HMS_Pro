@@ -40,6 +40,7 @@ export default function Register() {
     const passOk = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,12}$/.test(String(password || ""));
     if (!passOk) errs.password = "Password 6-12 chars, letters & numbers";
     if (!gender) errs.gender = "Gender is required";
+    if (address && address.length > 50) errs.address = "Address cannot exceed 50 characters";
     if (age === "" || Number.isNaN(Number(age))) errs.age = "Enter numeric age";
     if (!dob) {
       errs.dob = "Date of Birth is required";
@@ -163,11 +164,13 @@ export default function Register() {
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Address</label>
                 <textarea
                   rows={3}
+                  maxLength={50}
                   className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105"
                   placeholder="Address"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                 />
+                {errors.address && <div className="text-red-600 text-xs mt-1">{errors.address}</div>}
               </div>
             </div>
           </div>
