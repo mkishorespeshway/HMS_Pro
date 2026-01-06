@@ -68,6 +68,9 @@ router.post('/me', authenticate, async (req, res) => {
 const user = req.user;
 if (user.role !== 'doctor') return res.status(403).json({ message: 'Only doctors' });
 const payload = req.body;
+if (payload.specializations && Array.isArray(payload.specializations)) {
+  payload.specializations = [...new Set(payload.specializations)];
+}
 let profile = await DoctorProfile.findOne({ user: user._id });
 if (!profile) profile = new DoctorProfile({ user: user._id, ...payload });
 else Object.assign(profile, payload);

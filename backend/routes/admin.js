@@ -42,12 +42,13 @@ router.post('/doctors', authenticate, authorize(['admin']), async (req, res) => 
     isDoctorApproved: true
   });
 
-  const specs = Array.isArray(specializations)
+  const rawSpecs = Array.isArray(specializations)
     ? specializations
     : String(specializations || '')
         .split(',')
         .map(s => s.trim())
         .filter(Boolean);
+  const specs = [...new Set(rawSpecs)];
 
   const profile = await DoctorProfile.create({
     user: user._id,

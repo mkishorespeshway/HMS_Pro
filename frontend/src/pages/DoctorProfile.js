@@ -190,11 +190,9 @@ export default function DoctorProfile() {
     setSaving(true);
     setError("");
     try {
+      const rawSpecs = String(form.specializations || "").split(",").map((s) => s.trim()).filter(Boolean);
       const payload = {
-        specializations: String(form.specializations || "")
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
+        specializations: [...new Set(rawSpecs)],
         clinic: {
           name: form.clinicName || "",
           address: form.clinicAddress || "",
@@ -393,6 +391,14 @@ export default function DoctorProfile() {
                         onChange={(e) => {
                           const val = e.target.value || "";
                           if (!val) return;
+
+                          // Check if already in form specializations
+                          const currentSpecs = form.specializations ? form.specializations.split(",").map(s => s.trim()) : [];
+                          if (currentSpecs.includes(val)) {
+                            alert("This specialization is already added.");
+                            return;
+                          }
+
                           setForm((f) => ({
                             ...f,
                             specializations: f.specializations ? `${f.specializations}, ${val}` : val,

@@ -145,12 +145,18 @@ export default function AdminAddDoctor() {
     if (!trimmedForm.phone) { alert("Please enter Phone Number"); return; }
     if (!trimmedForm.specializations) { alert("Please enter Specializations"); return; }
 
-    // Check if entered specializations exist in the predefined list
+    // Check if entered specializations exist in the predefined list and are unique
     const enteredSpecs = trimmedForm.specializations.split(",").map(s => s.trim()).filter(s => s !== "");
     const invalidSpecs = enteredSpecs.filter(s => !specialties.includes(s));
     
     if (invalidSpecs.length > 0) {
       alert(`specialization is not here in the list: ${invalidSpecs.join(", ")}`);
+      return;
+    }
+
+    const uniqueSpecs = [...new Set(enteredSpecs)];
+    if (uniqueSpecs.length !== enteredSpecs.length) {
+      alert("Duplicate specializations are not allowed.");
       return;
     }
 
@@ -339,16 +345,30 @@ export default function AdminAddDoctor() {
                     const newSpec = prompt("Enter new specialization name:");
                     if (newSpec && newSpec.trim()) {
                       const formattedSpec = newSpec.trim();
+                      
+                      // Check if already in form specializations
+                      const currentSpecs = form.specializations ? form.specializations.split(",").map(s => s.trim()) : [];
+                      if (currentSpecs.includes(formattedSpec)) {
+                        alert("This specialization is already added to the doctor.");
+                        return;
+                      }
+
                       if (!specialties.includes(formattedSpec)) {
                         setSpecialties(prev => [...prev, formattedSpec].sort());
-                        setForm(f => ({
-                          ...f,
-                          specializations: f.specializations ? `${f.specializations}, ${formattedSpec}` : formattedSpec,
-                        }));
-                      } else {
-                        alert("This specialization already exists in the list.");
                       }
+                      
+                      setForm(f => ({
+                        ...f,
+                        specializations: f.specializations ? `${f.specializations}, ${formattedSpec}` : formattedSpec,
+                      }));
                     }
+                    return;
+                  }
+
+                  // Check if already in form specializations for existing selection
+                  const currentSpecs = form.specializations ? form.specializations.split(",").map(s => s.trim()) : [];
+                  if (currentSpecs.includes(val)) {
+                    alert("This specialization is already added to the doctor.");
                     return;
                   }
 
