@@ -177,29 +177,96 @@ export default function DoctorProfile() {
 
   const onChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'consultationFees' || name === 'slotDurationMins') {
-      const digits = String(value || '').replace(/\D/g, '');
-      setForm((f) => ({ ...f, [name]: digits }));
-      return;
+    let processedValue = value;
+
+    if (name === "clinicName") {
+      if (processedValue.startsWith(" ")) {
+        alert("Leading spaces are not allowed in Clinic Name!");
+        processedValue = processedValue.trimStart();
+      }
+      const clinicRegex = /^[a-zA-Z\s_]*$/;
+      if (!clinicRegex.test(processedValue)) {
+        alert("Clinic Name can only contain letters, spaces, and underscores!");
+        processedValue = processedValue.replace(/[^a-zA-Z\s_]/g, "");
+      }
+    } else if (name === "clinicCity") {
+      if (processedValue.startsWith(" ")) {
+        alert("Leading spaces are not allowed in City!");
+        processedValue = processedValue.trimStart();
+      }
+      const cityRegex = /^[a-zA-Z\s_]*$/;
+      if (!cityRegex.test(processedValue)) {
+        alert("City can only contain letters, spaces, and underscores!");
+        processedValue = processedValue.replace(/[^a-zA-Z\s_]/g, "");
+      }
+    } else {
+      if (processedValue.startsWith(" ")) {
+        alert("Spaces are not allowed at the beginning!");
+        processedValue = processedValue.trimStart();
+      }
     }
-    setForm((f) => ({ ...f, [name]: value }));
+
+    if (name === "consultationFees") processedValue = String(processedValue).replace(/\D/g, "").slice(0, 4);
+    if (name === "slotDurationMins") processedValue = String(processedValue).replace(/\D/g, "");
+    
+    if (name === "specializations" && processedValue.length > 100) return;
+    if (name === "clinicName" && processedValue.length > 100) return;
+    if (name === "clinicCity" && processedValue.length > 50) return;
+    if (name === "clinicAddress" && processedValue.length > 250) return;
+    
+    setForm((f) => ({ ...f, [name]: processedValue }));
+  };
+
+  const onBlur = (e) => {
+    const { name, value } = e.target;
+    if (typeof value === 'string' && value.endsWith(" ")) {
+      alert(`Spaces are not allowed at the end of ${name === 'clinicName' ? 'Clinic Name' : name === 'clinicCity' ? 'City' : name === 'clinicAddress' ? 'Address' : name}!`);
+      setForm((f) => ({ ...f, [name]: value.trim() }));
+    }
   };
 
   const save = async (e) => {
     e.preventDefault();
     setSaving(true);
     setError("");
+
+    // Final Trim for all fields
+    const trimmedForm = {};
+    Object.keys(form).forEach(key => {
+      trimmedForm[key] = typeof form[key] === 'string' ? form[key].trim() : form[key];
+    });
+
+    // Mandatory field checks
+    if (!trimmedForm.specializations) { alert("Please enter Specializations"); setSaving(false); return; }
+    if (!trimmedForm.clinicName) { alert("Please enter Clinic Name"); setSaving(false); return; }
+    if (!trimmedForm.clinicCity) { alert("Please enter City"); setSaving(false); return; }
+    if (!trimmedForm.clinicAddress) { alert("Please enter Clinic Address"); setSaving(false); return; }
+    if (!trimmedForm.consultationFees) { alert("Please enter Consultation Fees"); setSaving(false); return; }
+    if (!trimmedForm.slotDurationMins) { alert("Please enter Slot Duration"); setSaving(false); return; }
+
+    // Regex and format validation
+    if (trimmedForm.consultationFees && !/^\d+$/.test(String(trimmedForm.consultationFees))) { alert("Fees must be digits"); setSaving(false); return; }
+    if (trimmedForm.slotDurationMins && !/^\d+$/.test(String(trimmedForm.slotDurationMins))) { alert("Slot must be digits"); setSaving(false); return; }
+
     try {
-      const rawSpecs = String(form.specializations || "").split(",").map((s) => s.trim()).filter(Boolean);
+      const rawSpecs = String(trimmedForm.specializations || "").split(",").map((s) => s.trim()).filter(Boolean);
+      const uniqueSpecs = [...new Set(rawSpecs)];
+      
+      if (uniqueSpecs.length !== rawSpecs.length) {
+        alert("Duplicate specializations are not allowed.");
+        setSaving(false);
+        return;
+      }
+
       const payload = {
-        specializations: [...new Set(rawSpecs)],
+        specializations: uniqueSpecs,
         clinic: {
-          name: form.clinicName || "",
-          address: form.clinicAddress || "",
-          city: form.clinicCity || ""
+          name: trimmedForm.clinicName || "",
+          address: trimmedForm.clinicAddress || "",
+          city: trimmedForm.clinicCity || ""
         },
-        consultationFees: form.consultationFees ? Number(form.consultationFees) : undefined,
-        slotDurationMins: form.slotDurationMins ? Number(form.slotDurationMins) : undefined
+        consultationFees: trimmedForm.consultationFees ? Number(trimmedForm.consultationFees) : undefined,
+        slotDurationMins: trimmedForm.slotDurationMins ? Number(trimmedForm.slotDurationMins) : undefined
       };
       const { data } = await API.post("/doctors/me", payload);
       setProfile(data);
@@ -413,27 +480,27 @@ export default function DoctorProfile() {
                       </select>
                     );
                   })()}
-                  <input name="specializations" value={form.specializations} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" placeholder="e.g., Cardiology, Dermatology" />
+                  <input name="specializations" maxLength={100} value={form.specializations} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" placeholder="e.g., Cardiology, Dermatology" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Clinic Name</label>
-                  <input name="clinicName" value={form.clinicName} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
+                  <input name="clinicName" maxLength={100} value={form.clinicName} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">City</label>
-                  <input name="clinicCity" value={form.clinicCity} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
+                  <input name="clinicCity" maxLength={50} value={form.clinicCity} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Address</label>
-                  <input name="clinicAddress" value={form.clinicAddress} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
+                  <input name="clinicAddress" maxLength={250} value={form.clinicAddress} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Consultation Fees</label>
-                  <input inputMode="numeric" name="consultationFees" value={form.consultationFees} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
+                  <input inputMode="numeric" name="consultationFees" maxLength={4} value={form.consultationFees} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Slot Duration (mins)</label>
-                  <select name="slotDurationMins" value={form.slotDurationMins} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300">
+                  <select name="slotDurationMins" value={form.slotDurationMins} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300">
                     <option value="">Select</option>
                     <option value="15">15</option>
                     <option value="30">30</option>
