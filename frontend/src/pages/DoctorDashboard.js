@@ -9,7 +9,13 @@ export default function DoctorDashboard() {
   const [loading, setLoading] = useState(false);
   const [latestToday, setLatestToday] = useState([]);
   const [error, setError] = useState("");
-  const [online, setOnline] = useState(false);
+  const [online, setOnline] = useState(() => {
+    const uid = localStorage.getItem("userId") || "";
+    const byId = uid ? localStorage.getItem(`doctorOnlineById_${uid}`) : null;
+    if (byId !== null) return byId === "1";
+    const v = localStorage.getItem("doctorOnline");
+    return v === null ? true : v === "1";
+  });
   const [busy, setBusy] = useState(false);
   const [notifs, setNotifs] = useState([]);
   const [bellCount, setBellCount] = useState(0);

@@ -140,35 +140,34 @@ export default function SearchDoctors() {
 
   useEffect(() => {
     const cleanup = [];
-    const initSocket = () => {
-      const origin = String(API.defaults.baseURL || "").replace(/\/(api)?$/, "");
-      const w = window;
-      const onReady = () => {
-        try {
-          const socket = w.io ? w.io(origin, { transports: ["polling", "websocket"] }) : null;
-          if (socket) {
-            socket.on('doctor:status', (p) => {
-              const did = String(p?.doctorId || "");
-              if (!did) return;
-              setList((prev) => prev.map((d) => (
-                String(d?.user?._id || "") === did ? { ...d, isOnline: !!p.isOnline, isBusy: !!p.isBusy } : d
-              )));
-            });
-            cleanup.push(() => { try { socket.close(); } catch(_) {} });
-          }
-        } catch (_) {}
-      };
-      if (!w.io) {
-        const s = document.createElement('script');
-        s.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
-        s.onload = onReady;
-        document.body.appendChild(s);
-        cleanup.push(() => { try { document.body.removeChild(s); } catch(_) {} });
-      } else {
-        onReady();
-      }
+    const origin = String(API.defaults.baseURL || "").replace(/\/(api)?$/, "");
+    const w = window;
+    const onReady = () => {
+      try {
+        const socket = w.io ? w.io(origin, { transports: ["polling", "websocket"] }) : null;
+        if (socket) {
+          socket.on('doctor:status', (p) => {
+            const did = String(p?.doctorId || "");
+            if (!did) return;
+            setList((prev) => prev.map((d) => (
+              String(d?.user?._id || "") === did ? { ...d, isOnline: !!p.isOnline, isBusy: !!p.isBusy } : d
+            )));
+          });
+          cleanup.push(() => { try { socket.close(); } catch(_) {} });
+        }
+      } catch (_) {}
     };
-    initSocket();
+    if (!w.io) {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
+      s.async = true;
+      s.defer = true;
+      s.onload = onReady;
+      document.body.appendChild(s);
+      cleanup.push(() => { try { document.body.removeChild(s); } catch(_) {} });
+    } else {
+      onReady();
+    }
     return () => { cleanup.forEach((fn) => fn()); };
   }, []);
   
@@ -419,9 +418,8 @@ export default function SearchDoctors() {
                     )}
                     <div className="absolute top-3 right-3 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.3}s`, animationFillMode: 'forwards' }}>
                       {(() => {
-                        const online = typeof d.isOnline === 'boolean' ? d.isOnline : null;
-                        const busy = typeof d.isBusy === 'boolean' ? d.isBusy : null;
-                        if (online === null && busy === null) return null;
+                        const online = d.isOnline !== false;
+                        const busy = !!d.isBusy;
                         const cls = busy ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' : (online ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white' : 'bg-gradient-to-r from-red-400 to-pink-500 text-white');
                         const txt = busy ? 'Busy' : (online ? 'Online' : 'Offline');
                         return <span className={`inline-block text-xs px-3 py-2 rounded-full font-semibold shadow-lg hover:scale-105 transition-transform duration-300 ${cls}`}>{txt}</span>;

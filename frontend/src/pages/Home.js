@@ -350,9 +350,8 @@ export default function Home() {
                     )}
                     <div className="absolute top-3 right-3 animate-fade-in" style={{ animationDelay: `${i * 0.1 + 0.2}s`, animationFillMode: 'forwards' }}>
                       {(() => {
-                        const online = typeof d.isOnline === 'boolean' ? d.isOnline : null;
-                        const busy = typeof d.isBusy === 'boolean' ? d.isBusy : null;
-                        if (online === null && busy === null) return null;
+                        const online = d.isOnline !== false;
+                        const busy = !!d.isBusy;
                         const cls = busy ? 'badge badge-busy' : (online ? 'badge badge-online' : 'badge badge-offline');
                         const txt = busy ? 'Busy' : (online ? 'Online' : 'Offline');
                         return <span className={cls}>{txt}</span>;

@@ -18,7 +18,7 @@ consultationFees: Number,
 languages: [String],
  weeklyAvailability: [{ day: Number, from: String, to: String }],
  slotDurationMins: { type: Number, default: 15 },
- isOnline: { type: Boolean },
+ isOnline: { type: Boolean, default: true },
  isBusy: { type: Boolean }
 }, { timestamps: true });
 
