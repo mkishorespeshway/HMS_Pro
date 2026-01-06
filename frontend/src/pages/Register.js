@@ -31,21 +31,31 @@ export default function Register() {
       return String(a);
     };
     const errs = {};
+    if (!name.trim()) errs.name = "Full Name is required";
+    else if (name !== name.trim()) errs.name = "Full Name cannot have leading or trailing spaces";
+    else if (!/^[a-zA-Z][a-zA-Z0-9_ ]*$/.test(name)) errs.name = "Full Name must start with a letter and contain only letters, numbers, underscores, or spaces";
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = "Enter a valid email";
     const phoneSan = String(phone || "").replace(/\D/g, "");
     if (!/^[6-9]\d{9}$/.test(phoneSan)) errs.phone = "Phone must start 6-9 and be 10 digits";
     const passOk = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,12}$/.test(String(password || ""));
     if (!passOk) errs.password = "Password 6-12 chars, letters & numbers";
+    if (!gender) errs.gender = "Gender is required";
     if (age === "" || Number.isNaN(Number(age))) errs.age = "Enter numeric age";
-    if (dob) {
+    if (!dob) {
+      errs.dob = "Date of Birth is required";
+    } else {
       const d = new Date(dob);
       if (Number.isNaN(d.getTime())) errs.dob = "Enter a valid date";
       else if (d > today) errs.dob = "Date cannot be in future";
       const expected = calcAge(dob);
       if (expected !== "" && String(expected) !== String(age)) errs.age = "Age must match date of birth";
     }
+
     setErrors(errs);
-    if (Object.keys(errs).length) return;
+    if (Object.keys(errs).length) {
+      alert(Object.values(errs)[0]);
+      return;
+    }
 
     try {
       const res = await API.post("/auth/register", {
@@ -53,19 +63,15 @@ export default function Register() {
         email,
         password: password || "password123",
         role,
+        phone,
+        address,
+        gender,
+        birthday: dob,
+        photoBase64,
       });
 
       localStorage.setItem("token", res.data.token);
       if (res.data?.user?.id) localStorage.setItem("userId", res.data.user.id);
-      try {
-        await API.put("/auth/me", {
-          phone,
-          address,
-          gender,
-          birthday: dob,
-          photoBase64,
-        });
-      } catch (_) {}
       nav("/search");
     } catch (err) {
       if (err.message === 'canceled') return;
@@ -89,16 +95,18 @@ export default function Register() {
             </h3>
             <div className="grid gap-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name *</label>
                 <input
+                  required
                   className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105"
                   placeholder="Full Name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
+                {errors.name && <div className="text-red-600 text-xs mt-1">{errors.name}</div>}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Email *</label>
                 <input
                   type="email"
                   required
@@ -110,9 +118,10 @@ export default function Register() {
                 {errors.email && <div className="text-red-600 text-xs mt-1">{errors.email}</div>}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Password</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Password *</label>
                 <div className="relative">
                   <input
+                    required
                     className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105 pr-12"
                     placeholder="Password"
                     type={showPass ? "text" : "password"}
@@ -135,8 +144,9 @@ export default function Register() {
             </h3>
             <div className="grid gap-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Phone Number *</label>
                 <input
+                  required
                   className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105"
                   placeholder="Phone Number"
                   inputMode="numeric"
@@ -170,8 +180,9 @@ export default function Register() {
             <div className="grid gap-4">
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Gender</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Gender *</label>
                   <select
+                    required
                     className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105"
                     value={gender}
                     onChange={(e) => setGender(e.target.value)}
@@ -181,10 +192,12 @@ export default function Register() {
                     <option value="female">Female</option>
                     <option value="other">Other</option>
                   </select>
+                  {errors.gender && <div className="text-red-600 text-xs mt-1">{errors.gender}</div>}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Age</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Age *</label>
                   <input
+                    required
                     type="number"
                     min="0"
                     max="120"
@@ -197,7 +210,7 @@ export default function Register() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Date of Birth</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Date of Birth *</label>
                 {(() => {
                   const t = new Date();
                   const yyyy = t.getFullYear();
@@ -206,6 +219,7 @@ export default function Register() {
                   const maxDate = `${yyyy}-${mm}-${dd}`;
                   return (
                     <input
+                      required
                       type="date"
                       max={maxDate}
                       className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105"
@@ -228,7 +242,7 @@ export default function Register() {
               Profile Picture
             </h3>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Upload Image (Optional)</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Upload Image</label>
               <input
                 type="file"
                 accept="image/*"
@@ -241,6 +255,7 @@ export default function Register() {
                   reader.readAsDataURL(file);
                 }}
               />
+              {errors.photo && <div className="text-red-600 text-xs mt-1">{errors.photo}</div>}
             </div>
           </div>
 

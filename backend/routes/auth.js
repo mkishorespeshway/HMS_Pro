@@ -10,15 +10,30 @@ const cloudinary = require('cloudinary').v2;
 
 // Register
 router.post('/register', async (req, res) => {
-const { name, email, password, role } = req.body;
-if (!email || !password || !name) return res.status(400).json({ message: 'Missing fields' });
-const existing = await User.findOne({ email });
-if (existing) return res.status(400).json({ message: 'Email in use' });
-const passwordHash = await bcrypt.hash(password, 10);
-const user = await User.create({ name, email, passwordHash, role: role || 'patient' });
-// If doctor, set isDoctorApproved=false by default
-const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1d' });
-res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+  try {
+    const { name, email, password, role, phone, address, gender, birthday, photoBase64 } = req.body;
+    if (!email || !password || !name || !phone || !gender || !birthday) {
+      return res.status(400).json({ message: 'Missing mandatory fields' });
+    }
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ message: 'Email in use' });
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      name,
+      email,
+      passwordHash,
+      role: role || 'patient',
+      phone,
+      address,
+      gender,
+      birthday,
+      photoBase64
+    });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1d' });
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 
