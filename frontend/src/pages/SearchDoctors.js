@@ -110,6 +110,7 @@ export default function SearchDoctors() {
         setRatingById({});
       }
     } catch (e) {
+      if (e.message === 'canceled') return;
       setList([]);
       setError(e.response?.data?.message || e.message || "Network Error");
     }

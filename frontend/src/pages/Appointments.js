@@ -166,6 +166,7 @@ export default function Appointments() {
           setProfiles(new Map());
         }
       } catch (e) {
+        if (e.message === 'canceled') return;
         setError(e.response?.data?.message || e.message || "Failed to load");
       }
       setLoading(false);

@@ -102,6 +102,7 @@ export default function Home() {
         const { data } = await API.get("/doctors");
         setList(Array.isArray(data) ? data : []);
       } catch (e) {
+        if (e.message === 'canceled') return;
         setList([]);
         setError(e.response?.data?.message || e.message || "Network Error");
       }

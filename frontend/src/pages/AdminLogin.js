@@ -27,6 +27,7 @@ export default function AdminLogin() {
         nav("/admin/dashboard");
       }
     } catch (err) {
+      if (err.message === 'canceled') return;
       setError(err.response?.data?.message || err.message || "Login failed");
     } finally {
       setLoading(false);

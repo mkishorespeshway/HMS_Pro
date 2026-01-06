@@ -33,6 +33,7 @@ const nav = useNavigate();
         nav("/");
       }
     } catch (err) {
+      if (err.message === 'canceled') return;
       alert(err.response?.data?.message || err.message);
     }
   };

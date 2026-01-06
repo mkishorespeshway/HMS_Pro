@@ -150,6 +150,7 @@ export default function DoctorDashboard() {
           }
         } catch (_) {}
       } catch (e) {
+        if (e.message === 'canceled') return;
         setList([]);
         setError(e.response?.data?.message || e.message || "Failed to load dashboard");
       }

@@ -90,6 +90,7 @@ export default function DoctorToday() {
       items = [...pending, ...confirmed, ...done];
       setList(items);
     } catch (e) {
+      if (e.message === 'canceled') return;
       alert(e.response?.data?.message || e.message);
     } finally {
       setLoading(false);
@@ -737,6 +738,7 @@ export default function DoctorToday() {
                         try { socket && socket.close(); } catch(_) {}
                       } catch(_) {}
                     } catch (e) {
+                      if (e.message === 'canceled') return;
                       alert(e.response?.data?.message || e.message || 'Failed to complete');
                     }
                   }}
@@ -941,7 +943,10 @@ export default function DoctorToday() {
                               {isFuture && (<button type="button" onClick={() => reject(a._id || a.id, a.date, a.startTime)} className="px-3 py-1 rounded-md border border-red-600 text-red-700">Reject</button>)}
                               {(() => { try { const id = String(a._id || a.id || ''); const pres = !!a.prescriptionText; const jp = id ? localStorage.getItem(`joinedByPatient_${id}`) : null; const isCompletedNow = isPast && (pres || jp !== null); if (isCompletedNow) { return (<button type="button" onClick={() => { const id2 = String(a._id || a.id || ''); if (id2) { nav(`/prescription/${id2}`); } }} className="px-3 py-1 rounded-md border border-indigo-600 text-indigo-700">View Summary</button>); } } catch(_) {} return (<button type="button" onClick={() => { const id = String(a._id || a.id || ''); if (id) { nav(`/doctor/appointments/${id}/documents`); } }} className="px-3 py-1 rounded-md border border-purple-600 text-purple-700">View Documents</button>); })()}
                               {(() => { try { if (!a.prescriptionText) return null; const d = new Date(a.date); const [hh, mm] = String(a.startTime || '00:00').split(':').map((x) => Number(x)); d.setHours(hh, mm, 0, 0); const diff = Date.now() - d.getTime(); const max = 5 * 24 * 60 * 60 * 1000; if (diff < 0 || diff > max) return null; return (<button type="button" onClick={() => { const id = String(a._id || a.id || ''); if (id) { try { localStorage.setItem('lastChatApptId', id); } catch(_) {} nav(`/doctor/appointments/${id}/followup`); } }} className="px-3 py-1 rounded-md border border-green-600 text-green-700">Follow-up</button>); } catch(_) { return null; } })()}
-                              {isActive && (<button type="button" onClick={async () => { try { await API.put(`/appointments/${String(a._id || a.id)}/complete`); setList((prev) => prev.map((x) => (String(x._id || x.id) === String(a._id || a.id) ? { ...x, status: 'COMPLETED' } : x))); try { const uid = localStorage.getItem('userId') || ''; if (uid) { localStorage.setItem(`doctorBusyById_${uid}`, '0'); localStorage.setItem(`doctorOnlineById_${uid}`, '1'); } try { await API.put('/doctors/me/status', { isOnline: true, isBusy: false }); } catch(_) {} } catch(_) {} try { const w = window; const origin = String(API.defaults.baseURL || '').replace(/\/(api)?$/, ''); const socket = w.io ? w.io(origin, { transports: ['polling','websocket'] }) : null; socket && socket.emit('meet:update', { apptId: String(a._id || a.id), actor: 'doctor', event: 'complete' }); try { socket && socket.close(); } catch(_) {} } catch(_) {} } catch (e) { alert(e.response?.data?.message || e.message || 'Failed to complete'); } }} className="px-3 py-1 rounded-md border border-slate-300">Complete</button>)}
+                              {isActive && (<button type="button" onClick={async () => { try { await API.put(`/appointments/${String(a._id || a.id)}/complete`); setList((prev) => prev.map((x) => (String(x._id || x.id) === String(a._id || a.id) ? { ...x, status: 'COMPLETED' } : x))); try { const uid = localStorage.getItem('userId') || ''; if (uid) { localStorage.setItem(`doctorBusyById_${uid}`, '0'); localStorage.setItem(`doctorOnlineById_${uid}`, '1'); } try { await API.put('/doctors/me/status', { isOnline: true, isBusy: false }); } catch(_) {} } catch(_) {} try { const w = window; const origin = String(API.defaults.baseURL || '').replace(/\/(api)?$/, ''); const socket = w.io ? w.io(origin, { transports: ['polling','websocket'] }) : null; socket && socket.emit('meet:update', { apptId: String(a._id || a.id), actor: 'doctor', event: 'complete' }); try { socket && socket.close(); } catch(_) {} } catch(_) {} } catch (e) {
+                      if (e.message === 'canceled') return;
+                      alert(e.response?.data?.message || e.message || 'Failed to complete');
+                    } }} className="px-3 py-1 rounded-md border border-slate-300">Complete</button>)}
                             </div>
                           );
                         })()}
@@ -993,6 +998,7 @@ export default function DoctorToday() {
                     try { window.open(viewUrl, '_blank'); } catch (_) {}
                     alert('Prescription shared to patient');
                   } catch (e) {
+                    if (e.message === 'canceled') return;
                     alert(e.response?.data?.message || e.message || 'Failed to share');
                   }
                 }}
@@ -1056,6 +1062,7 @@ export default function DoctorToday() {
                           if (!/^https?:\/\//.test(url)) { alert('Failed to generate meeting link'); return; }
                           try { localStorage.setItem(`meetlink_${id}`, url); } catch(_) {}
                         } catch (e) {
+                          if (e.message === 'canceled') return;
                           alert(e.response?.data?.message || e.message || 'Failed to generate meeting link');
                           return;
                         }
@@ -1317,6 +1324,7 @@ export default function DoctorToday() {
                             alert('Saved & sent to patient');
                             try { window.open(`/prescription/${id}?print=1`, '_blank'); } catch(_) {}
                           } catch (e) {
+                            if (e.message === 'canceled') return;
                             alert(e.response?.data?.message || e.message || 'Failed to save');
                           }
                         }}

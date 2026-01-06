@@ -28,6 +28,7 @@ export default function DoctorAppointmentDocuments() {
         fetched = data;
         setAppt(data);
       } catch (e) {
+        if (e.message === 'canceled') return;
         setError(e.response?.data?.message || e.message || "Failed to load appointment");
       }
       try {

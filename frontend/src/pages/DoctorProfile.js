@@ -207,6 +207,7 @@ export default function DoctorProfile() {
       setProfile(data);
       setEditing(false);
     } catch (e) {
+      if (e.message === 'canceled') return;
       setError(e.response?.data?.message || e.message || "Failed to save profile");
     } finally {
       setSaving(false);

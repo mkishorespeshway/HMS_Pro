@@ -32,6 +32,7 @@ export default function DoctorLogin() {
         nav("/doctor/dashboard");
       }
     } catch (err) {
+      if (err.message === 'canceled') return;
       setError(err.response?.data?.message || err.message || "Login failed");
     } finally {
       setLoading(false);

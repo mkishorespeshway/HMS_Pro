@@ -68,6 +68,7 @@ export default function Register() {
       } catch (_) {}
       nav("/search");
     } catch (err) {
+      if (err.message === 'canceled') return;
       alert(err.response?.data?.message || err.message);
     }
   };

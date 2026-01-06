@@ -16,6 +16,7 @@ export default function AdminPendingDoctors() {
       const { data } = await API.get("/admin/pending-doctors");
       setList(data || []);
     } catch (e) {
+      if (e.message === 'canceled') return;
       setError(e.response?.data?.message || e.message || "Network Error");
     } finally {
       setLoading(false);
@@ -28,7 +29,10 @@ export default function AdminPendingDoctors() {
     try {
       await API.post(`/admin/doctors/${id}/approve`);
       await load();
-    } catch (e) { setError(e.response?.data?.message || e.message || "Network Error"); }
+    } catch (e) {
+      if (e.message === 'canceled') return;
+      setError(e.response?.data?.message || e.message || "Network Error");
+    }
   };
 
   const reject = async (id) => {
@@ -36,7 +40,10 @@ export default function AdminPendingDoctors() {
     try {
       await API.post(`/admin/doctors/${id}/reject`, { reason });
       await load();
-    } catch (e) { setError(e.response?.data?.message || e.message || "Network Error"); }
+    } catch (e) {
+      if (e.message === 'canceled') return;
+      setError(e.response?.data?.message || e.message || "Network Error");
+    }
   };
 
   const linkClass = (active) =>

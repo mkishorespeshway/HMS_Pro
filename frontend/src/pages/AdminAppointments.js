@@ -17,10 +17,12 @@ export default function AdminAppointments() {
         const { data } = await API.get("/admin/appointments");
         setList(data || []);
       } catch (e) {
+        if (e.message === 'canceled') return;
         setList([]);
         setError(e.response?.data?.message || e.message || "Failed to load appointments");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     load();
   }, []);

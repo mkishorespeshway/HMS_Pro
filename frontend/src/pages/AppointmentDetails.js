@@ -50,6 +50,7 @@ export default function AppointmentDetails() {
           setDetChat(Array.isArray(msgs) ? msgs : []);
         } catch(_) { setDetChat([]); }
       } catch (e) {
+        if (e.message === 'canceled') return;
         setError(e.response?.data?.message || e.message || "Failed to load appointment");
       }
       setLoading(false);

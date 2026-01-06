@@ -27,6 +27,7 @@ export default function FollowUpDetails({ actor = 'patient', backTo = '/appointm
         fetched = data || null;
         setAppt(fetched);
       } catch (e) {
+        if (e.message === 'canceled') return;
         setError(e.response?.data?.message || e.message || "Failed to load appointment");
       }
       try {
