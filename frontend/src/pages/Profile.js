@@ -17,8 +17,8 @@ export default function Profile() {
   const ageFromBirthday = (d) => {
     if (!d) return "--";
     const b = new Date(d);
-    if (Number.isNaN(b.getTime())) return "--";
     const today = new Date();
+    if (Number.isNaN(b.getTime()) || b > today) return "--"; // Check for invalid date or future date
     let age = today.getFullYear() - b.getFullYear();
     const m = today.getMonth() - b.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--;
@@ -36,7 +36,9 @@ export default function Profile() {
           if (key.startsWith("userEmailById_")) return key.replace("userEmailById_", "");
           if (key.startsWith("userPhoneById_")) return key.replace("userPhoneById_", "");
         }
-      } catch (_) {}
+      } catch (e) {
+        console.error("Failed to fetch profile data:", e);
+      }
       return null;
     };
 
@@ -53,32 +55,26 @@ export default function Profile() {
 
     setName(n || "");
     setEmail(e || "");
-    setPhone(p || p2 || "");
-    setAddress(a || "");
-    setGender(g || "");
-    const dobVal = b1 || b2 || "";
-    setBirthday(dobVal);
-    setAge(ag || "");
     setPhoto("");
-    try { if (uid) localStorage.removeItem(`userPhotoBase64ById_${uid}`); } catch (_) {}
+    try { if (uid) localStorage.removeItem(`userPhotoBase64ById_${uid}`); } catch (e) {
+      console.error("Failed to remove user photo from localStorage:", e);
+    }
 
     (async () => {
       try {
         const { data } = await API.get('/auth/me');
         if (data) {
-          if (data.name) setName(String(data.name));
-          if (data.email) setEmail(String(data.email));
-          const ph = String(data.phone || data.mobile || data.contactNumber || data.phoneNumber || data?.user?.phone || data?.user?.mobile || data?.user?.contactNumber || "");
-          if (ph) setPhone(ph);
-          if (data.address) setAddress(String(data.address));
-          if (data.gender) setGender(String(data.gender));
-          if (data.birthday) {
-            const d = String(data.birthday);
+            setName(String(data.name || ""));
+            setEmail(String(data.email || ""));
+            const ph = String(data.phone || data.mobile || data.contactNumber || data.phoneNumber || data?.user?.phone || data?.user?.mobile || data?.user?.contactNumber || "");
+            setPhone(ph);
+            setAddress(String(data.address || ""));
+            setGender(String(data.gender || ""));
+            const d = String(data.birthday || "");
             setBirthday(d);
             setAge(ageFromBirthday(d));
+            if (String(data.photoBase64 || '').startsWith('data:image')) setPhoto(String(data.photoBase64));
           }
-          if (String(data.photoBase64 || '').startsWith('data:image')) setPhoto(String(data.photoBase64));
-        }
       } catch (_) {}
     })();
   }, []);
@@ -170,7 +166,7 @@ export default function Profile() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      <div> Address: <div className="whitespace-pre-wrap text-slate-700 font-medium">{address}</div></div>
+                      <div> Address: <span className="whitespace-pre-wrap text-slate-700 font-medium">{address}</span></div>
                     </div>
                   </div>
                 ) : (
@@ -216,7 +212,7 @@ export default function Profile() {
                         <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 4v10m0 0l-2-2m2 2l2-2m6-6v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6a2 2 0 012-2h8a2 2 0 012 2z" />
                         </svg>
-                        <div> Birthday: <span className="text-slate-700 font-medium">{birthday}</span></div>
+                        <div> Date of Birth: <span className="text-slate-700 font-medium">{birthday}</span></div>
                       </div>
                       <div className="flex items-center gap-3">
                         <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,8 +232,8 @@ export default function Profile() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Birthday</label>
-                        <input type="date" value={birthday} onChange={(e) => { const d = e.target.value; setBirthday(d); setAge(ageFromBirthday(d)); }} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105" />
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Date of Birth</label>
+                        <input type="date" max={new Date().toISOString().split('T')[0]} value={birthday} onChange={(e) => { const d = e.target.value; setBirthday(d); setAge(ageFromBirthday(d)); }} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105" />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-2">Age</label>
