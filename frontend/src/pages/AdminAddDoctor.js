@@ -23,42 +23,174 @@ export default function AdminAddDoctor() {
   const [showPass, setShowPass] = useState(false);
   const [errors, setErrors] = useState({});
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [specialties, setSpecialties] = useState([
+    "General Physician",
+    "Gynecologist",
+    "Dermatologist",
+    "Pediatrician",
+    "Neurologist",
+    "Cardiologist",
+    "Orthopedic Surgeon",
+    "Gastroenterologist",
+    "ENT Specialist",
+    "Dentist",
+    "Psychiatrist",
+    "Diabetologist",
+    "Endocrinologist",
+    "Pulmonologist",
+    "Nephrologist",
+    "Urologist",
+    "Ophthalmologist",
+    "Oncologist",
+    "Rheumatologist",
+    "Physiotherapist"
+  ]);
 
   const onChange = (e) => {
     const { name, value } = e.target;
-    let v = value;
-    if (name === "phone") v = String(value).replace(/\D/g, "").slice(0, 10);
-    if (name === "fees" || name === "slotDurationMins" || name === "experienceYears") v = String(value).replace(/\D/g, "");
-    setForm((f) => ({ ...f, [name]: v }));
+    let processedValue = value;
+
+    if (name === "email") {
+      if (value.includes(" ")) {
+        alert("Spaces are not allowed in the email field! All spaces will be removed.");
+      }
+      processedValue = value.replace(/\s/g, "").toLowerCase();
+    } else if (name === "name") {
+      if (processedValue.startsWith(" ")) {
+        alert("Leading spaces are not allowed in Full Name!");
+        processedValue = processedValue.trimStart();
+      }
+      const nameRegex = /^[a-zA-Z\s_]*$/;
+      if (!nameRegex.test(processedValue)) {
+        alert("Full Name can only contain letters, spaces, and underscores!");
+        processedValue = processedValue.replace(/[^a-zA-Z\s_]/g, "");
+      }
+    } else if (name === "clinic") {
+      if (processedValue.startsWith(" ")) {
+        alert("Leading spaces are not allowed in Clinic Name!");
+        processedValue = processedValue.trimStart();
+      }
+      const clinicRegex = /^[a-zA-Z\s_]*$/;
+      if (!clinicRegex.test(processedValue)) {
+        alert("Clinic Name can only contain letters, spaces, and underscores!");
+        processedValue = processedValue.replace(/[^a-zA-Z\s_]/g, "");
+      }
+    } else if (name === "city") {
+      if (processedValue.startsWith(" ")) {
+        alert("Leading spaces are not allowed in City!");
+        processedValue = processedValue.trimStart();
+      }
+      const cityRegex = /^[a-zA-Z\s_]*$/;
+      if (!cityRegex.test(processedValue)) {
+        alert("City can only contain letters, spaces, and underscores!");
+        processedValue = processedValue.replace(/[^a-zA-Z\s_]/g, "");
+      }
+    } else {
+      if (processedValue.startsWith(" ")) {
+        alert("Spaces are not allowed at the beginning!");
+        processedValue = processedValue.trimStart();
+      }
+    }
+
+    if (name === "phone") processedValue = String(processedValue).replace(/\D/g, "").slice(0, 10);
+    if (name === "fees") processedValue = String(processedValue).replace(/\D/g, "").slice(0, 4);
+    if (name === "experienceYears") processedValue = String(processedValue).replace(/\D/g, "").slice(0, 2);
+    if (name === "slotDurationMins") processedValue = String(processedValue).replace(/\D/g, "");
+    
+    if (name === "name" && processedValue.length > 50) return; 
+    if (name === "email" && processedValue.length > 100) return;
+    if (name === "specializations" && processedValue.length > 100) return;
+    if (name === "clinic" && processedValue.length > 100) return;
+    if (name === "city" && processedValue.length > 50) return;
+    if (name === "address" && processedValue.length > 250) return;
+    if (name === "about" && processedValue.length > 500) return;
+    setForm((f) => ({ ...f, [name]: processedValue }));
+  };
+
+  const onBlur = (e) => {
+    const { name, value } = e.target;
+    if (value.endsWith(" ")) {
+      alert(`Spaces are not allowed at the end of ${name === 'name' ? 'Full Name' : name}!`);
+      setForm((f) => ({ ...f, [name]: value.trim() }));
+    }
   };
 
   const submit = async (e) => {
     e.preventDefault();
     const errs = {};
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(form.email || ""))) errs.email = "Enter a valid email";
-    if (!/^[6-9]\d{9}$/.test(String(form.phone || ""))) errs.phone = "Phone must start 6-9 and be 10 digits";
-    if (form.fees && !/^\d+$/.test(String(form.fees))) errs.fees = "Fees must be digits";
-    if (form.slotDurationMins && !/^\d+$/.test(String(form.slotDurationMins))) errs.slot = "Slot must be digits";
-    if (form.experienceYears && !/^\d+$/.test(String(form.experienceYears))) errs.exp = "Experience must be digits";
-    const passOk = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,12}$/.test(String(form.password || ""));
+
+    // Final Trim for all fields to remove trailing spaces
+    const trimmedForm = {};
+    Object.keys(form).forEach(key => {
+      trimmedForm[key] = typeof form[key] === 'string' ? form[key].trim() : form[key];
+    });
+
+    const trimmedName = trimmedForm.name;
+    const trimmedEmail = trimmedForm.email;
+
+    // Mandatory field check
+    if (!trimmedName) { alert("Please enter Full Name"); return; }
+    if (trimmedName.length < 3) { alert("Name is too short (min 3 characters)"); return; }
+    if (trimmedName.length > 50) { alert("Name is too long (max 50 characters)"); return; }
+
+    if (!trimmedEmail) { alert("Please enter Email"); return; }
+    
+    // Strict Email validation: no capital letters, no spaces, only @gmail.com or @hms.com
+    const emailRegex = /^[a-z0-9._%+-]+@(gmail\.com|hms\.com)$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      alert("Please enter a valid lowercase email ending with @gmail.com or @hms.com (e.g., doctor@gmail.com)");
+      return;
+    }
+
+    if (!trimmedForm.phone) { alert("Please enter Phone Number"); return; }
+    if (!trimmedForm.specializations) { alert("Please enter Specializations"); return; }
+
+    // Check if entered specializations exist in the predefined list
+    const enteredSpecs = trimmedForm.specializations.split(",").map(s => s.trim()).filter(s => s !== "");
+    const invalidSpecs = enteredSpecs.filter(s => !specialties.includes(s));
+    
+    if (invalidSpecs.length > 0) {
+      alert(`specialization is not here in the list: ${invalidSpecs.join(", ")}`);
+      return;
+    }
+
+    if (!trimmedForm.clinic) { alert("Please enter Clinic Name"); return; }
+    if (!trimmedForm.city) { alert("Please enter City"); return; }
+    if (!trimmedForm.address) { alert("Please enter Clinic Address"); return; }
+    if (!trimmedForm.fees) { alert("Please enter Consultation Fees"); return; }
+    if (!trimmedForm.experienceYears) { alert("Please enter Experience (years)"); return; }
+    if (!trimmedForm.password) { alert("Please enter Password"); return; }
+
+    // Regex and format validation
+    if (!/^[6-9]\d{9}$/.test(String(trimmedForm.phone))) errs.phone = "Phone must start 6-9 and be 10 digits";
+    if (trimmedForm.fees && !/^\d+$/.test(String(trimmedForm.fees))) errs.fees = "Fees must be digits";
+    if (trimmedForm.slotDurationMins && !/^\d+$/.test(String(trimmedForm.slotDurationMins))) errs.slot = "Slot must be digits";
+    if (trimmedForm.experienceYears && !/^\d+$/.test(String(trimmedForm.experienceYears))) errs.exp = "Experience must be digits";
+    const passOk = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,12}$/.test(String(trimmedForm.password));
     if (!passOk) errs.password = "Password 6-12 chars, letters & numbers";
+
     setErrors(errs);
-    if (Object.keys(errs).length) return;
+    if (Object.keys(errs).length) {
+      const firstError = Object.values(errs)[0];
+      alert(firstError);
+      return;
+    }
+
     try {
       const payload = {
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        specializations: form.specializations,
-        clinic: form.clinic,
-        city: form.city,
-        address: form.address,
-        fees: form.fees,
-        slotDurationMins: form.slotDurationMins,
-        experienceYears: form.experienceYears ? Number(form.experienceYears) : undefined,
-        about: form.about,
-        password: form.password,
-        photoBase64: form.photoBase64,
+        name: trimmedName,
+        email: trimmedEmail,
+        phone: trimmedForm.phone,
+        specializations: trimmedForm.specializations,
+        clinic: trimmedForm.clinic,
+        city: trimmedForm.city,
+        address: trimmedForm.address,
+        fees: trimmedForm.fees,
+        slotDurationMins: trimmedForm.slotDurationMins,
+        experienceYears: trimmedForm.experienceYears ? Number(trimmedForm.experienceYears) : undefined,
+        about: trimmedForm.about,
+        password: trimmedForm.password,
+        photoBase64: trimmedForm.photoBase64,
       };
       await API.post("/admin/doctors", payload);
       alert("Doctor created successfully.");
@@ -185,89 +317,83 @@ export default function AdminAddDoctor() {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-3 text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent animate-slide-in-right">Add Doctor</h2>
           <div className="mx-auto max-w-2xl bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-2xl p-6 animate-slide-in-left opacity-0 hover:scale-105 hover:shadow-2xl transition-all duration-500" style={{ animationDelay: '0.1s', animationFillMode: 'forwards' }}>
             <form onSubmit={submit}>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
-              <input name="name" value={form.name} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="Dr. John Doe" />
+              <label className="block text-sm font-medium text-slate-700 mb-1">Full Name <span className="text-red-500">*</span></label>
+              <input name="name" maxLength={50} value={form.name} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="Dr. John Doe" />
 
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-              <input type="email" name="email" value={form.email} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-1" placeholder="doctor@example.com" />
+              <label className="block text-sm font-medium text-slate-700 mb-1">Email <span className="text-red-500">*</span></label>
+              <input type="email" name="email" maxLength={100} value={form.email} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-1" placeholder="doctor@example.com" />
               {errors.email ? (<div className="text-red-600 text-xs mb-3">{errors.email}</div>) : (<div className="mb-3" />)}
 
-              <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-              <input name="phone" inputMode="numeric" maxLength={10} value={form.phone} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-1" placeholder="XXXXXXXXXX" />
+              <label className="block text-sm font-medium text-slate-700 mb-1">Phone <span className="text-red-500">*</span></label>
+              <input name="phone" inputMode="numeric" maxLength={10} value={form.phone} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-1" placeholder="XXXXXXXXXX" />
               {errors.phone ? (<div className="text-red-600 text-xs mb-3">{errors.phone}</div>) : (<div className="mb-3" />)}
 
-              <label className="block text-sm font-medium text-slate-700 mb-1">Specializations</label>
-              {(() => {
-                const SPECIALTIES = Array.from(new Set([
-                  "General Physician",
-                  "Gynecologist",
-                  "Dermatologist",
-                  "Pediatrician",
-                  "Neurologist",
-                  "Cardiologist",
-                  "Orthopedic Surgeon",
-                  "Gastroenterologist",
-                  "ENT Specialist",
-                  "Dentist",
-                  "Psychiatrist",
-                  "Diabetologist",
-                  "Endocrinologist",
-                  "Pulmonologist",
-                  "Nephrologist",
-                  "Urologist",
-                  "Ophthalmologist",
-                  "Oncologist",
-                  "Rheumatologist",
-                  "Physiotherapist"
-                ]));
-                return (
-                  <select
-                    defaultValue=""
-                    onChange={(e) => {
-                      const val = e.target.value || "";
-                      if (!val) return;
-                      setForm((f) => ({
-                        ...f,
-                        specializations: f.specializations ? `${f.specializations}, ${val}` : val,
-                      }));
-                    }}
-                    className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-2"
-                  >
-                    <option value="">Select specialization</option>
-                    {SPECIALTIES.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                );
-              })()}
-              <input name="specializations" value={form.specializations} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="e.g., Cardiology, Dermatology" />
+              <label className="block text-sm font-medium text-slate-700 mb-1">Specializations <span className="text-red-500">*</span></label>
+              <select
+                value=""
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (!val) return;
+                  
+                  if (val === "ADD_NEW") {
+                    const newSpec = prompt("Enter new specialization name:");
+                    if (newSpec && newSpec.trim()) {
+                      const formattedSpec = newSpec.trim();
+                      if (!specialties.includes(formattedSpec)) {
+                        setSpecialties(prev => [...prev, formattedSpec].sort());
+                        setForm(f => ({
+                          ...f,
+                          specializations: f.specializations ? `${f.specializations}, ${formattedSpec}` : formattedSpec,
+                        }));
+                      } else {
+                        alert("This specialization already exists in the list.");
+                      }
+                    }
+                    return;
+                  }
+
+                  setForm((f) => ({
+                    ...f,
+                    specializations: f.specializations ? `${f.specializations}, ${val}` : val,
+                  }));
+                }}
+                className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-2"
+              >
+                <option value="">Select specialization</option>
+                {specialties.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+                <option value="ADD_NEW" className="text-indigo-600 font-bold">+ Add New Specialization</option>
+              </select>
+              <input name="specializations" maxLength={100} value={form.specializations} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="e.g., Cardiology, Dermatology" />
 
               <div className="grid sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Clinic</label>
-                  <input name="clinic" value={form.clinic} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="Clinic name" />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Clinic <span className="text-red-500">*</span></label>
+                  <input name="clinic" maxLength={100} value={form.clinic} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="Clinic name" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">City</label>
-                  <input name="city" value={form.city} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="City" />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">City <span className="text-red-500">*</span></label>
+                  <input name="city" maxLength={50} value={form.city} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="City" />
                 </div>
               </div>
 
-              <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
-              <textarea name="address" value={form.address} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="Clinic address" rows={3} />
+              <label className="block text-sm font-medium text-slate-700 mb-1">Address <span className="text-red-500">*</span></label>
+              <textarea name="address" maxLength={250} value={form.address} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="Clinic address" rows={3} />
 
               <div className="grid sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Consultation Fees</label>
-                  <input name="fees" inputMode="numeric" value={form.fees} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-1" placeholder="e.g., 500" />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Consultation Fees <span className="text-red-500">*</span></label>
+                  <input name="fees" inputMode="numeric" maxLength={4} value={form.fees} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-1" placeholder="e.g., 500" />
                   {errors.fees ? (<div className="text-red-600 text-xs mb-3">{errors.fees}</div>) : (<div className="mb-3" />)}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Slot Duration (mins)</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Slot Duration (mins) <span className="text-red-500">*</span></label>
                   <select
                     name="slotDurationMins"
                     value={form.slotDurationMins}
                     onChange={onChange}
+                    onBlur={onBlur}
                     className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-1"
                   >
                     <option value="15">15</option>
@@ -280,14 +406,14 @@ export default function AdminAddDoctor() {
 
               <div className="grid sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Experience (years)</label>
-                  <input name="experienceYears" inputMode="numeric" value={form.experienceYears} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-1" placeholder="e.g., 5" />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Experience (years) <span className="text-red-500">*</span></label>
+                  <input name="experienceYears" inputMode="numeric" maxLength={2} value={form.experienceYears} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-1" placeholder="e.g., 5" />
                   {errors.exp ? (<div className="text-red-600 text-xs mb-3">{errors.exp}</div>) : (<div className="mb-3" />)}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Password <span className="text-red-500">*</span></label>
                   <div className="relative mb-1">
-                    <input name="password" type={showPass ? "text" : "password"} value={form.password} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 pr-10" placeholder="Set doctor password" />
+                    <input name="password" type={showPass ? "text" : "password"} value={form.password} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 pr-10" placeholder="Set doctor password" />
                     <button type="button" onClick={() => setShowPass((v) => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600">{showPass ? "🙈" : "👁"}</button>
                   </div>
                   {errors.password ? (<div className="text-red-600 text-xs mb-3">{errors.password}</div>) : (<div className="mb-3" />)}
@@ -295,7 +421,7 @@ export default function AdminAddDoctor() {
               </div>
 
               <label className="block text-sm font-medium text-slate-700 mb-1">About</label>
-              <textarea name="about" value={form.about} onChange={onChange} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="Short bio" rows={4} />
+              <textarea name="about" maxLength={500} value={form.about} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="Write about yourself..." rows={3} />
 
               <label className="block text-sm font-medium text-slate-700 mb-1">Upload Image</label>
               <input type="file" accept="image/*" className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white transition-all duration-300 mb-3" onChange={async (e) => {
