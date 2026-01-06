@@ -322,9 +322,11 @@ export default function SearchDoctors() {
                       <h3 className="text-lg font-bold text-slate-800 mb-1">{`Dr. ${d.user?.name || ''}`}</h3>
                       {(() => { const did = String(d.user?._id || ''); const info = ratingById[did]; const s = info?.avg || 0; const c = info?.count || 0; if (!s || !c) return null; return (
                         <div className="mb-2 flex items-center gap-1">
-                          {[1,2,3,4,5].map((n) => (
-                            <svg key={n} className={`w-5 h-5 ${s>=n ? 'text-amber-500' : 'text-slate-300'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                          ))}
+                          <>
+                            {[1,2,3,4,5].map((n) => (
+                              <svg key={n} className={`w-5 h-5 ${s>=n ? 'text-amber-500' : 'text-slate-300'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            ))}
+                          </>
                           <span className="text-sm text-slate-600">({c})</span>
                         </div>
                       ); })()}

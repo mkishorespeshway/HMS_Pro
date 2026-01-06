@@ -134,19 +134,31 @@ export default function DoctorToday() {
       localStorage.setItem(`doctorBusyById_${uid}`, "0");
       setOnline(true);
       setBusy(false);
-      try { await API.put('/doctors/me/status', { isOnline: true, isBusy: false }); } catch (_) {}
+      try {
+        await API.put('/doctors/me/status', { isOnline: true, isBusy: false });
+      } catch (err) {
+        console.error(err);
+      }
     } else if (status === "offline") {
       localStorage.setItem(`doctorOnlineById_${uid}`, "0");
       localStorage.setItem(`doctorBusyById_${uid}`, "0");
       setOnline(false);
       setBusy(false);
-      try { await API.put('/doctors/me/status', { isOnline: false, isBusy: false }); } catch (_) {}
+      try {
+        await API.put('/doctors/me/status', { isOnline: false, isBusy: false });
+      } catch (err) {
+        console.error(err);
+      }
     } else {
       localStorage.setItem(`doctorBusyById_${uid}`, "1");
       localStorage.setItem(`doctorOnlineById_${uid}`, "1");
       setOnline(true);
       setBusy(true);
-      try { await API.put('/doctors/me/status', { isOnline: true, isBusy: true }); } catch (_) {}
+      try {
+        await API.put('/doctors/me/status', { isOnline: true, isBusy: true });
+      } catch (err) {
+        console.error(err);
+      }
     }
   };
 

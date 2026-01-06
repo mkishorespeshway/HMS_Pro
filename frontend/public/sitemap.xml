@@ -40,4 +40,34 @@
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
+  <url>
+    <loc>https://hms.speshwayhrms.com/doctor/695cdd4e3b074e4b22a3e5d2</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://hms.speshwayhrms.com/doctor/695ce08bbc74cb0af37f1283</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://hms.speshwayhrms.com/doctor/695ce951e93169ed2bf36948</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://hms.speshwayhrms.com/doctor/695cea93e93169ed2bf369be</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://hms.speshwayhrms.com/doctor/695cec4be93169ed2bf36a22</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://hms.speshwayhrms.com/doctor/695cecb3e93169ed2bf36a7b</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
 </urlset>

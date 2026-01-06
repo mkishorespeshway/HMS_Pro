@@ -28,7 +28,9 @@ export default function DoctorLogin() {
         try {
           const uid = String(data?.user?.id || "");
           if (uid) localStorage.setItem('userId', uid);
-        } catch (_) {}
+        } catch (e) {
+          console.error(e);
+        }
         nav("/doctor/dashboard");
       }
     } catch (err) {
