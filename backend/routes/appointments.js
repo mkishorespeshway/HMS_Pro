@@ -7,6 +7,7 @@ const { generateSlots } = require("../utils/slotGenerator");
 const { sendMail } = require("../utils/mailer");
 const { createMeetLink } = require("../utils/meeting");
 const { notifyAppointmentConfirmed, notifyMeetingLink, notifySessionComplete, notifyPrescription } = require('../utils/notify');
+const cloudinary = require('cloudinary').v2;
 
 // -------------------------------
 // Get available slots for a doctor
@@ -306,8 +307,15 @@ router.put("/:id/patient-details", authenticate, async (req, res) => {
       const seen = new Set();
       for (const r of reports) {
         const name = typeof r?.name === 'string' ? r.name : '';
-        const url = typeof r?.url === 'string' ? r.url : '';
+        let url = typeof r?.url === 'string' ? r.url : '';
         if (!name || !url) continue;
+        if (url.startsWith('data:image')) {
+          const result = await cloudinary.uploader.upload(url, {
+            folder: 'hms_medical_reports',
+            resource_type: 'image'
+          });
+          url = result.secure_url;
+        }
         const key = `${name}|${url}`;
         if (seen.has(key)) continue;
         seen.add(key);
@@ -337,8 +345,15 @@ router.put("/patient-details", authenticate, async (req, res) => {
       const seen = new Set();
       for (const r of reports) {
         const name = typeof r?.name === 'string' ? r.name : '';
-        const url = typeof r?.url === 'string' ? r.url : '';
+        let url = typeof r?.url === 'string' ? r.url : '';
         if (!name || !url) continue;
+        if (url.startsWith('data:image')) {
+          const result = await cloudinary.uploader.upload(url, {
+            folder: 'hms_medical_reports',
+            resource_type: 'image'
+          });
+          url = result.secure_url;
+        }
         const key = `${name}|${url}`;
         if (seen.has(key)) continue;
         seen.add(key);

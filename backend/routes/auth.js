@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { sendMail } = require('../utils/mailer');
 const { authenticate } = require('../middlewares/auth');
+const cloudinary = require('cloudinary').v2;
 
 
 // Register
@@ -96,7 +97,18 @@ router.get('/me', authenticate, async (req, res) => {
 router.put('/me', authenticate, async (req, res) => {
   try {
     const allow = ['name','email','phone','address','gender','birthday','photoBase64'];
-    allow.forEach((k) => { if (typeof req.body[k] !== 'undefined') req.user[k] = req.body[k]; });
+    for (const k of allow) {
+      if (typeof req.body[k] === 'undefined') continue;
+      if (k === 'photoBase64' && String(req.body[k]).startsWith('data:image')) {
+        const result = await cloudinary.uploader.upload(req.body[k], {
+          folder: 'hms_profile_photos',
+          resource_type: 'image'
+        });
+        req.user[k] = result.secure_url;
+      } else {
+        req.user[k] = req.body[k];
+      }
+    }
     await req.user.save();
     res.json({ ok: true });
   } catch (e) {
