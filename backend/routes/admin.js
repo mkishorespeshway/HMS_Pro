@@ -58,7 +58,7 @@ router.post('/doctors', authenticate, authorize(['admin']), async (req, res) => 
     experienceYears: experienceYears ? Number(experienceYears) : undefined,
     about: about || undefined,
     photoBase64: photoBase64 || undefined,
-    isOnline: true
+    isOnline: false
   });
 
   try {
