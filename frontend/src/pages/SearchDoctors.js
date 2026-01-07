@@ -4,29 +4,6 @@ import Logo from "../components/Logo";
 import API from "../api";
 import { Helmet } from "react-helmet-async";
 
-const SPECIALTIES = [
-  "General Physician",
-  "Dermatologist",
-  "Gynecologist",
-  "Pediatrician",
-  "Orthopedic Surgeon",
-  "Cardiologist",
-  "Neurologist",
-  "Gastroenterologist",
-  "ENT Specialist",
-  "Dentist",
-  "Psychiatrist",
-  "Diabetologist",
-  "Endocrinologist",
-  "Pulmonologist",
-  "Nephrologist",
-  "Urologist",
-  "Ophthalmologist",
-  "Oncologist",
-  "Rheumatologist",
-  "Physiotherapist",
-];
-
 const OG_FALLBACK = (process.env.PUBLIC_URL || '') + '/logo512.png';
 
 export default function SearchDoctors() {
@@ -37,8 +14,22 @@ export default function SearchDoctors() {
   const [list, setList] = useState([]);
   const [ratingById, setRatingById] = useState({});
   const [specialization, setSpecialization] = useState("");
+  const [specialties, setSpecialties] = useState([]);
   const [error, setError] = useState("");
   const CARD_FALLBACK = "";
+
+  useEffect(() => {
+    fetchSpecialties();
+  }, []);
+
+  const fetchSpecialties = async () => {
+    try {
+      const { data } = await API.get("/specializations");
+      setSpecialties(data);
+    } catch (e) {
+      console.error("Failed to fetch specializations", e);
+    }
+  };
 
   const getOnlineStatus = (id) => {
     const v = localStorage.getItem(`doctorOnlineById_${id}`);
@@ -374,7 +365,7 @@ export default function SearchDoctors() {
                 className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105"
               >
                 <option value="">All Specialties</option>
-                {SPECIALTIES.map((s) => (
+                {specialties.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>

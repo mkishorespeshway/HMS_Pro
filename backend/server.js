@@ -29,6 +29,7 @@ const authRoutes = require('./routes/auth');
 const doctorRoutes = require('./routes/doctors');
 const appointmentRoutes = require('./routes/appointments');
 const adminRoutes = require('./routes/admin');
+const specializationRoutes = require('./routes/specializations');
 const notificationRoutes = require('./routes/notifications');
 const jwt = require('jsonwebtoken');
 const { notifyChat } = require('./utils/notify');
@@ -47,7 +48,22 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-connectDB();
+connectDB().then(async () => {
+  // Seed specializations if empty
+  const Specialization = require('./models/Specialization');
+  const count = await Specialization.countDocuments();
+  if (count === 0) {
+    const defaultSpecs = [
+      "General Physician", "Gynecologist", "Dermatologist", "Pediatrician",
+      "Neurologist", "Cardiologist", "Orthopedic Surgeon", "Gastroenterologist",
+      "ENT Specialist", "Dentist", "Psychiatrist", "Diabetologist",
+      "Endocrinologist", "Pulmonologist", "Nephrologist", "Urologist",
+      "Ophthalmologist", "Oncologist", "Rheumatologist", "Physiotherapist"
+    ];
+    await Specialization.insertMany(defaultSpecs.map(name => ({ name })));
+    console.log('Specializations seeded');
+  }
+});
 
 // Create HTTP server and Socket.IO instance
 const server = http.createServer(app);
@@ -156,6 +172,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/specializations', specializationRoutes);
 app.use('/api/notifications', notificationRoutes);
 
 

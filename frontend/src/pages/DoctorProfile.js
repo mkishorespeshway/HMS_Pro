@@ -31,6 +31,20 @@ export default function DoctorProfile() {
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [specialties, setSpecialties] = useState([]);
+
+  useEffect(() => {
+    fetchSpecialties();
+  }, []);
+
+  const fetchSpecialties = async () => {
+    try {
+      const { data } = await API.get("/specializations");
+      setSpecialties(data);
+    } catch (e) {
+      console.error("Failed to fetch specializations", e);
+    }
+  };
   const [form, setForm] = useState({
     specializations: "",
     about: "",
@@ -447,57 +461,31 @@ export default function DoctorProfile() {
               <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Specializations</label>
-                  {(() => {
-                    const SPECIALTIES = Array.from(new Set([
-                      "General Physician",
-                      "Gynecologist",
-                      "Dermatologist",
-                      "Pediatrician",
-                      "Neurologist",
-                      "Cardiologist",
-                      "Orthopedic Surgeon",
-                      "Gastroenterologist",
-                      "ENT Specialist",
-                      "Dentist",
-                      "Psychiatrist",
-                      "Diabetologist",
-                      "Endocrinologist",
-                      "Pulmonologist",
-                      "Nephrologist",
-                      "Urologist",
-                      "Ophthalmologist",
-                      "Oncologist",
-                      "Rheumatologist",
-                      "Physiotherapist"
-                    ]));
-                    return (
-                      <select
-                        defaultValue=""
-                        onChange={(e) => {
-                          const val = e.target.value || "";
-                          if (!val) return;
+                  <select
+                    defaultValue=""
+                    onChange={async (e) => {
+                      const val = e.target.value || "";
+                      if (!val) return;
 
-                          // Check if already in form specializations
-                          const currentSpecs = form.specializations ? form.specializations.split(",").map(s => s.trim()) : [];
-                          if (currentSpecs.includes(val)) {
-                            alert("This specialization is already added.");
-                            return;
-                          }
+                      // Check if already in form specializations
+                      const currentSpecs = form.specializations ? form.specializations.split(",").map(s => s.trim()) : [];
+                      if (currentSpecs.includes(val)) {
+                        alert("This specialization is already added.");
+                        return;
+                      }
 
-                          setForm((f) => ({
-                            ...f,
-                            specializations: f.specializations ? `${f.specializations}, ${val}` : val,
-                          }));
-                        }}
-                        className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-2"
-                      >
-                        <option value="">Select specialization</option>
-                        {SPECIALTIES.map((s) => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
-                    );
-                  })()}
+                      setForm((f) => ({
+                        ...f,
+                        specializations: f.specializations ? `${f.specializations}, ${val}` : val,
+                      }));
+                    }}
+                    className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-2"
+                  >
+                    <option value="">Select specialization</option>
+                    {specialties.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
                   <input name="specializations" maxLength={100} value={form.specializations} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" placeholder="e.g., Cardiology, Dermatology" />
                 </div>
                 <div className="sm:col-span-2">

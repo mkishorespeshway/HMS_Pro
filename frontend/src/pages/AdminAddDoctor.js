@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../api";
 import Logo from "../components/Logo";
@@ -23,28 +23,20 @@ export default function AdminAddDoctor() {
   const [showPass, setShowPass] = useState(false);
   const [errors, setErrors] = useState({});
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [specialties, setSpecialties] = useState([
-    "General Physician",
-    "Gynecologist",
-    "Dermatologist",
-    "Pediatrician",
-    "Neurologist",
-    "Cardiologist",
-    "Orthopedic Surgeon",
-    "Gastroenterologist",
-    "ENT Specialist",
-    "Dentist",
-    "Psychiatrist",
-    "Diabetologist",
-    "Endocrinologist",
-    "Pulmonologist",
-    "Nephrologist",
-    "Urologist",
-    "Ophthalmologist",
-    "Oncologist",
-    "Rheumatologist",
-    "Physiotherapist"
-  ]);
+  const [specialties, setSpecialties] = useState([]);
+
+  useEffect(() => {
+    fetchSpecialties();
+  }, []);
+
+  const fetchSpecialties = async () => {
+    try {
+      const { data } = await API.get("/specializations");
+      setSpecialties(data);
+    } catch (e) {
+      console.error("Failed to fetch specializations", e);
+    }
+  };
 
   const onChange = (e) => {
     const { name, value } = e.target;
@@ -337,7 +329,7 @@ export default function AdminAddDoctor() {
               <label className="block text-sm font-medium text-slate-700 mb-1">Specializations <span className="text-red-500">*</span></label>
               <select
                 value=""
-                onChange={(e) => {
+                onChange={async (e) => {
                   const val = e.target.value;
                   if (!val) return;
                   
@@ -353,8 +345,17 @@ export default function AdminAddDoctor() {
                         return;
                       }
 
+                      // Save to backend if not exists
                       if (!specialties.includes(formattedSpec)) {
-                        setSpecialties(prev => [...prev, formattedSpec].sort());
+                        try {
+                          await API.post("/specializations", { name: formattedSpec });
+                          setSpecialties(prev => [...prev, formattedSpec].sort());
+                        } catch (err) {
+                          if (err.response?.data?.message !== "Specialization already exists") {
+                            alert(err.response?.data?.message || "Failed to add specialization");
+                            return;
+                          }
+                        }
                       }
                       
                       setForm(f => ({

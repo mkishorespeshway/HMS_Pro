@@ -60,25 +60,20 @@ export default function Home() {
     'Gastroenterologist': "bg-gradient-to-br from-yellow-100 via-lime-100 to-green-100 hover:from-yellow-200 hover:via-lime-200 hover:to-green-200 text-yellow-600 shadow-yellow-200/50",
   };
 
+  const [allSpecialties, setAllSpecialties] = useState([]);
+
   const specialties = useMemo(() => {
     // Start with all predefined specialties
-    const allSpecs = Object.keys(iconMap).map(spec => ({
+    const baseSpecs = Object.keys(iconMap).map(spec => ({
       label: spec,
       icon: iconMap[spec],
       color: colorMap[spec] || "bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 hover:from-blue-200 hover:via-indigo-200 hover:to-purple-200 text-blue-600 shadow-blue-200/50"
     }));
 
-    // Add any additional specialties from doctors that aren't in the predefined list
-    const uniqueSpecs = new Set();
-    list.forEach(doctor => {
-      if (doctor.specializations) {
-        doctor.specializations.forEach(spec => uniqueSpecs.add(spec));
-      }
-    });
-
-    uniqueSpecs.forEach(spec => {
+    // Add any additional specialties from backend that aren't in the predefined list
+    allSpecialties.forEach(spec => {
       if (!iconMap[spec]) {
-        allSpecs.push({
+        baseSpecs.push({
           label: spec,
           icon: '🏥',
           color: "bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 hover:from-blue-200 hover:via-indigo-200 hover:to-purple-200 text-blue-600 shadow-blue-200/50"
@@ -86,8 +81,20 @@ export default function Home() {
       }
     });
 
-    return allSpecs.sort((a, b) => a.label.localeCompare(b.label));
-  }, [list]);
+    return baseSpecs.sort((a, b) => a.label.localeCompare(b.label));
+  }, [allSpecialties]);
+
+  useEffect(() => {
+    const fetchAllSpecs = async () => {
+      try {
+        const { data } = await API.get("/specializations");
+        setAllSpecialties(data);
+      } catch (e) {
+        console.error("Failed to fetch specializations", e);
+      }
+    };
+    fetchAllSpecs();
+  }, []);
   useEffect(() => {
     if (didInit.current) return;
     didInit.current = true;
