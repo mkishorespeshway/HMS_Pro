@@ -16,6 +16,7 @@ export default function SearchDoctors() {
   const [specialization, setSpecialization] = useState("");
   const [specialties, setSpecialties] = useState([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const CARD_FALLBACK = "";
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function SearchDoctors() {
   const abortRef = useRef(null);
   const search = async () => {
     setError("");
+    setLoading(true);
     try {
       if (abortRef.current) { try { abortRef.current.abort(); } catch(_) {} }
       abortRef.current = new AbortController();
@@ -104,6 +106,8 @@ export default function SearchDoctors() {
       if (e.message === 'canceled') return;
       setList([]);
       setError(e.response?.data?.message || e.message || "Network Error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -292,51 +296,64 @@ export default function SearchDoctors() {
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Doctors Management</h2>
               </div>
               {error && <div className="mb-6 text-center text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-4 animate-fade-in shadow-lg">{error}</div>}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {list.map((d, index) => (
-                  <div key={d._id} className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl overflow-hidden hover:scale-105 hover:shadow-2xl transition-all duration-500 animate-zoom-in opacity-0" style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'forwards' }}>
-                    <div className="relative">
-                      {photoOf(d) ? (
-                        <img src={photoOf(d)} alt="Doctor" className="w-full h-64 object-cover hover:scale-110 transition-transform duration-700" />
-                      ) : (
-                        <div className="w-full h-64 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center hover:scale-110 transition-transform duration-700">
-                          <div className="text-6xl text-slate-400">👨‍⚕️</div>
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+                  <p className="text-slate-600 font-medium">Searching for doctors...</p>
+                </div>
+              ) : list.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 bg-white/50 backdrop-blur-sm rounded-3xl border border-white/30 shadow-xl animate-fade-in">
+                  <div className="text-6xl mb-4">🔍</div>
+                  <h3 className="text-xl font-bold text-slate-800 mb-2">No Doctors Found</h3>
+                  <p className="text-slate-600 text-center max-w-md">We couldn't find any doctors matching your search criteria. Try adjusting your filters or search query.</p>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {list.map((d, index) => (
+                    <div key={d._id} className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl overflow-hidden hover:scale-105 hover:shadow-2xl transition-all duration-500 animate-zoom-in opacity-0" style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'forwards' }}>
+                      <div className="relative">
+                        {photoOf(d) ? (
+                          <img src={photoOf(d)} alt="Doctor" className="w-full h-64 object-cover hover:scale-110 transition-transform duration-700" />
+                        ) : (
+                          <div className="w-full h-64 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center hover:scale-110 transition-transform duration-700">
+                            <div className="text-6xl text-slate-400">👨‍⚕️</div>
+                          </div>
+                        )}
+                        <div className="absolute top-3 right-3 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.3}s`, animationFillMode: 'forwards' }}>
+                          {(() => {
+                            const online = typeof d.isOnline === 'boolean' ? d.isOnline : null;
+                            const busy = typeof d.isBusy === 'boolean' ? d.isBusy : null;
+                            if (online === null && busy === null) return null;
+                            const cls = busy ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' : (online ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white' : 'bg-gradient-to-r from-red-400 to-pink-500 text-white');
+                            const txt = busy ? 'Busy' : (online ? 'Online' : 'Offline');
+                            return <span className={`inline-block text-xs px-3 py-2 rounded-full font-semibold shadow-lg hover:scale-105 transition-transform duration-300 ${cls}`}>{txt}</span>;
+                          })()}
                         </div>
-                      )}
-                      <div className="absolute top-3 right-3 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.3}s`, animationFillMode: 'forwards' }}>
-                        {(() => {
-                          const online = typeof d.isOnline === 'boolean' ? d.isOnline : null;
-                          const busy = typeof d.isBusy === 'boolean' ? d.isBusy : null;
-                          if (online === null && busy === null) return null;
-                          const cls = busy ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' : (online ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white' : 'bg-gradient-to-r from-red-400 to-pink-500 text-white');
-                          const txt = busy ? 'Busy' : (online ? 'Online' : 'Offline');
-                          return <span className={`inline-block text-xs px-3 py-2 rounded-full font-semibold shadow-lg hover:scale-105 transition-transform duration-300 ${cls}`}>{txt}</span>;
-                        })()}
+                      </div>
+                      <div className="p-6 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
+                        <h3 className="text-lg font-bold text-slate-800 mb-1">{`Dr. ${d.user?.name || ''}`}</h3>
+                        {(() => { const did = String(d.user?._id || ''); const info = ratingById[did]; const s = info?.avg || 0; const c = info?.count || 0; if (!s || !c) return null; return (
+                          <div className="mb-2 flex items-center gap-1">
+                            <>
+                              {[1,2,3,4,5].map((n) => (
+                                <svg key={n} className={`w-5 h-5 ${s>=n ? 'text-amber-500' : 'text-slate-300'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                              ))}
+                            </>
+                            <span className="text-sm text-slate-600">({c})</span>
+                          </div>
+                        ); })()}
+                        <p className="text-sm text-indigo-600 font-medium mb-2">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
+                        {typeof d.consultationFees === 'number' && (
+                          <div className="text-sm text-slate-600 font-semibold mb-3">Fee: <span className="text-green-600">₹{d.consultationFees}</span></div>
+                        )}
+                        <Link to={`/admin/doctors/${d.user._id}`} className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                          View Profile
+                        </Link>
                       </div>
                     </div>
-                    <div className="p-6 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
-                      <h3 className="text-lg font-bold text-slate-800 mb-1">{`Dr. ${d.user?.name || ''}`}</h3>
-                      {(() => { const did = String(d.user?._id || ''); const info = ratingById[did]; const s = info?.avg || 0; const c = info?.count || 0; if (!s || !c) return null; return (
-                        <div className="mb-2 flex items-center gap-1">
-                          <>
-                            {[1,2,3,4,5].map((n) => (
-                              <svg key={n} className={`w-5 h-5 ${s>=n ? 'text-amber-500' : 'text-slate-300'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                            ))}
-                          </>
-                          <span className="text-sm text-slate-600">({c})</span>
-                        </div>
-                      ); })()}
-                      <p className="text-sm text-indigo-600 font-medium mb-2">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
-                      {typeof d.consultationFees === 'number' && (
-                        <div className="text-sm text-slate-600 font-semibold mb-3">Fee: <span className="text-green-600">₹{d.consultationFees}</span></div>
-                      )}
-                      <Link to={`/admin/doctors/${d.user._id}`} className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                        View Profile
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -399,55 +416,74 @@ export default function SearchDoctors() {
         <div className="grid grid-cols-1 gap-8">
           <main>
             {error && <div className="mb-6 text-center text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-4 animate-fade-in shadow-lg">{error}</div>}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {list.map((d, index) => (
-                <div key={d._id} className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl overflow-hidden hover:scale-105 hover:shadow-2xl transition-all duration-500 animate-zoom-in opacity-0" style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'forwards' }}>
-                  <div className="relative">
-                    {photoOf(d) ? (
-                      <img
-                        src={photoOf(d)}
-                        alt="Doctor"
-                        className="w-full h-64 object-cover hover:scale-110 transition-transform duration-700"
-                      />
-                    ) : (
-                      <div className="w-full h-64 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center hover:scale-110 transition-transform duration-700">
-                        <div className="text-6xl text-slate-400">👨‍⚕️</div>
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+                <p className="text-slate-600 font-medium">Finding the best doctors for you...</p>
+              </div>
+            ) : list.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 bg-white/50 backdrop-blur-sm rounded-3xl border border-white/30 shadow-xl animate-fade-in">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-xl font-bold text-slate-800 mb-2">No Doctors Found</h3>
+                <p className="text-slate-600 text-center max-w-md">We couldn't find any doctors matching your search criteria. Try adjusting your filters or search query.</p>
+                <button 
+                  onClick={() => { setQ(""); setSpecialization(""); }}
+                  className="mt-6 px-6 py-2 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
+                >
+                  Clear All Filters
+                </button>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {list.map((d, index) => (
+                  <div key={d._id} className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl overflow-hidden hover:scale-105 hover:shadow-2xl transition-all duration-500 animate-zoom-in opacity-0" style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'forwards' }}>
+                    <div className="relative">
+                      {photoOf(d) ? (
+                        <img
+                          src={photoOf(d)}
+                          alt="Doctor"
+                          className="w-full h-64 object-cover hover:scale-110 transition-transform duration-700"
+                        />
+                      ) : (
+                        <div className="w-full h-64 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center hover:scale-110 transition-transform duration-700">
+                          <div className="text-6xl text-slate-400">👨‍⚕️</div>
+                        </div>
+                      )}
+                      <div className="absolute top-3 right-3 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.3}s`, animationFillMode: 'forwards' }}>
+                        {(() => {
+                          const online = d.isOnline !== false;
+                          const busy = !!d.isBusy;
+                          const cls = busy ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' : (online ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white' : 'bg-gradient-to-r from-red-400 to-pink-500 text-white');
+                          const txt = busy ? 'Busy' : (online ? 'Online' : 'Offline');
+                          return <span className={`inline-block text-xs px-3 py-2 rounded-full font-semibold shadow-lg hover:scale-105 transition-transform duration-300 ${cls}`}>{txt}</span>;
+                        })()}
                       </div>
-                    )}
-                    <div className="absolute top-3 right-3 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.3}s`, animationFillMode: 'forwards' }}>
-                      {(() => {
-                        const online = d.isOnline !== false;
-                        const busy = !!d.isBusy;
-                        const cls = busy ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' : (online ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white' : 'bg-gradient-to-r from-red-400 to-pink-500 text-white');
-                        const txt = busy ? 'Busy' : (online ? 'Online' : 'Offline');
-                        return <span className={`inline-block text-xs px-3 py-2 rounded-full font-semibold shadow-lg hover:scale-105 transition-transform duration-300 ${cls}`}>{txt}</span>;
-                      })()}
+                    </div>
+                    <div className="p-6 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
+                      <h3 className="text-lg font-bold text-slate-800 mb-1">{`Dr. ${d.user?.name || ''}`}</h3>
+                      {(() => { const did = String(d.user?._id || ''); const avgRaw = Number(d?.averageRating || 0) || 0; const fallbackAvg = Number(ratingById[did]?.avg || 0) || 0; const avg = avgRaw > 0 ? avgRaw : fallbackAvg; const c = Number(ratingById[did]?.count || 0) || 0; const s = Math.round(avg); return (
+                        <div className="mb-2 flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            {[1,2,3,4,5].map((n) => (
+                              <svg key={n} className={`w-5 h-5 ${s>=n ? 'text-amber-500' : 'text-slate-300'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            ))}
+                          </div>
+                          <span className="text-sm font-medium text-slate-700">{avg.toFixed(1)}</span>
+                          {c > 0 && <span className="text-sm text-slate-600">({c} reviews)</span>}
+                        </div>
+                      ); })()}
+                      <p className="text-sm text-indigo-600 font-medium mb-2">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
+                      {typeof d.consultationFees === 'number' && (
+                        <div className="text-sm text-slate-600 font-semibold mb-3">Consultation Fee: <span className="text-green-600">₹{d.consultationFees}</span></div>
+                      )}
+                      <Link to={`/doctor/${d.user._id}`} className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                        View Profile
+                      </Link>
                     </div>
                   </div>
-                  <div className="p-6 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
-                    <h3 className="text-lg font-bold text-slate-800 mb-1">{`Dr. ${d.user?.name || ''}`}</h3>
-                    {(() => { const did = String(d.user?._id || ''); const avgRaw = Number(d?.averageRating || 0) || 0; const fallbackAvg = Number(ratingById[did]?.avg || 0) || 0; const avg = avgRaw > 0 ? avgRaw : fallbackAvg; const c = Number(ratingById[did]?.count || 0) || 0; const s = Math.round(avg); return (
-                      <div className="mb-2 flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          {[1,2,3,4,5].map((n) => (
-                            <svg key={n} className={`w-5 h-5 ${s>=n ? 'text-amber-500' : 'text-slate-300'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                          ))}
-                        </div>
-                        <span className="text-sm font-medium text-slate-700">{avg.toFixed(1)}</span>
-                        {c > 0 && <span className="text-sm text-slate-600">({c} reviews)</span>}
-                      </div>
-                    ); })()}
-                    <p className="text-sm text-indigo-600 font-medium mb-2">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
-                    {typeof d.consultationFees === 'number' && (
-                      <div className="text-sm text-slate-600 font-semibold mb-3">Consultation Fee: <span className="text-green-600">₹{d.consultationFees}</span></div>
-                    )}
-                    <Link to={`/doctor/${d.user._id}`} className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                      View Profile
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </main>
         </div>
       </div>
