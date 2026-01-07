@@ -33,6 +33,7 @@ export default function DoctorProfile() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     specializations: "",
+    about: "",
     clinicName: "",
     clinicAddress: "",
     clinicCity: "",
@@ -166,6 +167,7 @@ export default function DoctorProfile() {
     setError("");
     setForm({
       specializations: (profile?.specializations || []).join(", "),
+      about: profile?.about || "",
       clinicName: profile?.clinic?.name || "",
       clinicAddress: profile?.clinic?.address || "",
       clinicCity: profile?.clinic?.city || "",
@@ -213,6 +215,7 @@ export default function DoctorProfile() {
     if (name === "clinicName" && processedValue.length > 100) return;
     if (name === "clinicCity" && processedValue.length > 50) return;
     if (name === "clinicAddress" && processedValue.length > 50) return;
+    if (name === "about" && processedValue.length > 500) return;
     
     setForm((f) => ({ ...f, [name]: processedValue }));
   };
@@ -260,6 +263,7 @@ export default function DoctorProfile() {
 
       const payload = {
         specializations: uniqueSpecs,
+        about: trimmedForm.about || "",
         clinic: {
           name: trimmedForm.clinicName || "",
           address: trimmedForm.clinicAddress || "",
@@ -384,8 +388,16 @@ export default function DoctorProfile() {
                 <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl p-6 hover:scale-105 hover:shadow-2xl transition-all duration-500">
                   <div className="text-xl font-bold text-slate-800 mb-4">Doctor Information</div>
                   <div className="space-y-3 text-sm">
-                    <p className="text-slate-700">{about}</p>
-                    {fee !== "" && (<div className="text-slate-700">Appointment Fee: <span className="font-medium">₹{fee}</span></div>)}
+                    {about && (
+                      <div className="text-slate-700">
+                        <span className="text-slate-500">About:</span> <p className="font-medium inline whitespace-pre-wrap">{about}</p>
+                      </div>
+                    )}
+                    {fee !== "" && (
+                      <div className="text-slate-700">
+                        <span className="text-slate-500">Appointment Fee:</span> <span className="font-medium">₹{fee}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="mt-6 bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl p-6 hover:scale-105 hover:shadow-2xl transition-all duration-500">
@@ -488,6 +500,11 @@ export default function DoctorProfile() {
                   })()}
                   <input name="specializations" maxLength={100} value={form.specializations} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" placeholder="e.g., Cardiology, Dermatology" />
                 </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">About</label>
+                  <textarea name="about" maxLength={500} value={form.about} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" rows={3} placeholder="Tell patients about your medical background and expertise..." />
+                </div>
+
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Clinic Name</label>
                   <input name="clinicName" maxLength={100} value={form.clinicName} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
