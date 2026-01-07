@@ -242,6 +242,11 @@ export default function AdminAddDoctor() {
                       {p.startsWith("/admin/add-doctor") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
                     </Link>
 
+                    <Link to="/admin/specializations" className={linkClass(p.startsWith("/admin/specializations"))}>
+                      <span className="relative z-10">Specializations</span>
+                      {p.startsWith("/admin/specializations") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                    </Link>
+
                     <Link to="/admin/doctors" className={linkClass(p.startsWith("/admin/doctors") && !p.startsWith("/admin/doctors/pending"))}>
                       <span className="relative z-10">Doctors List</span>
                       {(p.startsWith("/admin/doctors") && !p.startsWith("/admin/doctors/pending")) && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
@@ -283,6 +288,7 @@ export default function AdminAddDoctor() {
                       { path: '/admin/dashboard', label: 'Dashboard' },
                       { path: '/admin/appointments', label: 'Appointments' },
                       { path: '/admin/add-doctor', label: 'Add Doctor' },
+                      { path: '/admin/specializations', label: 'Specializations' },
                       { path: '/admin/doctors', label: 'Doctors List' }
                     ].map((item) => (
                       <Link
@@ -329,42 +335,9 @@ export default function AdminAddDoctor() {
               <label className="block text-sm font-medium text-slate-700 mb-1">Specializations <span className="text-red-500">*</span></label>
               <select
                 value=""
-                onChange={async (e) => {
+                onChange={(e) => {
                   const val = e.target.value;
                   if (!val) return;
-                  
-                  if (val === "ADD_NEW") {
-                    const newSpec = prompt("Enter new specialization name:");
-                    if (newSpec && newSpec.trim()) {
-                      const formattedSpec = newSpec.trim();
-                      
-                      // Check if already in form specializations
-                      const currentSpecs = form.specializations ? form.specializations.split(",").map(s => s.trim()) : [];
-                      if (currentSpecs.includes(formattedSpec)) {
-                        alert("This specialization is already added to the doctor.");
-                        return;
-                      }
-
-                      // Save to backend if not exists
-                      if (!specialties.includes(formattedSpec)) {
-                        try {
-                          await API.post("/specializations", { name: formattedSpec });
-                          setSpecialties(prev => [...prev, formattedSpec].sort());
-                        } catch (err) {
-                          if (err.response?.data?.message !== "Specialization already exists") {
-                            alert(err.response?.data?.message || "Failed to add specialization");
-                            return;
-                          }
-                        }
-                      }
-                      
-                      setForm(f => ({
-                        ...f,
-                        specializations: f.specializations ? `${f.specializations}, ${formattedSpec}` : formattedSpec,
-                      }));
-                    }
-                    return;
-                  }
 
                   // Check if already in form specializations for existing selection
                   const currentSpecs = form.specializations ? form.specializations.split(",").map(s => s.trim()) : [];
@@ -384,8 +357,18 @@ export default function AdminAddDoctor() {
                 {specialties.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
-                <option value="ADD_NEW" className="text-indigo-600 font-bold">+ Add New Specialization</option>
               </select>
+              <div className="flex justify-between items-center mb-2">
+                <div className="text-xs text-slate-500 italic">
+                  * Select specializations from the list above.
+                </div>
+                <Link to="/admin/specializations" className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">
+                  <span>Manage List</span>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </Link>
+              </div>
               <input name="specializations" maxLength={100} value={form.specializations} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="e.g., Cardiology, Dermatology" />
 
               <div className="grid sm:grid-cols-2 gap-3">

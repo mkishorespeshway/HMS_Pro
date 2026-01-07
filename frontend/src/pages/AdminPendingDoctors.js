@@ -91,6 +91,11 @@ export default function AdminPendingDoctors() {
                       {p.startsWith("/admin/add-doctor") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
                     </Link>
 
+                    <Link to="/admin/specializations" className={linkClass(p.startsWith("/admin/specializations"))}>
+                      <span className="relative z-10">Specializations</span>
+                      {p.startsWith("/admin/specializations") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                    </Link>
+
                     <Link to="/admin/doctors" className={linkClass(p.startsWith("/admin/doctors") && !p.startsWith("/admin/doctors/pending"))}>
                       <span className="relative z-10">Doctors List</span>
                       {(p.startsWith("/admin/doctors") && !p.startsWith("/admin/doctors/pending")) && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
@@ -132,6 +137,7 @@ export default function AdminPendingDoctors() {
                       { path: '/admin/dashboard', label: 'Dashboard' },
                       { path: '/admin/appointments', label: 'Appointments' },
                       { path: '/admin/add-doctor', label: 'Add Doctor' },
+                      { path: '/admin/specializations', label: 'Specializations' },
                       { path: '/admin/doctors', label: 'Doctors List' }
                     ].map((item) => (
                       <Link

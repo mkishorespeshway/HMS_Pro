@@ -23,6 +23,7 @@ const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminAppointments = lazy(() => import("./pages/AdminAppointments"));
 const AdminAddDoctor = lazy(() => import("./pages/AdminAddDoctor"));
+const AdminSpecializations = lazy(() => import("./pages/AdminSpecializations"));
 const SearchDoctors = lazy(() => import("./pages/SearchDoctors"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Appointments = lazy(() => import("./pages/Appointments"));
@@ -789,6 +790,7 @@ function App() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/appointments" element={<AdminAppointments />} />
           <Route path="/admin/add-doctor" element={<AdminAddDoctor />} />
+          <Route path="/admin/specializations" element={<AdminSpecializations />} />
           <Route path="/admin/doctors" element={<SearchDoctors />} />
           <Route path="/forgot" element={<ForgotPassword />} />
           <Route path="/profile" element={<Profile />} />
