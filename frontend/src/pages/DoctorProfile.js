@@ -52,7 +52,8 @@ export default function DoctorProfile() {
     clinicAddress: "",
     clinicCity: "",
     consultationFees: "",
-    slotDurationMins: ""
+    slotDurationMins: "",
+    photoBase64: ""
   });
 
   useEffect(() => {
@@ -186,7 +187,8 @@ export default function DoctorProfile() {
       clinicAddress: profile?.clinic?.address || "",
       clinicCity: profile?.clinic?.city || "",
       consultationFees: String(profile?.consultationFees ?? ""),
-      slotDurationMins: String(profile?.slotDurationMins ?? "")
+      slotDurationMins: String(profile?.slotDurationMins ?? ""),
+      photoBase64: profile?.photoBase64 || ""
     });
     setEditing(true);
   };
@@ -242,6 +244,21 @@ export default function DoctorProfile() {
     }
   };
 
+  const onFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("File size should be less than 2MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setForm((f) => ({ ...f, photoBase64: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const save = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -284,7 +301,8 @@ export default function DoctorProfile() {
           city: trimmedForm.clinicCity || ""
         },
         consultationFees: trimmedForm.consultationFees ? Number(trimmedForm.consultationFees) : undefined,
-        slotDurationMins: trimmedForm.slotDurationMins ? Number(trimmedForm.slotDurationMins) : undefined
+        slotDurationMins: trimmedForm.slotDurationMins ? Number(trimmedForm.slotDurationMins) : undefined,
+        photoBase64: form.photoBase64
       };
       const { data } = await API.post("/doctors/me", payload);
       setProfile(data);
@@ -459,6 +477,26 @@ export default function DoctorProfile() {
               <h2 className="text-xl font-semibold mb-4">Edit Profile</h2>
               {error && <div className="text-red-600 mb-3 text-sm">{error}</div>}
               <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2 flex flex-col items-center mb-4">
+                  <div className="relative group">
+                    {form.photoBase64 ? (
+                      <img src={form.photoBase64} alt="Preview" className="w-32 h-32 object-cover rounded-xl border-2 border-indigo-200 shadow-md" />
+                    ) : (
+                      <div className="w-32 h-32 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center">
+                        <span className="text-slate-400 text-xs">No Photo</span>
+                      </div>
+                    )}
+                    <label className="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-lg cursor-pointer shadow-lg hover:bg-indigo-700 transition-colors">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <input type="file" className="hidden" accept="image/*" onChange={onFileChange} />
+                    </label>
+                  </div>
+                  <span className="text-xs text-slate-500 mt-2">Click icon to upload photo</span>
+                </div>
+
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Specializations</label>
                   <select
