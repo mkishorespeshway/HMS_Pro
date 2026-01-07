@@ -215,7 +215,7 @@ export default function DoctorProfile() {
     if (name === "clinicName" && processedValue.length > 100) return;
     if (name === "clinicCity" && processedValue.length > 50) return;
     if (name === "clinicAddress" && processedValue.length > 50) return;
-    if (name === "about" && processedValue.length > 500) return;
+    if (name === "about" && processedValue.length > 350) return;
     
     setForm((f) => ({ ...f, [name]: processedValue }));
   };
@@ -502,7 +502,7 @@ export default function DoctorProfile() {
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">About</label>
-                  <textarea name="about" maxLength={500} value={form.about} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" rows={3} placeholder="Tell patients about your medical background and expertise..." />
+                  <textarea name="about" maxLength={350} value={form.about} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" rows={3} placeholder="Tell patients about your medical background and expertise..." />
                 </div>
 
                 <div>

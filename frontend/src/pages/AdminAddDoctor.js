@@ -103,7 +103,7 @@ export default function AdminAddDoctor() {
     if (name === "clinic" && processedValue.length > 100) return;
     if (name === "city" && processedValue.length > 50) return;
     if (name === "address" && processedValue.length > 50) return;
-    if (name === "about" && processedValue.length > 500) return;
+    if (name === "about" && processedValue.length > 350) return;
     setForm((f) => ({ ...f, [name]: processedValue }));
   };
 
@@ -441,7 +441,7 @@ export default function AdminAddDoctor() {
               </div>
 
               <label className="block text-sm font-medium text-slate-700 mb-1">About</label>
-              <textarea name="about" maxLength={500} value={form.about} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="Write about yourself..." rows={3} />
+              <textarea name="about" maxLength={350} value={form.about} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="Write about yourself..." rows={3} />
 
               <label className="block text-sm font-medium text-slate-700 mb-1">Upload Image</label>
               <input type="file" accept="image/*" className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white transition-all duration-300 mb-3" onChange={async (e) => {
