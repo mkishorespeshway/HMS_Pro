@@ -212,7 +212,7 @@ export default function DoctorProfile() {
     if (name === "specializations" && processedValue.length > 100) return;
     if (name === "clinicName" && processedValue.length > 100) return;
     if (name === "clinicCity" && processedValue.length > 50) return;
-    if (name === "clinicAddress" && processedValue.length > 250) return;
+    if (name === "clinicAddress" && processedValue.length > 50) return;
     
     setForm((f) => ({ ...f, [name]: processedValue }));
   };
@@ -392,26 +392,32 @@ export default function DoctorProfile() {
                   <div className="text-xl font-bold text-slate-800 mb-4">Clinic Details</div>
                   <div className="space-y-4 text-sm">
                     {clinicName && (
-                      <div className="flex items-center gap-3">
-                        <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="flex items-start gap-3">
+                        <svg className="w-5 h-5 text-indigo-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10l9-7 9 7v8a2 2 0 01-2 2H5a2 2 0 01-2-2v-8z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 21V9h6v12" />
                         </svg>
-                        <div> Clinic: <span className="text-slate-700 font-medium">{clinicName}</span></div>
+                        <div className="flex-1 text-slate-700">
+                          <span className="text-slate-500">Clinic:</span> <span className="font-medium break-all">{clinicName}</span>
+                        </div>
                       </div>
                     )}
                     <div className="flex items-start gap-3">
-                      <svg className="w-5 h-5 text-indigo-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-indigo-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      <div> Address: <div className="whitespace-pre-wrap text-slate-700 font-medium">{address}</div></div>
+                      <div className="flex-1 text-slate-700">
+                        <span className="text-slate-500">Address:</span> <span className="font-medium break-all whitespace-pre-wrap">{address}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-indigo-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 21.5l-7-7a4.95 4.95 0 117-7l7 7a4.95 4.95 0 11-7 7z" />
                       </svg>
-                      <div> City: <span className="text-slate-700 font-medium">{city}</span></div>
+                      <div className="flex-1 text-slate-700">
+                        <span className="text-slate-500">City:</span> <span className="font-medium break-all">{city}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -492,7 +498,7 @@ export default function DoctorProfile() {
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Address</label>
-                  <input name="clinicAddress" maxLength={250} value={form.clinicAddress} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
+                  <input name="clinicAddress" maxLength={50} value={form.clinicAddress} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Consultation Fees</label>
