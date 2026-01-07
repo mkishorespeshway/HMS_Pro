@@ -378,13 +378,13 @@ export default function SearchDoctors() {
       <div className="max-w-7xl mx-auto pt-8 px-4 animate-fade-in">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-8 text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent animate-slide-in-right">Find Your Perfect Doctor</h2>
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-2xl p-6 mb-8 animate-slide-in-left opacity-0" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
-          <div className="grid sm:grid-cols-3 gap-4 items-start">
-            <div>
+          <div className="grid sm:grid-cols-4 gap-4 items-end">
+            <div className="sm:col-span-1">
               <label className="block text-sm font-semibold text-slate-700 mb-2">Specialization</label>
               <select
                 value={specialization}
                 onChange={(e) => setSpecialization(e.target.value)}
-                className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105"
+                className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
               >
                 <option value="">All Specializations</option>
                 {specialties.map((s) => (
@@ -392,23 +392,29 @@ export default function SearchDoctors() {
                 ))}
               </select>
             </div>
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Search Doctors</label>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input
-                  className="w-full sm:flex-1 p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105"
-                  placeholder="Search by name, clinic, or specialization..."
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') search(); }}
-                />
-                <button onClick={search} className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">Search</button>
-                <button
-                  onClick={() => { setQ(''); setSpecialization(''); search(); }}
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 font-semibold transition-all duration-300 hover:scale-105"
-                >
-                  Clear
-                </button>
+            <div className="sm:col-span-3">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Search Doctors</label>
+                  <input
+                    className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
+                    placeholder="Search by name, clinic, or specialization..."
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') search(); }}
+                  />
+                </div>
+                <div className="sm:col-span-1">
+                  <button onClick={search} className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">Search</button>
+                </div>
+                <div className="sm:col-span-1">
+                  <button
+                    onClick={() => { setQ(''); setSpecialization(''); search(); }}
+                    className="w-full px-6 py-3 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 font-semibold transition-all duration-300 hover:scale-105"
+                  >
+                    Clear
+                  </button>
+                </div>
               </div>
             </div>
           </div>
