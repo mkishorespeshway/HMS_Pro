@@ -142,7 +142,7 @@ export default function AdminAddDoctor() {
     const invalidSpecs = enteredSpecs.filter(s => !specialties.includes(s));
     
     if (invalidSpecs.length > 0) {
-      alert(`specialization is not here in the list: ${invalidSpecs.join(", ")}`);
+      alert(`Specialization is not in the list: ${invalidSpecs.join(", ")}`);
       return;
     }
 

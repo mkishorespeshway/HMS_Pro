@@ -171,7 +171,7 @@ export default function SearchDoctors() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const pageTitle = specialization ? `Find ${specialization} | HospoZen` : (q ? `Find Doctors: ${q} | HospoZen` : 'Find Doctors | HospoZen');
-  const pageDesc = specialization ? `Browse and book ${specialization} near you.` : (q ? `Search results for doctors matching "${q}".` : 'Search and book verified doctors by specialty, experience, and ratings.');
+  const pageDesc = specialization ? `Browse and book ${specialization} near you.` : (q ? `Search results for doctors matching "${q}".` : 'Search and book verified doctors by specialization, experience, and ratings.');
 
   if (isAdmin) {
     return (
@@ -363,13 +363,13 @@ export default function SearchDoctors() {
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-2xl p-6 mb-8 animate-slide-in-left opacity-0" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
           <div className="grid sm:grid-cols-3 gap-4 items-start">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Specialty</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Specialization</label>
               <select
                 value={specialization}
                 onChange={(e) => setSpecialization(e.target.value)}
                 className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105"
               >
-                <option value="">All Specialties</option>
+                <option value="">All Specializations</option>
                 {specialties.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}

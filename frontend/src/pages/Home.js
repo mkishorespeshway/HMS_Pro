@@ -293,8 +293,8 @@ export default function Home() {
             <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 rounded-full text-sm font-semibold animate-slide-in-down shadow-lg border border-blue-200/50 mb-6">
               <span className="mr-2">🎯</span> Choose Your Specialist
             </div>
-            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent animate-slide-in-up mb-6">Find by Speciality</h2>
-            <p className="text-gray-600 text-xl max-w-3xl mx-auto animate-fade-in leading-relaxed" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>Simply browse through our comprehensive range of medical specialties and schedule your appointment with qualified professionals.</p>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent animate-slide-in-up mb-6">Find by Specialization</h2>
+            <p className="text-gray-600 text-xl max-w-3xl mx-auto animate-fade-in leading-relaxed" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>Simply browse through our comprehensive range of medical specializations and schedule your appointment with qualified professionals.</p>
           </div>
           <div className="relative overflow-hidden">
             <div className="flex gap-10 animate-scroll-left" style={{ width: `${(specialties.length * 2) * 180}px` }}>

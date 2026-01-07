@@ -716,7 +716,7 @@ function App() {
       if (path === '/') return { title: 'HospoZen | Book Doctors Online', desc: 'Find verified doctors and book appointments online with HospoZen.', keys: 'book doctors online, find doctors, healthcare appointments, telemedicine' };
       if (path.startsWith('/about')) return { title: 'About HospoZen | Healthcare Platform', desc: 'Learn about HospoZen and our mission to modernize healthcare.', keys: 'about hospozen, healthcare platform, company info' };
       if (path.startsWith('/contact')) return { title: 'Contact HospoZen | Support', desc: 'Get support and contact the HospoZen team.', keys: 'contact hospozen, support, help' };
-      if (path.startsWith('/search')) return { title: 'Find Doctors by Specialty | HospoZen', desc: 'Search and filter doctors by specialization, experience, and ratings.', keys: 'find doctors, specialties, doctor search, ratings' };
+      if (path.startsWith('/search')) return { title: 'Find Doctors by Specialization | HospoZen', desc: 'Search and filter doctors by specialization, experience, and ratings.', keys: 'find doctors, specializations, doctor search, ratings' };
       if (path.startsWith('/doctor/')) return { title: 'Doctor Profile | HospoZen', desc: 'View doctor details, specialization, experience, and book an appointment.', keys: 'doctor profile, book appointment, specialization' };
       if (path.startsWith('/appointments')) return { title: 'My Appointments | HospoZen', desc: 'Manage upcoming and past appointments securely.', keys: 'appointments, patient dashboard, manage bookings' };
       if (path.startsWith('/pay')) return { title: 'Secure Payment | HospoZen', desc: 'Complete your consultation payment securely.', keys: 'payment, secure checkout, consultation' };
