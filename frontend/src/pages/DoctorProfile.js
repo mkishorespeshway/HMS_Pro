@@ -214,7 +214,7 @@ export default function DoctorProfile() {
     if (name === "specializations" && processedValue.length > 100) return;
     if (name === "clinicName" && processedValue.length > 100) return;
     if (name === "clinicCity" && processedValue.length > 50) return;
-    if (name === "clinicAddress" && processedValue.length > 50) return;
+    if (name === "clinicAddress" && processedValue.length > 150) return;
     if (name === "about" && processedValue.length > 350) return;
     
     setForm((f) => ({ ...f, [name]: processedValue }));
@@ -515,7 +515,7 @@ export default function DoctorProfile() {
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Address</label>
-                  <input name="clinicAddress" maxLength={50} value={form.clinicAddress} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
+                  <input name="clinicAddress" maxLength={150} value={form.clinicAddress} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Consultation Fees</label>
