@@ -295,6 +295,55 @@ export default function SearchDoctors() {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Doctors Management</h2>
               </div>
+              
+              <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/30 shadow-2xl p-6 mb-8 animate-fade-in opacity-0 relative z-20" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
+                <div className="grid sm:grid-cols-4 gap-4 items-end">
+                  <div className="sm:col-span-1 relative">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Specialization</label>
+                    <div className="relative">
+                      <select
+                        value={specialization}
+                        onChange={(e) => setSpecialization(e.target.value)}
+                        className="w-full p-3 pr-10 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 appearance-none outline-none text-slate-700 font-medium cursor-pointer"
+                      >
+                        <option value="">All Specializations</option>
+                        {specialties.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="sm:col-span-3">
+                    <div className="flex flex-col sm:flex-row gap-3 items-end">
+                      <div className="w-full">
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Search Doctors</label>
+                        <input
+                          className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 outline-none text-slate-700 font-medium"
+                          placeholder="Search by name, clinic, or specialization..."
+                          value={q}
+                          onChange={(e) => setQ(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') search(); }}
+                        />
+                      </div>
+                      <div className="w-full sm:w-auto flex gap-2 sm:gap-3">
+                        <button onClick={search} className="flex-1 sm:w-32 px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 whitespace-nowrap">Search</button>
+                        <button
+                          onClick={() => { setQ(''); setSpecialization(''); search(); }}
+                          className="flex-1 sm:w-32 px-4 py-3 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 font-semibold transition-all duration-300 hover:scale-105 whitespace-nowrap"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {error && <div className="mb-6 text-center text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-4 animate-fade-in shadow-lg">{error}</div>}
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-20">
@@ -377,40 +426,45 @@ export default function SearchDoctors() {
       </Helmet>
       <div className="max-w-7xl mx-auto pt-8 px-4 animate-fade-in">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-8 text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent animate-slide-in-right">Find Your Perfect Doctor</h2>
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-2xl p-6 mb-8 animate-slide-in-left opacity-0" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
+        <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/30 shadow-2xl p-6 mb-8 animate-fade-in opacity-0 relative z-20" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
           <div className="grid sm:grid-cols-4 gap-4 items-end">
-            <div className="sm:col-span-1">
+            <div className="sm:col-span-1 relative">
               <label className="block text-sm font-semibold text-slate-700 mb-2">Specialization</label>
-              <select
-                value={specialization}
-                onChange={(e) => setSpecialization(e.target.value)}
-                className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
-              >
-                <option value="">All Specializations</option>
-                {specialties.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={specialization}
+                  onChange={(e) => setSpecialization(e.target.value)}
+                  className="w-full p-3 pr-10 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 appearance-none outline-none text-slate-700 font-medium cursor-pointer"
+                >
+                  <option value="">All Specializations</option>
+                  {specialties.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
             </div>
             <div className="sm:col-span-3">
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
-                <div className="sm:col-span-2">
+              <div className="flex flex-col sm:flex-row gap-3 items-end">
+                <div className="w-full">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Search Doctors</label>
                   <input
-                    className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
+                    className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 outline-none text-slate-700 font-medium"
                     placeholder="Search by name, clinic, or specialization..."
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') search(); }}
                   />
                 </div>
-                <div className="sm:col-span-1">
-                  <button onClick={search} className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">Search</button>
-                </div>
-                <div className="sm:col-span-1">
+                <div className="w-full sm:w-auto flex gap-2 sm:gap-3">
+                  <button onClick={search} className="flex-1 sm:w-32 px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 whitespace-nowrap">Search</button>
                   <button
                     onClick={() => { setQ(''); setSpecialization(''); search(); }}
-                    className="w-full px-6 py-3 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 font-semibold transition-all duration-300 hover:scale-105"
+                    className="flex-1 sm:w-32 px-4 py-3 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 font-semibold transition-all duration-300 hover:scale-105 whitespace-nowrap"
                   >
                     Clear
                   </button>
