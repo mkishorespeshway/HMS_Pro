@@ -283,6 +283,7 @@ export default function DoctorDetails() {
                     { path: '/admin/dashboard', label: 'Dashboard' },
                     { path: '/admin/appointments', label: 'Appointments' },
                     { path: '/admin/add-doctor', label: 'Add Doctor' },
+                    { path: '/admin/specializations', label: 'Specializations' },
                     { path: '/admin/doctors', label: 'Doctors List' }
                   ].map((item) => (
                     <Link
