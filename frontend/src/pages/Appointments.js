@@ -507,8 +507,23 @@ export default function Appointments() {
       const msgs = JSON.parse(localStorage.getItem(`wr_${id}_chat`) || '[]');
       const normMsgs = (Array.isArray(msgs) ? msgs : []).map((it) => (typeof it === 'string' ? it : String(it?.text || ''))).filter(Boolean);
       setWaitChat(normMsgs);
-      const files = JSON.parse(localStorage.getItem(`wr_${id}_files`) || '[]');
-      setWaitFiles(Array.isArray(files) ? files : []);
+      const localFiles = JSON.parse(localStorage.getItem(`wr_${id}_files`) || '[]');
+      const serverFiles = Array.isArray(waitingAppt?.patientReports) ? waitingAppt.patientReports : [];
+      
+      const merged = [...serverFiles];
+      const serverNames = new Set(serverFiles.map(f => String(f.name || '').toLowerCase()));
+      
+      if (Array.isArray(localFiles)) {
+        for (const f of localFiles) {
+          const name = String(f.name || '').toLowerCase();
+          if (!serverNames.has(name)) {
+            merged.push(f);
+            serverNames.add(name);
+          }
+        }
+      }
+      setWaitFiles(merged);
+      try { localStorage.setItem(`wr_${id}_files`, JSON.stringify(merged)); } catch(_) {}
     } catch(_) { setWaitChat([]); }
   }, [waitingAppt]);
 
@@ -524,16 +539,24 @@ export default function Appointments() {
       } catch(_) {}
       const doctorFiles = JSON.parse(localStorage.getItem(`wr_${id}_files`) || '[]');
       const serverFiles = Array.isArray(detailsAppt?.patientReports) ? detailsAppt.patientReports : [];
-      const mergedFiles = [...(Array.isArray(doctorFiles) ? doctorFiles : []), ...serverFiles];
-      const seen = new Set();
-      const arr = [];
-      for (const x of mergedFiles) {
-        const key = `${String(x?.url || '')}|${String(x?.name || '')}`;
-        if (!key || seen.has(key)) continue;
-        seen.add(key);
-        arr.push(x);
+      
+      // Smart merge: if a file exists in serverFiles, ignore it in localStorage (matching by name)
+      const merged = [...serverFiles];
+      const serverNames = new Set(serverFiles.map(f => String(f.name || '').toLowerCase()));
+      
+      if (Array.isArray(doctorFiles)) {
+        for (const f of doctorFiles) {
+          const name = String(f.name || '').toLowerCase();
+          if (!serverNames.has(name)) {
+            merged.push(f);
+            serverNames.add(name); // prevent duplicates within localStorage too
+          }
+        }
       }
-      setDetPrevFiles(arr);
+
+      setDetPrevFiles(merged);
+      // Update localStorage to keep it in sync with server truth
+      try { localStorage.setItem(`wr_${id}_files`, JSON.stringify(merged)); } catch(_) {}
       const msgs = JSON.parse(localStorage.getItem(`wr_${id}_chat`) || '[]');
       const normMsgs = (Array.isArray(msgs) ? msgs : []).map((it) => (typeof it === 'string' ? it : String(it?.text || ''))).filter(Boolean);
       setDetChat(normMsgs);
@@ -648,6 +671,23 @@ export default function Appointments() {
       localStorage.setItem(`${keyBase}_chat`, JSON.stringify(msgs || []));
       localStorage.setItem(`${keyBase}_files`, JSON.stringify(files || []));
       localStorage.setItem(`${keyBase}_symptoms`, String(symptoms || ''));
+    } catch (_) {}
+  };
+
+  const savePatientReports = async (apptId, files) => {
+    try {
+      const a = (list || []).find(x => String(x._id || x.id) === String(apptId));
+      if (!a) return;
+      await API.put(`/appointments/${apptId}/patient-details`, {
+        symptoms: a.patientSymptoms || localStorage.getItem(`wr_${apptId}_symptoms`) || "",
+        summary: a.patientSummary || localStorage.getItem(`fu_${apptId}_symptoms`) || "",
+        date: a.date,
+        startTime: a.startTime,
+        doctorId: String(a.doctor?._id || a.doctor || ""),
+        reports: files,
+      });
+      // Update local list to reflect changes
+      setList(prev => prev.map(x => String(x._id || x.id) === String(apptId) ? { ...x, patientReports: files } : x));
     } catch (_) {}
   };
 
@@ -1221,55 +1261,90 @@ export default function Appointments() {
                 </div>
                 <div className="mt-4">
                   <div className="text-slate-900 font-semibold mb-1">Medical reports uploaded</div>
-                  <input
-                    type="file"
-                    multiple
-                    onChange={async (e) => {
-                    const filesSel = Array.from(e.target.files || []);
-                    const newItems = [];
-                      for (const f of filesSel) {
-                        try {
-                          const buf = await f.arrayBuffer();
-                          const bytes = new Uint8Array(buf);
-                          let binary = '';
-                          for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-                          const b64 = btoa(binary);
-                          const mime = f.type || 'application/octet-stream';
-                          newItems.push({ name: f.name, url: `data:${mime};base64,${b64}` });
-                        } catch (_) {}
-                      }
-                      const nextFiles = [...waitFiles, ...newItems];
-                      setWaitFiles(nextFiles);
-                    const id = String(waitingAppt._id || waitingAppt.id);
-                    try { localStorage.setItem(`wr_${id}_files`, JSON.stringify(nextFiles)); } catch(_) {}
-                    try { socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'patient', kind: 'report', text: `Report uploaded (${filesSel.length})` }); } catch(_) {}
-                    e.target.value = '';
-                  }}
-                  />
+                  <div className="group relative">
+                    <input
+                      id="report-upload"
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={async (e) => {
+                         const filesSel = Array.from(e.target.files || []);
+                         const newItems = [];
+                         for (const f of filesSel) {
+                           try {
+                             const buf = await f.arrayBuffer();
+                             const bytes = new Uint8Array(buf);
+                             let binary = '';
+                             for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+                             const b64 = btoa(binary);
+                             const mime = f.type || 'application/octet-stream';
+                             newItems.push({ name: f.name, url: `data:${mime};base64,${b64}` });
+                           } catch (_) {}
+                         }
+                         const nextFiles = [...waitFiles, ...newItems];
+                         setWaitFiles(nextFiles);
+                         const id = String(waitingAppt._id || waitingAppt.id);
+                         try { localStorage.setItem(`wr_${id}_files`, JSON.stringify(nextFiles)); } catch(_) {}
+                         try { socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'patient', kind: 'report', text: `Report uploaded (${filesSel.length})` }); } catch(_) {}
+                         await savePatientReports(id, nextFiles);
+                         e.target.value = '';
+                       }}
+                    />
+                    <label
+                      htmlFor="report-upload"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-indigo-50 hover:border-indigo-400 transition-all cursor-pointer group-hover:scale-[1.01]"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg className="w-8 h-8 mb-3 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p className="mb-1 text-sm text-slate-700 font-medium">Click to upload reports</p>
+                        <p className="text-xs text-slate-500">PDF, PNG, JPG (Multiple allowed)</p>
+                      </div>
+                    </label>
+                  </div>
                   <div className="mt-2 space-y-2">
                     {waitFiles.length === 0 ? (
-                      <div className="text-slate-600 text-sm">No reports uploaded</div>
+                      <div className="text-slate-600 text-sm italic px-1">No reports uploaded yet</div>
                     ) : (
                       waitFiles.map((f, idx) => (
-                        <div key={idx} className="flex items-center justify-between border rounded-md p-2">
+                        <div key={idx} className="flex items-center justify-between border border-slate-200 rounded-xl p-3 bg-white shadow-sm hover:shadow-md transition-shadow">
                           <div className="flex items-center gap-3">
-                            {(String(f.url || '').startsWith('data:image')) && (
-                              <img src={f.url} alt={f.name} className="h-10 w-10 object-cover rounded" />
-                            )}
-                            <div className="text-sm text-slate-700 truncate max-w-[12rem]">{f.name}</div>
+                            <div className="h-10 w-10 shrink-0 bg-indigo-50 rounded-lg flex items-center justify-center overflow-hidden">
+                              {(String(f.url || '').startsWith('data:image')) ? (
+                                <img src={f.url} alt={f.name} className="h-full w-full object-cover" />
+                              ) : (
+                                <svg className="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              )}
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <div className="text-sm font-medium text-slate-900 truncate max-w-[10rem] md:max-w-[15rem]">{f.name}</div>
+                              <div className="text-[10px] text-slate-500 uppercase font-bold">{f.name.split('.').pop()}</div>
+                            </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <button onClick={() => openFile(f.url, f.name)} className="px-2 py-1 rounded-md border border-slate-300 text-sm">Open</button>
+                            <button onClick={() => openFile(f.url, f.name)} className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="Open">
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </button>
                             <button
-                              onClick={() => {
+                              onClick={async () => {
                                 const nextFiles = waitFiles.filter((_, i) => i !== idx);
                                 setWaitFiles(nextFiles);
                                 const id = String(waitingAppt._id || waitingAppt.id);
                                 try { localStorage.setItem(`wr_${id}_files`, JSON.stringify(nextFiles)); } catch(_) {}
+                                await savePatientReports(id, nextFiles);
                               }}
-                              className="px-2 py-1 rounded-md border border-red-600 text-red-700 text-sm"
+                              className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
+                              title="Remove"
                             >
-                              Remove
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
                             </button>
                           </div>
                         </div>
@@ -1405,55 +1480,90 @@ export default function Appointments() {
               </div>
               <div>
                 <div className="text-slate-900 font-semibold mb-1">Medical reports uploaded</div>
-                <input
-                  type="file"
-                  multiple
-                  onChange={async (e) => {
-                    const files = Array.from(e.target.files || []);
-                    const newItems = [];
-                    for (const f of files) {
-                      try {
-                        const buf = await f.arrayBuffer();
-                        const bytes = new Uint8Array(buf);
-                        let binary = '';
-                        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-                        const b64 = btoa(binary);
-                        const mime = f.type || 'application/octet-stream';
-                        newItems.push({ name: f.name, url: `data:${mime};base64,${b64}` });
-                      } catch (_) {}
-                    }
-                    const nextFiles = [...detPrevFiles, ...newItems];
-                    setDetPrevFiles(nextFiles);
-                    const id = String(detailsAppt._id || detailsAppt.id);
-                    try { localStorage.setItem(`wr_${id}_files`, JSON.stringify(nextFiles)); } catch(_) {}
-                    try { socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'patient', kind: 'report', text: `Report uploaded (${files.length})` }); } catch(_) {}
-                    e.target.value = '';
-                  }}
-                />
+                <div className="group relative">
+                  <input
+                    id="report-upload-details"
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={async (e) => {
+                       const files = Array.from(e.target.files || []);
+                       const newItems = [];
+                       for (const f of files) {
+                         try {
+                           const buf = await f.arrayBuffer();
+                           const bytes = new Uint8Array(buf);
+                           let binary = '';
+                           for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+                           const b64 = btoa(binary);
+                           const mime = f.type || 'application/octet-stream';
+                           newItems.push({ name: f.name, url: `data:${mime};base64,${b64}` });
+                         } catch (_) {}
+                       }
+                       const nextFiles = [...detPrevFiles, ...newItems];
+                       setDetPrevFiles(nextFiles);
+                       const id = String(detailsAppt._id || detailsAppt.id);
+                       try { localStorage.setItem(`wr_${id}_files`, JSON.stringify(nextFiles)); } catch(_) {}
+                       try { socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'patient', kind: 'report', text: `Report uploaded (${files.length})` }); } catch(_) {}
+                       await savePatientReports(id, nextFiles);
+                       e.target.value = '';
+                     }}
+                  />
+                  <label
+                    htmlFor="report-upload-details"
+                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-blue-200 rounded-xl bg-blue-50/30 hover:bg-blue-50 hover:border-blue-400 transition-all cursor-pointer group-hover:scale-[1.01]"
+                  >
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <svg className="w-8 h-8 mb-3 text-blue-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <p className="mb-1 text-sm text-blue-700 font-medium">Click to upload reports</p>
+                      <p className="text-xs text-blue-500">PDF, PNG, JPG (Multiple allowed)</p>
+                    </div>
+                  </label>
+                </div>
                 <div className="mt-2 space-y-2">
                   {detPrevFiles.length === 0 ? (
-                    <div className="text-slate-500 text-sm">No reports uploaded</div>
+                    <div className="text-slate-500 text-sm italic px-1">No reports uploaded yet</div>
                   ) : (
                     detPrevFiles.map((f, idx) => (
-                      <div key={idx} className="flex items-center justify-between border border-blue-200 rounded-xl p-3 bg-white/70">
+                      <div key={idx} className="flex items-center justify-between border border-blue-100 rounded-xl p-3 bg-white/80 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-center gap-3">
-                          {(String(f.url || '').startsWith('data:image')) && (
-                            <img src={f.url} alt={f.name} className="h-10 w-10 object-cover rounded" />
-                          )}
-                          <div className="text-sm text-slate-800 truncate max-w-[12rem]">{f.name}</div>
+                          <div className="h-10 w-10 shrink-0 bg-blue-50 rounded-lg flex items-center justify-center overflow-hidden">
+                            {(String(f.url || '').startsWith('data:image')) ? (
+                              <img src={f.url} alt={f.name} className="h-full w-full object-cover" />
+                            ) : (
+                              <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <div className="text-sm font-medium text-slate-900 truncate max-w-[10rem] md:max-w-[15rem]">{f.name}</div>
+                            <div className="text-[10px] text-blue-500 uppercase font-bold">{f.name.split('.').pop()}</div>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <button onClick={() => openFile(f.url, f.name)} className="px-2 py-1 rounded-md border border-blue-200 text-blue-700 text-sm">Open</button>
+                          <button onClick={() => openFile(f.url, f.name)} className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors" title="Open">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </button>
                           <button
-                            onClick={() => {
+                            onClick={async () => {
                               const nextFiles = detPrevFiles.filter((_, i) => i !== idx);
                               setDetPrevFiles(nextFiles);
                               const id = String(detailsAppt._id || detailsAppt.id);
                               try { localStorage.setItem(`wr_${id}_files`, JSON.stringify(nextFiles)); } catch(_) {}
+                              await savePatientReports(id, nextFiles);
                             }}
-                            className="px-2 py-1 rounded-md border border-red-600 text-red-700 text-sm"
+                            className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
+                            title="Remove"
                           >
-                            Remove
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                           </button>
                         </div>
                       </div>

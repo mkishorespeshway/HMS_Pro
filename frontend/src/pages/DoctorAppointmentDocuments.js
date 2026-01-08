@@ -38,17 +38,27 @@ export default function DoctorAppointmentDocuments() {
         const serverF = Array.isArray(fetched?.patientReports) ? fetched.patientReports : [];
         const wrS = String(localStorage.getItem(`wr_${id}_symptoms`) || "");
         const fuS = String(localStorage.getItem(`fu_${id}_symptoms`) || "");
+        
         const baseMsgs = Array.isArray(wrMsgs) ? wrMsgs : [];
-        const merged = ([]).concat(Array.isArray(wrF) ? wrF : [], Array.isArray(fuF) ? fuF : [], Array.isArray(serverF) ? serverF : []);
-        const uniq = [];
-        const seen = new Set();
-        for (const x of Array.isArray(merged) ? merged : []) {
-          const key = `${String(x?.url || '')}|${String(x?.name || '')}`;
-          if (!key || seen.has(key)) continue;
-          seen.add(key);
-          uniq.push(x);
+        
+        // Smart merge: prioritize server files, then deduplicate others by name
+        const merged = [...serverF];
+        const seenNames = new Set(serverF.map(f => String(f.name || '').toLowerCase()));
+        
+        const localSources = [wrF, fuF];
+        for (const list of localSources) {
+          if (Array.isArray(list)) {
+            for (const f of list) {
+              const name = String(f.name || '').toLowerCase();
+              if (name && !seenNames.has(name)) {
+                merged.push(f);
+                seenNames.add(name);
+              }
+            }
+          }
         }
-        const cleanFiles = uniq.filter((x) => {
+
+        const cleanFiles = merged.filter((x) => {
           const name = String(x?.name || '').toLowerCase();
           const by = String(x?.by || '').toLowerCase();
           if (by === 'doctor') return false;
