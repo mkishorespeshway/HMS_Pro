@@ -115,11 +115,16 @@ router.put('/me', authenticate, async (req, res) => {
     for (const k of allow) {
       if (typeof req.body[k] === 'undefined') continue;
       if (k === 'photoBase64' && String(req.body[k]).startsWith('data:image')) {
-        const result = await cloudinary.uploader.upload(req.body[k], {
-          folder: 'hms_profile_photos',
-          resource_type: 'image'
-        });
-        req.user[k] = result.secure_url;
+        if (process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_CLOUD_NAME) {
+          const result = await cloudinary.uploader.upload(req.body[k], {
+            folder: 'hms_profile_photos',
+            resource_type: 'image'
+          });
+          req.user[k] = result.secure_url;
+        } else {
+          // Fallback to storing base64 directly if Cloudinary is not configured
+          req.user[k] = req.body[k];
+        }
       } else {
         req.user[k] = req.body[k];
       }

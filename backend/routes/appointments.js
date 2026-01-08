@@ -310,11 +310,16 @@ router.put("/:id/patient-details", authenticate, async (req, res) => {
         let url = typeof r?.url === 'string' ? r.url : '';
         if (!name || !url) continue;
         if (url.startsWith('data:image')) {
-          const result = await cloudinary.uploader.upload(url, {
-            folder: 'hms_medical_reports',
-            resource_type: 'image'
-          });
-          url = result.secure_url;
+          if (process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_CLOUD_NAME) {
+            const result = await cloudinary.uploader.upload(url, {
+              folder: 'hms_medical_reports',
+              resource_type: 'image'
+            });
+            url = result.secure_url;
+          } else {
+            // Fallback to storing base64 directly if Cloudinary is not configured
+            // url remains the base64 string
+          }
         }
         const key = `${name}|${url}`;
         if (seen.has(key)) continue;
@@ -348,11 +353,16 @@ router.put("/patient-details", authenticate, async (req, res) => {
         let url = typeof r?.url === 'string' ? r.url : '';
         if (!name || !url) continue;
         if (url.startsWith('data:image')) {
-          const result = await cloudinary.uploader.upload(url, {
-            folder: 'hms_medical_reports',
-            resource_type: 'image'
-          });
-          url = result.secure_url;
+          if (process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_CLOUD_NAME) {
+            const result = await cloudinary.uploader.upload(url, {
+              folder: 'hms_medical_reports',
+              resource_type: 'image'
+            });
+            url = result.secure_url;
+          } else {
+            // Fallback to storing base64 directly if Cloudinary is not configured
+            // url remains the base64 string
+          }
         }
         const key = `${name}|${url}`;
         if (seen.has(key)) continue;
