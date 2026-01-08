@@ -482,21 +482,21 @@ function Header() {
 
                 {/* Enhanced User Dropdown */}
                 {open && (
-                  <div className="absolute right-0 top-16 w-80 bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-blue-200/60 z-50 overflow-hidden">
-                    <div className="relative h-24 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
+                  <div className="absolute right-0 top-16 w-80 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-blue-200/60 z-50 overflow-hidden animate-fade-in flex flex-col max-h-[calc(100vh-5rem)]">
+                    <div className="relative shrink-0 h-24 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
                       <div className="absolute inset-0 bg-white/10 mix-blend-overlay"></div>
                       <div className="absolute right-6 -top-2 w-4 h-4 bg-white/95 border border-blue-200/60 rotate-45"></div>
-                      <div className="absolute left-6 -bottom-8 w-28 h-28 rounded-2xl shadow-xl border-4 border-white/70 overflow-hidden">
+                      <div className="absolute left-6 -bottom-8 w-28 h-28 rounded-2xl shadow-xl border-4 border-white/70 overflow-hidden bg-white">
                         {photo ? (
                           <img src={photo} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center font-bold">
+                          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center font-bold text-3xl">
                             {(userName || '').charAt(0).toUpperCase() || 'U'}
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="pt-10 px-6 pb-4 border-b border-blue-200/50">
+                    <div className="shrink-0 pt-10 px-6 pb-4 border-b border-blue-200/50">
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-2xl font-extrabold bg-gradient-to-r from-slate-900 to-indigo-700 bg-clip-text text-transparent">{userName || 'User'}</div>
@@ -504,64 +504,68 @@ function Header() {
                         </div>
                         <button
                           onClick={() => setOpen(false)}
-                          className="text-slate-500 hover:text-slate-900 transition"
+                          className="text-slate-400 hover:text-slate-600 transition-colors p-1"
                         >
                           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
                         </button>
                       </div>
                     </div>
-                    <div className="p-2">
+                    <div className="p-2 space-y-1 overflow-y-auto custom-scrollbar pb-4">
                       <Link
                         to="/profile"
-                        className="group flex items-center justify-between px-6 py-3 rounded-2xl mx-2 hover:bg-blue-50 transition-all"
+                        className="group flex items-center justify-between px-4 py-3 rounded-2xl hover:bg-indigo-50 transition-all duration-300"
                         onClick={() => { fancyLog('My Profile', 'Manage account & details', themes.profile); setOpen(false); }}
                       >
-                        <div className="flex items-center">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                          </div>
                           <div>
-                            <div className="font-semibold text-slate-900">My Profile</div>
-                            <div className="relative mt-1">
-                              <span className="text-xs text-slate-500">Manage account & details</span>
-                              <span className="block h-0.5 w-10 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full group-hover:w-16 transition-all duration-300"></span>
-                            </div>
+                            <div className="font-bold text-slate-800">My Profile</div>
+                            <div className="text-xs text-slate-500">Manage account & details</div>
                           </div>
                         </div>
-                        <svg className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        <svg className="w-5 h-5 text-slate-300 group-hover:text-indigo-600 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </Link>
+                      
                       <Link
                         to="/appointments"
-                        className="group flex items-center justify-between px-6 py-3 rounded-2xl mx-2 hover:bg-blue-50 transition-all"
+                        className="group flex items-center justify-between px-4 py-3 rounded-2xl hover:bg-purple-50 transition-all duration-300"
                         onClick={() => { fancyLog('My Appointments', 'View, join, and manage', themes.appts); setOpen(false); }}
                       >
-                        <div className="flex items-center">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all duration-300">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 4v10m0 0l-2-2m2 2l2-2m6-6v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6a2 2 0 012-2h8a2 2 0 012 2z" /></svg>
+                          </div>
                           <div>
-                            <div className="font-semibold text-slate-900">My Appointments</div>
-                            <div className="relative mt-1">
-                              <span className="text-xs text-slate-500">View, join, and manage</span>
-                              <span className="block h-0.5 w-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full group-hover:w-16 transition-all duration-300"></span>
-                            </div>
+                            <div className="font-bold text-slate-800">My Appointments</div>
+                            <div className="text-xs text-slate-500">View, join, and manage</div>
                           </div>
                         </div>
-                        <svg className="w-4 h-4 text-slate-400 group-hover:text-purple-600 transition" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        <svg className="w-5 h-5 text-slate-300 group-hover:text-purple-600 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </Link>
+
                       <Link
                         to="/appointments?view=prescriptions"
-                        className="group flex items-center justify-between px-6 py-3 rounded-2xl mx-2 hover:bg-blue-50 transition-all"
+                        className="group flex items-center justify-between px-4 py-3 rounded-2xl hover:bg-teal-50 transition-all duration-300"
                         onClick={() => { fancyLog('Prescriptions', 'Access and share Rx', themes.rx); setOpen(false); }}
                       >
-                        <div className="flex items-center">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition-all duration-300">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                          </div>
                           <div>
-                            <div className="font-semibold text-slate-900">Prescriptions</div>
-                            <div className="relative mt-1">
-                              <span className="text-xs text-slate-500">Access and share Rx</span>
-                              <span className="block h-0.5 w-10 bg-gradient-to-r from-cyan-500 to-teal-500 rounded-full group-hover:w-16 transition-all duration-300"></span>
-                            </div>
+                            <div className="font-bold text-slate-800">Prescriptions</div>
+                            <div className="text-xs text-slate-500">Access and share Rx</div>
                           </div>
                         </div>
-                        <svg className="w-4 h-4 text-slate-400 group-hover:text-cyan-600 transition" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        <svg className="w-5 h-5 text-slate-300 group-hover:text-teal-600 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </Link>
-                      <div className="px-6 py-3">
-                        <div className="h-px bg-gradient-to-r from-transparent via-blue-200/60 to-transparent"></div>
+
+                      <div className="py-2 px-4">
+                        <div className="h-px bg-slate-100"></div>
                       </div>
+
                       <button
                         onClick={() => {
                           fancyLog('Sign Out', 'Securely end session', themes.signout);
@@ -570,16 +574,18 @@ function Header() {
                           nav('/login');
                           setOpen(false);
                         }}
-                        className="group flex items-center justify-between w-full px-6 py-3 rounded-2xl mx-2 hover:bg-red-50 transition-all text-red-600"
+                        className="group flex items-center justify-between w-full px-4 py-3 rounded-2xl hover:bg-red-50 transition-all duration-300 text-red-600"
                       >
-                        <div>
-                          <div className="font-semibold">Sign Out</div>
-                          <div className="relative mt-1">
-                            <span className="text-xs text-red-500">Securely end session</span>
-                            <span className="block h-0.5 w-10 bg-gradient-to-r from-red-500 to-pink-500 rounded-full group-hover:w-16 transition-all duration-300"></span>
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all duration-300">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                          </div>
+                          <div>
+                            <div className="font-bold">Sign Out</div>
+                            <div className="text-xs text-red-500">Securely end session</div>
                           </div>
                         </div>
-                        <svg className="w-4 h-4 text-red-400 group-hover:text-red-600 transition" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        <svg className="w-5 h-5 text-red-300 group-hover:text-red-600 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </button>
                     </div>
                   </div>
