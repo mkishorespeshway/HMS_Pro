@@ -15,6 +15,7 @@ const appointmentSchema = new mongoose.Schema({
   beneficiaryName: { type: String },
   meetingLink: { type: String },
   prescriptionText: { type: String },
+  isPrescriptionShared: { type: Boolean, default: false },
   patientSymptoms: { type: String },
   patientSummary: { type: String },
   patientReports: [{

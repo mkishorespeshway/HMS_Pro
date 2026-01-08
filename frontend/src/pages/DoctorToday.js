@@ -1329,7 +1329,7 @@ export default function DoctorToday() {
                               prescription ? `Notes: ${prescription}` : ""
                             ].filter(Boolean);
                             const text = parts.join("\n");
-                            await API.post(`/appointments/${id}/prescription`, { text });
+                            await API.post(`/appointments/${id}/prescription`, { text, notify: true, isPrescriptionShared: true });
                             try {
                               const key = String(id);
                               const prev = JSON.parse(localStorage.getItem(`wr_${key}_prevpres`) || '[]');

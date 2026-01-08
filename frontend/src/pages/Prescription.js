@@ -75,12 +75,27 @@ export default function Prescription() {
   const clinicName = useMemo(() => String(profile?.clinic?.name || "").trim(), [profile]);
   const clinicCity = useMemo(() => String(profile?.clinic?.city || "").trim(), [profile]);
   const doctorName = useMemo(() => `Dr. ${appt?.doctor?.name || ''}`, [appt]);
-  const patientName = useMemo(() => String(appt?.patient?.name || "").trim(), [appt]);
+  const patientName = useMemo(() => {
+    if (appt?.beneficiaryType === 'family' && appt?.beneficiaryName) {
+      return String(appt.beneficiaryName).trim();
+    }
+    return String(appt?.patient?.name || "").trim();
+  }, [appt]);
   const when = useMemo(() => `${appt?.date || ''} ${appt?.startTime || ''}-${appt?.endTime || ''}`, [appt]);
   const doctorQuals = useMemo(() => (Array.isArray(profile?.qualifications) ? profile.qualifications.join(', ') : ''), [profile]);
   const doctorSpecs = useMemo(() => (Array.isArray(profile?.specializations) ? profile.specializations.join(', ') : ''), [profile]);
   const patientAge = useMemo(() => {
     try {
+      if (appt?.patient?.birthday) {
+        const birthDate = new Date(appt.patient.birthday);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        if (age >= 0) return String(age);
+      }
       const pid = String(appt?.patient?._id || appt?.patient || '');
       const val = localStorage.getItem(`userAgeById_${pid}`) || '';
       return String(val || '').trim();
@@ -88,6 +103,9 @@ export default function Prescription() {
   }, [appt]);
   const patientGender = useMemo(() => {
     try {
+      if (appt?.patient?.gender) {
+        return String(appt.patient.gender).trim();
+      }
       const pid = String(appt?.patient?._id || appt?.patient || '');
       const val = localStorage.getItem(`userGenderById_${pid}`) || '';
       return String(val || '').trim();
@@ -181,6 +199,28 @@ export default function Prescription() {
       return !!uid && uid === did;
     } catch(_) { return false; }
   }, [appt]);
+
+  // If patient tries to view unshared prescription
+  if (appt && !isDoctorUser && !appt.isPrescriptionShared) {
+     // Check if user is patient
+     const user = JSON.parse(localStorage.getItem('user') || '{}');
+     if (user.role === 'patient') {
+        return (
+          <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center max-w-md w-full">
+              <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m11 3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 mb-2">Prescription Not Available</h2>
+              <p className="text-slate-600 mb-6">The doctor has not shared the prescription yet. Please check back later or contact the clinic.</p>
+              <button onClick={() => nav(-1)} className="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Go Back</button>
+            </div>
+          </div>
+        );
+     }
+  }
 
   const pdfRef = useRef(null);
 
@@ -490,8 +530,8 @@ export default function Prescription() {
                 ].filter(Boolean);
                 const text = parts.join('\n');
                 try {
-                  await API.post(`/appointments/${id}/prescription`, { text });
-                  setAppt((prev) => (prev ? ({ ...(prev || {}), prescriptionText: text }) : prev));
+                  await API.post(`/appointments/${id}/prescription`, { text, notify: false, isPrescriptionShared: false });
+                  setAppt((prev) => (prev ? ({ ...(prev || {}), prescriptionText: text, isPrescriptionShared: false }) : prev));
                   alert('Updated');
                 } catch (e) {
                   alert(e.response?.data?.message || e.message || 'Failed to update');
@@ -562,7 +602,7 @@ export default function Prescription() {
                         localStorage.setItem(`wr_${key}_prevpres`, JSON.stringify(next));
                         try { const chan = new BroadcastChannel('prescriptions'); chan.postMessage({ id: key, item }); chan.close(); } catch (_) {}
                       } catch (_) {}
-                      try { await API.post(`/appointments/${id}/prescription`, { text }); } catch (_) {}
+                      try { await API.post(`/appointments/${id}/prescription`, { text, notify: true, isPrescriptionShared: true }); } catch (_) {}
                       try {
                         if (navigator.share) {
                           await navigator.share({ title: 'Prescription', url: viewUrl });
@@ -609,7 +649,7 @@ export default function Prescription() {
           </div>
           <div className="presc-line"><span>Address:</span><span>{String(profile?.clinic?.address || '').trim()}</span></div>
           <div className="presc-row">
-            <div className="presc-line presc-half"><span>Age:</span><span>{patientAge || ''}</span></div>
+            <div className="presc-line presc-half"><span>Age / Gender:</span><span>{[patientAge, patientGender].filter(Boolean).join(' / ') || '--'}</span></div>
             <div className="presc-line presc-half"><span>Diagnosis:</span><span>{parsed.diagnosis || ''}</span></div>
           </div>
         </div>

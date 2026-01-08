@@ -284,18 +284,24 @@ router.put("/:id/reject", authenticate, async (req, res) => {
 
 router.post("/:id/prescription", authenticate, async (req, res) => {
   const { id } = req.params;
-  const { text } = req.body;
+  const { text, notify, isPrescriptionShared } = req.body;
   const appt = await Appointment.findById(id).populate("patient", "name email");
   if (!appt) return res.status(404).json({ message: "Appointment not found" });
   if (req.user.role !== "doctor" || String(appt.doctor) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
+  
   appt.prescriptionText = text || "";
+  if (isPrescriptionShared !== undefined) {
+    appt.isPrescriptionShared = !!isPrescriptionShared;
+  }
   await appt.save();
 
-  const url = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/prescription/${id}`;
-  try {
-    if (appt.patient.email) await sendMail(appt.patient.email, "Prescription Available", `Your prescription is ready: ${url}`);
-  } catch (e) {}
-  try { await notifyPrescription(req.app, id); } catch (_) {}
+  if (notify !== false) {
+    const url = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/prescription/${id}`;
+    try {
+      if (appt.patient.email) await sendMail(appt.patient.email, "Prescription Available", `Your prescription is ready: ${url}`);
+    } catch (e) {}
+    try { await notifyPrescription(req.app, id); } catch (_) {}
+  }
   res.json({ ok: true });
 });
 
@@ -431,6 +437,12 @@ router.get("/:id", authenticate, async (req, res) => {
     .populate("patient", "name email gender birthday photoBase64");
   if (!appt) return res.status(404).json({ message: "Appointment not found" });
   if (String(appt.patient._id) !== String(req.user._id) && String(appt.doctor._id) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
+  
+  // Hide prescription from patient if not shared
+  if (req.user.role === 'patient' && !appt.isPrescriptionShared) {
+    appt.prescriptionText = "";
+  }
+
   res.json(appt);
 });
 

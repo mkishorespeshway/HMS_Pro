@@ -936,7 +936,7 @@ export default function Appointments() {
                                   {docId && (
                                     <button onClick={() => nav(`/doctor/${String(docId)}`)} className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md">Book Next Slot</button>
                                   )}
-                                  {a.prescriptionText && (
+                                  {a.isPrescriptionShared && a.prescriptionText && (
                                     <button
                                       onClick={() => { const id = String(a._id || a.id || ''); if (id) nav(`/prescription/${id}`); }}
                                       className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md"
