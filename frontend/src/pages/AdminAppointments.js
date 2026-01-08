@@ -263,9 +263,14 @@ export default function AdminAppointments() {
                       <div className="text-slate-700">Fee: <span className="text-slate-900">₹{a.fee || 0}</span></div>
                     </div>
                     <div className="flex items-center gap-2 pt-1">
-                      <span className={`badge ${String(a.status || '').toUpperCase()==='PENDING' ? 'badge-busy' : ((String(a.status || '').toUpperCase()==='CANCELLED' || String(a.status || '').toUpperCase()==='CANCELED') ? 'badge-offline' : 'badge-online')}`}>
-                        {a.status}
-                      </span>
+                      {(() => {
+                        const s = String(a.status || "").toUpperCase();
+                        let cls = "badge-online";
+                        if (s === "PENDING") cls = "badge-busy";
+                        if (s === "CANCELLED" || s === "CANCELED") cls = "badge-offline";
+                        if (s === "CONFIRMED") cls = "badge-confirmed";
+                        return <span className={`badge ${cls}`}>{a.status}</span>;
+                      })()}
                     </div>
                   </div>
                 ))

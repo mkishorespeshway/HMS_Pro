@@ -106,63 +106,64 @@ export default function DoctorDashboard() {
     } catch(_) {}
   }, [chatAppt]);
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      setError("");
+      const uid = localStorage.getItem("userId");
+
+      const getFromAdmin = async () => {
+        try {
+          const all = await API.get("/admin/appointments");
+          return (all.data || []).filter((x) => String(x.doctor?._id || x.doctor) === String(uid));
+        } catch (e) {
+          return [];
+        }
+      };
+
+      let items = [];
       try {
-        setError("");
-        const uid = localStorage.getItem("userId");
-
-        const getFromAdmin = async () => {
-          try {
-            const all = await API.get("/admin/appointments");
-            return (all.data || []).filter((x) => String(x.doctor?._id || x.doctor) === String(uid));
-          } catch (e) {
-            return [];
-          }
-        };
-
-        let items = [];
-        try {
-          const mine = await API.get("/appointments/mine");
-          items = mine.data || [];
-        } catch (eMine) {
-          items = await getFromAdmin();
-        }
-
-        if (!items.length) {
-          const alt = await getFromAdmin();
-          if (alt.length) items = alt;
-        }
-
-        const _d0 = new Date();
-        const todayStr = `${_d0.getFullYear()}-${String(_d0.getMonth()+1).padStart(2,'0')}-${String(_d0.getDate()).padStart(2,'0')}`;
-        let filtered = (items || []).filter((a) => a.date === todayStr);
-        try {
-          const todayRes = await API.get('/appointments/today');
-          const todayList = todayRes.data || [];
-          if (Array.isArray(todayList) && todayList.length) {
-            filtered = todayList;
-          }
-        } catch (eToday) {}
-        setLatestToday(filtered);
-
-        setList(items);
-        try {
-          if (uid) {
-            const profs = await API.get(`/doctors?user=${uid}`);
-            const first = Array.isArray(profs?.data) ? profs.data[0] : null;
-            setProfile(first || null);
-          }
-        } catch (_) {}
-      } catch (e) {
-        if (e.message === 'canceled') return;
-        setList([]);
-        setError(e.response?.data?.message || e.message || "Failed to load dashboard");
+        const mine = await API.get("/appointments/mine");
+        items = mine.data || [];
+      } catch (eMine) {
+        items = await getFromAdmin();
       }
-      setLoading(false);
-    };
-    load();
+
+      if (!items.length) {
+        const alt = await getFromAdmin();
+        if (alt.length) items = alt;
+      }
+
+      const _d0 = new Date();
+      const todayStr = `${_d0.getFullYear()}-${String(_d0.getMonth()+1).padStart(2,'0')}-${String(_d0.getDate()).padStart(2,'0')}`;
+      let filtered = (items || []).filter((a) => a.date === todayStr);
+      try {
+        const todayRes = await API.get('/appointments/today');
+        const todayList = todayRes.data || [];
+        if (Array.isArray(todayList) && todayList.length) {
+          filtered = todayList;
+        }
+      } catch (eToday) {}
+      setLatestToday(filtered);
+
+      setList(items);
+      try {
+        if (uid) {
+          const profs = await API.get(`/doctors?user=${uid}`);
+          const first = Array.isArray(profs?.data) ? profs.data[0] : null;
+          setProfile(first || null);
+        }
+      } catch (_) {}
+    } catch (e) {
+      if (e.message === 'canceled') return;
+      setList([]);
+      setError(e.response?.data?.message || e.message || "Failed to load dashboard");
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -322,6 +323,7 @@ export default function DoctorDashboard() {
               if (both) {
                 await API.put(`/appointments/${id}/complete`);
                 socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'complete' });
+                try { loadData(); } catch(_) {}
               } else {
                 socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'exit' });
               }
@@ -557,16 +559,48 @@ export default function DoctorDashboard() {
     const poll = setInterval(async () => {
       try {
         const todayRes = await API.get("/appointments/today");
-        let items = Array.isArray(todayRes.data) ? todayRes.data : [];
-        items = items.filter((x) => String(x.doctor?._id || x.doctor || "") === String(uid));
-        const seen = new Set([...(list || []), ...(latestToday || [])].map((x) => String(x._id || x.id || "")));
-        for (const a of items) {
-          const key = String(a._id || a.id || "");
-          if (!seen.has(key)) {
-            setLatestToday((prev) => [a, ...prev]);
-            setList((prev) => [a, ...prev]);
+        const items = Array.isArray(todayRes.data) ? todayRes.data : [];
+        const doctorItems = items.filter((x) => String(x.doctor?._id || x.doctor || "") === String(uid));
+        
+        // Update latestToday if items changed
+        setLatestToday((prev) => {
+          let changed = false;
+          const next = doctorItems.map(item => {
+            const id = String(item._id || item.id);
+            const old = prev.find(p => String(p._id || p.id) === id);
+            if (!old || old.status !== item.status) {
+              changed = true;
+              return item;
+            }
+            return old;
+          });
+          if (next.length !== prev.length) changed = true;
+          return changed ? next : prev;
+        });
+
+        // Update list if any status changed
+        setList((prev) => {
+          let changed = false;
+          const next = prev.map(old => {
+            const id = String(old._id || old.id);
+            const match = doctorItems.find(item => String(item._id || item.id) === id);
+            if (match && match.status !== old.status) {
+              changed = true;
+              return { ...old, status: match.status };
+            }
+            return old;
+          });
+          
+          // Also add new items from doctorItems that aren't in list
+          const existingIds = new Set(prev.map(x => String(x._id || x.id)));
+          const newItems = doctorItems.filter(item => !existingIds.has(String(item._id || item.id)));
+          if (newItems.length > 0) {
+            changed = true;
+            return [...newItems, ...next];
           }
-        }
+          
+          return changed ? next : prev;
+        });
       } catch (_) {}
     }, 10000);
 
@@ -1302,10 +1336,10 @@ export default function DoctorDashboard() {
                       <div className="flex items-center gap-2">
                         {(() => {
                           const s = String(a.status || "").toUpperCase();
-                          const colorClass = s === "CANCELLED" ? "bg-red-100 text-red-700" : s === "CONFIRMED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700";
+                          const colorClass = s === "CANCELLED" ? "bg-red-100 text-red-700" : s === "CONFIRMED" ? "bg-yellow-100 text-yellow-700" : "bg-blue-100 text-blue-700";
                           return (
                             <span className={`px-3 py-1 rounded-full text-xs font-bold ${colorClass}`}>
-                              {s === "CANCELLED" ? "Cancelled" : s === "CONFIRMED" ? "Accepted" : "Completed"}
+                              {s === "CANCELLED" ? "Cancelled" : s === "CONFIRMED" ? "Confirmed" : "Completed"}
                             </span>
                           );
                         })()}
@@ -1479,7 +1513,7 @@ export default function DoctorDashboard() {
                     <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto sm:justify-end">
                       {(() => {
                         const s = String(a.status).toUpperCase();
-                        const cls = s === 'PENDING' ? 'bg-amber-100 text-amber-700' : s === 'CONFIRMED' ? 'bg-indigo-100 text-indigo-700' : s === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+                        const cls = s === 'PENDING' ? 'bg-amber-100 text-amber-700' : s === 'CONFIRMED' ? 'bg-yellow-100 text-yellow-700' : s === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
                         const txt = s === 'PENDING' ? 'Pending' : s === 'CONFIRMED' ? 'Confirmed' : s === 'COMPLETED' ? 'Completed' : 'Cancelled';
                         return <span className={`inline-block text-[10px] font-bold px-2 py-1 rounded-full ${cls}`}>{txt}</span>;
                       })()}
