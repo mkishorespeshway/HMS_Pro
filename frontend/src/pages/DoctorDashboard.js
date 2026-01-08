@@ -1586,13 +1586,18 @@ export default function DoctorDashboard() {
                   )}
                 </div>
                 <div className="mt-2 flex gap-2">
-                  <input id="chatInputDoc" placeholder="Reply to patient" className="flex-1 border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                  <input 
+                    id="chatInputDoc" 
+                    placeholder="Reply to patient" 
+                    maxLength={50}
+                    className="flex-1 border border-slate-300 rounded-md px-3 py-2 text-sm" 
+                  />
                   <button
                     onClick={() => {
                       try {
                         const id = String(chatAppt._id || chatAppt.id);
                         const input = document.getElementById('chatInputDoc');
-                        const val = String(input?.value || '').trim();
+                        const val = String(input?.value || '').trim().slice(0, 50);
                         if (!val) return;
                         const msgs = JSON.parse(localStorage.getItem(`wr_${id}_chat`) || '[]');
                         const next = [...(Array.isArray(msgs) ? msgs : []), val];
@@ -1600,10 +1605,10 @@ export default function DoctorDashboard() {
                         if (input) input.value = '';
                         try {
                           const chan = new BroadcastChannel('chatmsg');
-                          chan.postMessage({ apptId: id, actor: 'doctor' });
+                          chan.postMessage({ apptId: id, actor: 'doctor', text: val });
                           chan.close();
                         } catch(_) {}
-                        try { socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'doctor', kind: 'pre' }); } catch(_) {}
+                        try { socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'doctor', kind: 'pre', text: val }); } catch(_) {}
                         try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
                       } catch(_) {}
                     }}

@@ -222,11 +222,17 @@ export default function AppointmentDetails() {
                 )}
               </div>
               <div className="mt-2 flex gap-2">
-                <input value={detText} onChange={(e) => setDetText(e.target.value)} placeholder="Type a quick message" className="flex-1 border border-slate-300 rounded-md px-3 py-2" />
+                <input 
+                  value={detText} 
+                  onChange={(e) => setDetText(e.target.value)} 
+                  placeholder="Type a quick message" 
+                  maxLength={50}
+                  className="flex-1 border border-slate-300 rounded-md px-3 py-2" 
+                />
                 <button
                   onClick={() => {
                     try {
-                      const t = String(detText || '').trim();
+                      const t = String(detText || '').trim().slice(0, 50);
                       if (!t) return;
                       const k = `wr_${id}_chat`;
                       const arr = JSON.parse(localStorage.getItem(k) || '[]');

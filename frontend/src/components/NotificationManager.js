@@ -93,14 +93,15 @@ export default function NotificationManager({ actor = 'patient' }) {
        const chan = new BroadcastChannel('chatmsg');
        chan.onmessage = (e) => {
          try {
-           const { apptId, actor: msgActor, kind } = e.data || {};
+           const { apptId, actor: msgActor, kind, text: msgText } = e.data || {};
            // If we are a patient, we only care about messages from doctors
            // If we are a doctor, we only care about messages from patients
            if (actor === 'patient' && String(msgActor || '').toLowerCase() !== 'doctor') return;
            if (actor === 'doctor' && String(msgActor || '').toLowerCase() === 'doctor') return;
-
+ 
            const id = String(Date.now()) + String(Math.random());
-           const text = `New message from ${actor === 'patient' ? 'doctor' : 'patient'}`;
+           const sender = actor === 'patient' ? 'doctor' : 'patient';
+           const text = msgText ? `New message from ${sender}: ${msgText}` : `New message from ${sender}`;
            const apptIdStr = String(apptId || '');
            window.dispatchEvent(new CustomEvent('hospozen_notif', { 
              detail: { message: text, type: 'chat', kind: kind || 'pre', apptId: apptIdStr } 
@@ -193,12 +194,14 @@ export default function NotificationManager({ actor = 'patient' }) {
               setNotifs(prev => prev.filter(x => x.id !== n.id));
             } catch(_) {}
           }}
-          className="block w-80 text-left px-4 py-3 rounded-2xl shadow-2xl border border-blue-200/50 bg-white/95 backdrop-blur-md hover:bg-blue-50 transition pointer-events-auto"
+          className="block w-[85vw] sm:w-80 max-w-sm text-left px-4 py-3 rounded-2xl shadow-2xl border border-blue-200/50 bg-white/95 backdrop-blur-md hover:bg-blue-50 transition pointer-events-auto"
         >
           <div className="flex items-start gap-3">
             <TypeIcon type={n.type} />
-            <div className="flex-1">
-              <div className="text-sm text-slate-900 font-semibold">{n.text || 'Notification'}</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm text-slate-900 font-semibold break-all">
+                {n.text && n.text.length > 50 ? n.text.substring(0, 50) + '...' : n.text || 'Notification'}
+              </div>
             </div>
           </div>
         </button>

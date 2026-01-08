@@ -171,10 +171,16 @@ export default function FollowUpDetails({ actor = 'patient', backTo = '/appointm
                 )}
               </div>
               <div className="mt-2 flex gap-2">
-                <input value={fuText} onChange={(e) => setFuText(e.target.value)} placeholder="Type a quick message" className="flex-1 border border-blue-200 rounded-xl px-3 py-2 text-sm bg-white/70" />
+                <input 
+                  value={fuText} 
+                  onChange={(e) => setFuText(e.target.value)} 
+                  placeholder="Type a quick message" 
+                  maxLength={50}
+                  className="flex-1 border border-blue-200 rounded-xl px-3 py-2 text-sm bg-white/70" 
+                />
                 <button
                   onClick={() => {
-                    const t = fuText.trim();
+                    const t = String(fuText || '').trim().slice(0, 50);
                     if (!t) return;
                     const next = [...fuChat, t];
                     setFuChat(next);
