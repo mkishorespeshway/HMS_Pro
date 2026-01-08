@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
+import NotificationManager from "../components/NotificationManager";
 import API from "../api";
 
 export default function DoctorDashboard() {
@@ -871,36 +872,135 @@ export default function DoctorDashboard() {
                   </div>
                 );
               })()}
-              <button
-                onClick={async () => {
-                  try {
-                    window.dispatchEvent(new CustomEvent('close_notif_popups'));
-                    setPanelOpen((v) => !v);
-                    if (!panelOpen) {
-                      setPanelLoading(true);
-                      const { data } = await API.get('/notifications');
-                      const items = Array.isArray(data) ? data : [];
-                      setPanelItems(items);
-                      const unread = items.filter((x) => !x.read).length;
-                      setPanelUnread(unread);
-                      setBellCount(unread);
-                      setPanelLoading(false);
-                    }
-                  } catch (_) { setPanelLoading(false); }
-                }}
-                className="inline-flex p-2 sm:p-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 border border-gray-200 hover:border-blue-300 relative"
-                title="Notifications"
-              >
-                <svg className={`w-6 h-6 ${bellCount > 0 ? 'animate-bounce' : ''}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 22a2 2 0 002-2H10a2 2 0 002 2z" fill="#2563EB"/>
-                  <path d="M12 2a7 7 0 00-7 7v3l-2 3h18l-2-3V9a7 7 0 00-7-7z" stroke="#2563EB" strokeWidth="2" fill="none"/>
-                </svg>
-                {bellCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center font-bold shadow-lg animate-pulse">
-                    {bellCount > 9 ? '9+' : bellCount}
-                  </span>
+              <div className="relative">
+                <button
+                  onClick={async () => {
+                    try {
+                      window.dispatchEvent(new CustomEvent('close_notif_popups'));
+                      setPanelOpen((v) => !v);
+                      if (!panelOpen) {
+                        setPanelLoading(true);
+                        const { data } = await API.get('/notifications');
+                        const items = Array.isArray(data) ? data : [];
+                        setPanelItems(items);
+                        const unread = items.filter((x) => !x.read).length;
+                        setPanelUnread(unread);
+                        setBellCount(unread);
+                        setPanelLoading(false);
+                      }
+                    } catch (_) { setPanelLoading(false); }
+                  }}
+                  className="inline-flex p-2 sm:p-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 border border-gray-200 hover:border-blue-300 relative"
+                  title="Notifications"
+                >
+                  <svg className={`w-6 h-6 ${bellCount > 0 ? 'animate-bounce' : ''}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22a2 2 0 002-2H10a2 2 0 002 2z" fill="#2563EB"/>
+                    <path d="M12 2a7 7 0 00-7 7v3l-2 3h18l-2-3V9a7 7 0 00-7-7z" stroke="#2563EB" strokeWidth="2" fill="none"/>
+                  </svg>
+                  {bellCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center font-bold shadow-lg animate-pulse">
+                      {bellCount > 9 ? '9+' : bellCount}
+                    </span>
+                  )}
+                </button>
+
+                <NotificationManager actor="doctor" />
+
+                {panelOpen && (
+                  <div className="fixed sm:absolute left-3 right-3 sm:left-auto sm:right-0 top-16 sm:top-14 w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-blue-200/50 z-50">
+                    <div className="absolute right-3 sm:right-4 -top-2 w-4 h-4 bg-white/95 border border-blue-200/50 rotate-45"></div>
+                    <div className="p-4 sm:p-6 border-b border-blue-200/50">
+                      <div className="flex items-start sm:items-center justify-between gap-3">
+                        <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Notifications</h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-full font-medium">{panelUnread} new</span>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const ids = panelItems.filter((x) => !x.read).map((x) => x._id || x.id);
+                                await Promise.all(ids.map((id) => API.put(`/notifications/${id}/read`).catch(() => {})));
+                                setPanelItems((prev) => prev.map((x) => ({ ...x, read: true })));
+                                setPanelUnread(0);
+                                setBellCount(0);
+                              } catch(_) {}
+                            }}
+                            className="text-xs px-2 py-1 rounded-md border border-blue-200 text-blue-700 hover:bg-blue-50"
+                          >
+                            Mark all read
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try { await API.delete('/notifications'); setPanelItems([]); setPanelUnread(0); setBellCount(0); } catch(_) {}
+                            }}
+                            className="text-xs px-2 py-1 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                          >
+                            Clear all
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="max-h-[65vh] sm:max-h-96 overflow-y-auto">
+                      {panelLoading ? (
+                        <div className="p-8 text-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                        </div>
+                      ) : panelItems.length === 0 ? (
+                        <div className="p-12 text-center text-gray-500">
+                          <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                          </svg>
+                          <p className="font-medium">No notifications yet</p>
+                        </div>
+                      ) : (
+                        panelItems.map((n) => (
+                          <div key={n._id || n.id} className="p-4 border-b border-gray-100 hover:bg-blue-50/50 transition-colors duration-200">
+                            <div className="flex items-start justify-between">
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                    const id = String(n.apptId || '');
+                                    const msg = String(n.message || '').toLowerCase();
+                                    const hasFu = (() => { try { const arr = JSON.parse(localStorage.getItem(`fu_${id}_chat`) || '[]'); return Array.isArray(arr) && arr.length > 0; } catch(_) { return false; } })();
+                                    if ((msg.includes('view details') || n.type === 'details') && id) {
+                                      nav(`/doctor/appointments/${id}/documents`);
+                                    } else if ((id && (n.kind === 'followup' || hasFu || msg.includes('follow up') || msg.includes('follow-up') || msg.includes('followup') || n.type === 'followup'))) {
+                                      try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
+                                      nav(`/doctor/appointments/${id}/followup`);
+                                    } else if ((n.type === 'chat' || msg.includes('new message')) && id) {
+                                      nav(`/doctor/appointments/${id}/documents`);
+                                    } else if (n.type === 'meet' && n.apptId) {
+                                      await openMeetFor(n.apptId);
+                                    } else if (n.type === 'appointment') {
+                                      nav('/doctor/appointments');
+                                    } else if (n.link) {
+                                      nav(n.link);
+                                    }
+                                    setPanelOpen(false);
+                                    try { await API.put(`/notifications/${n._id || n.id}/read`); } catch(_) {}
+                                    setPanelItems((prev) => prev.map((x) => (String(x._id || x.id) === String(n._id || n.id) ? { ...x, read: true } : x)));
+                                    setPanelUnread((c) => Math.max(0, c - 1));
+                                    setBellCount((c) => Math.max(0, c - 1));
+                                    } catch(_) {}
+                                  }}
+                                  className="flex-1 text-left"
+                              >
+                                <div className="flex items-start gap-3">
+                                  <TypeIcon type={n.type} />
+                                  <div className="flex-1">
+                                    <p className="text-sm text-gray-900 font-medium">{n.message}</p>
+                                    <p className="text-xs text-gray-500 mt-1">{timeAgo(n.createdAt)}</p>
+                                  </div>
+                                </div>
+                              </button>
+                              {!n.read && <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 )}
-              </button>
+              </div>
               <button
                 className="lg:hidden p-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 border border-gray-200 hover:border-blue-300"
                 onClick={() => setMobileOpen(!mobileOpen)}
@@ -910,100 +1010,6 @@ export default function DoctorDashboard() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              {panelOpen && (
-                <div className="fixed sm:absolute left-3 right-3 sm:left-auto sm:right-0 top-16 sm:top-16 w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-blue-200/50 z-50">
-                  <div className="absolute right-3 sm:right-6 -top-2 w-4 h-4 bg-white/95 border border-blue-200/50 rotate-45"></div>
-                  <div className="p-4 sm:p-6 border-b border-blue-200/50">
-                    <div className="flex items-start sm:items-center justify-between gap-3">
-                      <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Notifications</h3>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-full font-medium">{panelUnread} new</span>
-                        <button
-                          onClick={async () => {
-                            try {
-                              const ids = panelItems.filter((x) => !x.read).map((x) => x._id || x.id);
-                              await Promise.all(ids.map((id) => API.put(`/notifications/${id}/read`).catch(() => {})));
-                              setPanelItems((prev) => prev.map((x) => ({ ...x, read: true })));
-                              setPanelUnread(0);
-                              setBellCount(0);
-                            } catch(_) {}
-                          }}
-                          className="text-xs px-2 py-1 rounded-md border border-blue-200 text-blue-700 hover:bg-blue-50"
-                        >
-                          Mark all read
-                        </button>
-                        <button
-                          onClick={async () => {
-                            try { await API.delete('/notifications'); setPanelItems([]); setPanelUnread(0); setBellCount(0); } catch(_) {}
-                          }}
-                          className="text-xs px-2 py-1 rounded-md bg-blue-600 text-white hover:bg-blue-700"
-                        >
-                          Clear all
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="max-h-[65vh] sm:max-h-96 overflow-y-auto">
-                    {panelLoading ? (
-                      <div className="p-8 text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-                      </div>
-                    ) : panelItems.length === 0 ? (
-                      <div className="p-12 text-center text-gray-500">
-                        <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                        </svg>
-                        <p className="font-medium">No notifications yet</p>
-                      </div>
-                    ) : (
-                      panelItems.map((n) => (
-                        <div key={n._id || n.id} className="p-4 border-b border-gray-100 hover:bg-blue-50/50 transition-colors duration-200">
-                          <div className="flex items-start justify-between">
-                              <button
-                                onClick={async () => {
-                                  try {
-                                  const id = String(n.apptId || '');
-                                  const msg = String(n.message || '').toLowerCase();
-                                  const hasFu = (() => { try { const arr = JSON.parse(localStorage.getItem(`fu_${id}_chat`) || '[]'); return Array.isArray(arr) && arr.length > 0; } catch(_) { return false; } })();
-                                  if ((msg.includes('view details') || n.type === 'details') && id) {
-                                    nav(`/doctor/appointments/${id}/documents`);
-                                  } else if ((id && (n.kind === 'followup' || hasFu || msg.includes('follow up') || msg.includes('follow-up') || msg.includes('followup') || n.type === 'followup'))) {
-                                    try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
-                                    nav(`/doctor/appointments/${id}/followup`);
-                                  } else if ((n.type === 'chat' || msg.includes('new message')) && id) {
-                                    nav(`/doctor/appointments/${id}/documents`);
-                                  } else if (n.type === 'meet' && n.apptId) {
-                                    await openMeetFor(n.apptId);
-                                  } else if (n.type === 'appointment') {
-                                    nav('/doctor/appointments');
-                                  } else if (n.link) {
-                                    nav(n.link);
-                                  }
-                                  setPanelOpen(false);
-                                  try { await API.put(`/notifications/${n._id || n.id}/read`); } catch(_) {}
-                                  setPanelItems((prev) => prev.map((x) => (String(x._id || x.id) === String(n._id || n.id) ? { ...x, read: true } : x)));
-                                  setPanelUnread((c) => Math.max(0, c - 1));
-                                  setBellCount((c) => Math.max(0, c - 1));
-                                  } catch(_) {}
-                                }}
-                                className="flex-1 text-left"
-                            >
-                              <div className="flex items-start gap-3">
-                                <TypeIcon type={n.type} />
-                                <div className="flex-1">
-                                  <p className="text-sm text-gray-900 font-medium">{n.message}</p>
-                                  <p className="text-xs text-gray-500 mt-1">{timeAgo(n.createdAt)}</p>
-                                </div>
-                              </div>
-                            </button>
-                            {!n.read && <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
   <button
     onClick={() => {
       try {
