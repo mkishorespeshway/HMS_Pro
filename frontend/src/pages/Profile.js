@@ -73,7 +73,7 @@
              const d = String(data.birthday || "");
              setBirthday(d);
              setAge(ageFromBirthday(d));
-             if (String(data.photoBase64 || '').startsWith('data:image')) setPhoto(String(data.photoBase64));
+             if (data.photoBase64) setPhoto(String(data.photoBase64));
            }
        } catch (_) {}
      })();
@@ -92,20 +92,25 @@
          if (exp !== '--' && norm !== '' && norm !== exp) { alert('Age must match the date of birth'); return; }
        }
        await API.put('/auth/me', { name, email, phone, address, gender, birthday, photoBase64: photo });
-       const uid = localStorage.getItem("userId");
-       if (uid) {
-         localStorage.setItem(`userNameById_${uid}`, name || "");
-         localStorage.setItem(`userEmailById_${uid}`, email || "");
-         localStorage.setItem(`userPhoneById_${uid}`, phone || "");
-         localStorage.setItem(`userMobileById_${uid}`, phone || "");
-         localStorage.setItem(`userAddressById_${uid}`, address || "");
-         localStorage.setItem(`userGenderById_${uid}`, gender || "");
-         localStorage.setItem(`userBirthdayById_${uid}`, birthday || "");
-         localStorage.setItem(`userDobById_${uid}`, birthday || "");
-         localStorage.setItem(`userAgeById_${uid}`, ageFromBirthday(birthday) || age || "");
-         localStorage.setItem(`userPhotoBase64ById_${uid}`, photo || "");
-       }
-       setEditing(false);
+      const uid = localStorage.getItem("userId");
+      if (uid) {
+        localStorage.setItem(`userNameById_${uid}`, name || "");
+        localStorage.setItem(`userEmailById_${uid}`, email || "");
+        localStorage.setItem(`userPhoneById_${uid}`, phone || "");
+        localStorage.setItem(`userMobileById_${uid}`, phone || "");
+        localStorage.setItem(`userAddressById_${uid}`, address || "");
+        localStorage.setItem(`userGenderById_${uid}`, gender || "");
+        localStorage.setItem(`userBirthdayById_${uid}`, birthday || "");
+        localStorage.setItem(`userDobById_${uid}`, birthday || "");
+        localStorage.setItem(`userAgeById_${uid}`, ageFromBirthday(birthday) || age || "");
+        localStorage.setItem(`userPhotoBase64ById_${uid}`, photo || "");
+      }
+      try {
+        const bc = new BroadcastChannel('profile_update');
+        bc.postMessage({ type: 'UPDATE', name, photo });
+        bc.close();
+      } catch (e) {}
+      setEditing(false);
      } catch (e) {
        alert(e.response?.data?.message || e.message || 'Failed to save');
      }
@@ -131,13 +136,13 @@
            <div className="grid md:grid-cols-3 gap-8">
              <div className="animate-fade-in" style={{ animationDelay: '0.4s', animationFillMode: 'forwards' }}>
                <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl p-6 hover:scale-105 hover:shadow-2xl transition-all duration-500">
-                 {String(photo || "").startsWith("data:image") ? (
-                   <img
-                     src={photo}
-                     alt="User"
-                     className="w-32 h-32 md:w-40 md:h-40 object-cover rounded-xl border-2 border-indigo-200 mx-auto hover:scale-110 transition-transform duration-700"
-                   />
-                 ) : (
+                {photo && photo !== 'null' ? (
+                  <img
+                    src={photo.startsWith('data:') || photo.startsWith('http') ? photo : `data:image/jpeg;base64,${photo}`}
+                    alt="User"
+                    className="w-32 h-32 md:w-40 md:h-40 object-cover rounded-xl border-2 border-indigo-200 mx-auto hover:scale-110 transition-transform duration-700"
+                  />
+                ) : (
                    <div className="w-32 h-32 md:w-40 md:h-40 rounded-xl border-2 border-slate-300 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center mx-auto hover:scale-110 transition-transform duration-700">
                      <div className="text-6xl text-slate-400">👤</div>
                    </div>

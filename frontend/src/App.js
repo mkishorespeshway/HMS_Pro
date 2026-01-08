@@ -124,11 +124,23 @@ function Header() {
         const { data } = await API.get('/auth/me');
         if (data) {
           if (data.name) setUserName(String(data.name));
-          if (String(data.photoBase64 || '').startsWith('data:image')) setPhoto(String(data.photoBase64));
+          if (data.photoBase64) setPhoto(String(data.photoBase64));
         }
       } catch (_) {}
     })();
   }, [token]);
+  useEffect(() => {
+    try {
+      const bc = new BroadcastChannel('profile_update');
+      bc.onmessage = (e) => {
+        if (e.data?.type === 'UPDATE') {
+          if (e.data.name) setUserName(e.data.name);
+          if (e.data.photo) setPhoto(e.data.photo);
+        }
+      };
+      return () => bc.close();
+    } catch (e) {}
+  }, []);
   useEffect(() => {
     (async () => {
       try {
@@ -464,9 +476,9 @@ function Header() {
                 </div>
 
                 {/* Enhanced User Profile */}
-                {photo ? (
+                {photo && photo !== 'null' ? (
                   <img
-                    src={photo}
+                    src={photo.startsWith('data:') || photo.startsWith('http') ? photo : `data:image/jpeg;base64,${photo}`}
                     alt="Profile"
                     className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl object-cover border-3 border-white cursor-pointer hover:border-blue-300 transition-all duration-300 shadow-lg hover:shadow-xl"
                     onClick={() => setOpen(!open)}
@@ -487,8 +499,12 @@ function Header() {
                       <div className="absolute inset-0 bg-white/10 mix-blend-overlay"></div>
                       <div className="absolute right-6 -top-2 w-4 h-4 bg-white/95 border border-blue-200/60 rotate-45"></div>
                       <div className="absolute left-6 -bottom-8 w-28 h-28 rounded-2xl shadow-xl border-4 border-white/70 overflow-hidden bg-white">
-                        {photo ? (
-                          <img src={photo} alt="Profile" className="w-full h-full object-cover" />
+                        {photo && photo !== 'null' ? (
+                          <img
+                            src={photo.startsWith('data:') || photo.startsWith('http') ? photo : `data:image/jpeg;base64,${photo}`}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center font-bold text-3xl">
                             {(userName || '').charAt(0).toUpperCase() || 'U'}
