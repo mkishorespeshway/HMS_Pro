@@ -123,12 +123,22 @@ export default function Appointments() {
               const end = new Date(a.date);
               const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
               end.setHours(eh, em, 0, 0);
-              const monitor = setInterval(() => {
+              const monitor = setInterval(async () => {
                 const now = Date.now();
                 const expired = now >= end.getTime();
                 if (expired || !win || win.closed) {
                   clearInterval(monitor);
-                  try { localStorage.setItem(`joinedByPatient_${idX}`, expired ? '0' : '0'); localStorage.setItem(`openMeeting_${idX}`, '0'); } catch(_) {}
+                  if (expired) {
+                    try {
+                      const djEver = localStorage.getItem(`everJoinedDoctor_${idX}`) === '1';
+                      const pjEver = localStorage.getItem(`everJoinedPatient_${idX}`) === '1';
+                      if (djEver && pjEver) {
+                        await API.put(`/appointments/${idX}/complete`);
+                      }
+                    } catch(_) {}
+                    try { if (win && !win.closed) win.close(); } catch(_) {}
+                  }
+                  try { localStorage.setItem(`joinedByPatient_${idX}`, '0'); localStorage.setItem(`openMeeting_${idX}`, '0'); } catch(_) {}
                   try { socketRef.current && socketRef.current.emit('meet:update', { apptId: idX, actor: 'patient', event: expired ? 'complete' : 'exit' }); } catch(_) {}
                 }
               }, 1000);
@@ -991,7 +1001,7 @@ export default function Appointments() {
                                     try {
                                       const idX = String(a._id || a.id);
                                       try { localStorage.setItem(`everJoinedPatient_${idX}`, '1'); } catch(_) {}
-                                      const monitor = setInterval(() => {
+                                      const monitor = setInterval(async () => {
                                         const end = new Date(a.date);
                                         const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
                                         end.setHours(eh, em, 0, 0);
@@ -1001,6 +1011,11 @@ export default function Appointments() {
                                           const djEver = localStorage.getItem(`everJoinedDoctor_${idX}`) === '1';
                                           const pjEver = localStorage.getItem(`everJoinedPatient_${idX}`) === '1';
                                           const both = djEver && pjEver;
+                                          try {
+                                            if (both) {
+                                              await API.put(`/appointments/${idX}/complete`);
+                                            }
+                                          } catch(_) {}
                                           try {
                                             localStorage.setItem(`joinedByPatient_${idX}`, '0');
                                             localStorage.setItem(`openMeeting_${idX}`, '0');

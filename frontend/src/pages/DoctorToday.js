@@ -1106,6 +1106,11 @@ export default function DoctorToday() {
                                 socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'exit' });
                               }
                             } catch(_) {}
+                            try {
+                              const name = `meet_${id}`;
+                              const w = window.open('', name);
+                              if (w && !w.closed) w.close();
+                            } catch(_) {}
                             clearInterval(meetMonitorRef.current);
                             meetMonitorRef.current = null;
                             return;

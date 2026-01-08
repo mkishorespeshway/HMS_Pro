@@ -160,9 +160,13 @@ setInterval(async () => {
         await createNotification(app, { userId: a.doctor, title: 'Time Alert', message: 'Only 5 minutes left in your consultation.', type: 'timer', link: '/doctor/dashboard', dedupeKey: `rem5_${id}` });
         await createNotification(app, { userId: a.patient, title: 'Time Alert', message: 'Only 5 minutes left in your consultation.', type: 'timer', link: '/appointments', dedupeKey: `rem5p_${id}` });
       }
-      if (now >= oneRemain && now < oneRemain + windowMsOther) {
-        await createNotification(app, { userId: a.doctor, title: 'Time Alert', message: '1 minute remaining — please conclude conversation.', type: 'timer', link: '/doctor/dashboard', dedupeKey: `rem1_${id}` });
-        await createNotification(app, { userId: a.patient, title: 'Time Alert', message: '1 minute remaining — please conclude conversation.', type: 'timer', link: '/appointments', dedupeKey: `rem1p_${id}` });
+      if (now >= end.getTime() && a.status !== 'COMPLETED') {
+        a.status = 'COMPLETED';
+        await a.save();
+        await createNotification(app, { userId: a.doctor, title: 'Session Ended', message: 'The appointment slot has ended. Session marked as completed.', type: 'info', link: '/doctor/dashboard', dedupeKey: `ended_${id}` });
+        await createNotification(app, { userId: a.patient, title: 'Session Ended', message: 'The appointment slot has ended. Session marked as completed.', type: 'info', link: '/appointments', dedupeKey: `endedp_${id}` });
+        // Emit socket to both so they close windows if open
+        io.emit('meet:update', { apptId: id, actor: 'system', event: 'complete' });
       }
     }
   } catch (_) {}

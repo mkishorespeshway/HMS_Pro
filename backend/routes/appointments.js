@@ -203,6 +203,29 @@ router.put('/:id/payment/failed', authenticate, async (req, res) => {
   res.json({ ok: true });
 });
 
+router.put("/:id/complete", authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const appt = await Appointment.findById(id);
+    if (!appt) return res.status(404).json({ message: "Appointment not found" });
+    
+    const uid = String(req.user._id);
+    const isDoctor = String(appt.doctor) === uid;
+    const isPatient = String(appt.patient) === uid;
+    const isAdmin = req.user.role === "admin";
+
+    if (!isDoctor && !isPatient && !isAdmin) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    appt.status = "COMPLETED";
+    await appt.save();
+    res.json(appt);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
 router.put("/:id/cancel", authenticate, async (req, res) => {
     const { id } = req.params;
     const appt = await Appointment.findById(id);
