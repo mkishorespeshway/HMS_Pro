@@ -17,7 +17,6 @@ export default function DoctorDashboard() {
     return v === null ? true : v === "1";
   });
   const [busy, setBusy] = useState(false);
-  const [notifs, setNotifs] = useState([]);
   const [bellCount, setBellCount] = useState(0);
   const [chatAppt, setChatAppt] = useState(null);
   const [chatPreview, setChatPreview] = useState(null);
@@ -220,8 +219,6 @@ export default function DoctorDashboard() {
           if (!id) return;
           setBellCount((c) => c + 1);
           try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
-          const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id);
-          addNotif(`New message from ${a?.patient?.name || 'patient'}`, id);
         } catch (_) {}
       };
       chan.onmessage = onMsg;
@@ -388,26 +385,6 @@ export default function DoctorDashboard() {
     } catch(_) {}
   };
 
-  const addNotif = (text, apptId, link) => {
-    const id = String(Date.now()) + String(Math.random());
-    setNotifs((prev) => [{ id, text, apptId, link }, ...prev].slice(0, 4));
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      setTimeout(() => { try { osc.stop(); ctx.close(); } catch(_) {} }, 450);
-    } catch (_) {}
-    setTimeout(() => { setNotifs((prev) => prev.filter((n) => n.id !== id)); }, 6000);
-  };
-
   useEffect(() => {
     const uid = localStorage.getItem("userId") || "";
     const cleanup = [];
@@ -426,7 +403,6 @@ export default function DoctorDashboard() {
                 const key = String(a._id || a.id || "");
                 const seen = new Set([...(list || []), ...(latestToday || [])].map((x) => String(x._id || x.id || "")));
                 if (seen.has(key)) return;
-                addNotif(`New appointment booked at ${a.startTime || "--:--"}`, null, "/doctor/dashboard#all-appointments");
                 setLatestToday((prev) => [a, ...prev]);
                 setList((prev) => [a, ...prev]);
               } catch (_) {}
@@ -554,30 +530,8 @@ export default function DoctorDashboard() {
                 }
                 setBellCount((c) => c + 1);
                 try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
-                const a = (list || []).find((x) => String(x._id || x.id) === id) || (latestToday || []).find((x) => String(x._id || x.id) === id);
-                addNotif(`New message from ${a?.patient?.name || 'patient'}`, id);
               } catch (_) {}
             });
-                socket.on('notify', (p) => {
-                  try {
-                    if (Date.now() < muteUntil) return;
-                    const text = p?.message || '';
-                    const link = p?.link || '';
-                    const apptId = p?.apptId ? String(p.apptId) : null;
-                    if (p?.type === 'chat' && apptId) try { localStorage.setItem('lastChatApptId', apptId); } catch(_) {}
-                    setBellCount((c) => c + 1);
-                    addNotif(text, apptId, link, p?.kind);
-                    if (panelOpen) {
-                      const item = { _id: p?.id || String(Date.now()), id: p?.id || String(Date.now()), message: text, link, type: p?.type || 'general', kind: p?.kind, createdAt: new Date().toISOString(), read: false, apptId };
-                      setPanelItems((prev) => {
-                        const exists = prev.some((x) => String(x._id || x.id) === String(item._id || item.id));
-                        if (exists) return prev;
-                        return [item, ...prev].slice(0, 100);
-                      });
-                      setPanelUnread((c) => c + 1);
-                    }
-                  } catch (_) {}
-                });
             cleanup.push(() => { try { socket.close(); } catch(_) {} });
           }
         } catch(_) {}
@@ -603,7 +557,6 @@ export default function DoctorDashboard() {
         for (const a of items) {
           const key = String(a._id || a.id || "");
           if (!seen.has(key)) {
-            addNotif(`New appointment booked at ${a.startTime || "--:--"}`, null, "/doctor/dashboard#all-appointments");
             setLatestToday((prev) => [a, ...prev]);
             setList((prev) => [a, ...prev]);
           }
@@ -613,6 +566,36 @@ export default function DoctorDashboard() {
 
     return () => { cleanup.forEach((fn) => fn()); clearInterval(poll); };
   }, [list, latestToday]);
+
+  useEffect(() => {
+    const onHospozenNotif = (e) => {
+      try {
+        setBellCount((c) => c + 1);
+        if (panelOpen && e.detail) {
+          const p = e.detail;
+          const item = { 
+            _id: p._id || p.id || String(Date.now()), 
+            id: p._id || p.id || String(Date.now()), 
+            message: p.message || '', 
+            link: p.link || '', 
+            type: p.type || 'general', 
+            kind: p.kind, 
+            createdAt: new Date().toISOString(), 
+            read: false, 
+            apptId: p.apptId 
+          };
+          setPanelItems((prev) => {
+            const exists = prev.some((x) => String(x._id || x.id) === String(item._id || item.id));
+            if (exists) return prev;
+            return [item, ...prev].slice(0, 100);
+          });
+          setPanelUnread((c) => c + 1);
+        }
+      } catch(_) {}
+    };
+    window.addEventListener('hospozen_notif', onHospozenNotif);
+    return () => window.removeEventListener('hospozen_notif', onHospozenNotif);
+  }, [panelOpen]);
 
   const accept = async (id) => {
     if (!id) return;
@@ -1059,39 +1042,6 @@ export default function DoctorDashboard() {
       )}
       <div className="grid grid-cols-12 gap-6">
         <main className="col-span-12">
-          <div className="hidden sm:block fixed right-4 top-4 z-50 space-y-2">
-              {notifs.map((n) => (
-              <button key={n.id} onClick={async () => {
-                try {
-                  const id = String(n.apptId || '');
-                  const msg = String(n.text || '').toLowerCase();
-                  if (((msg.includes('follow up') || msg.includes('follow-up') || msg.includes('followup')) || n.type === 'followup') && id) {
-                    try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
-                    nav(`/doctor/appointments/${id}/followup`);
-                  } else if ((n.type === 'chat' || msg.includes('new message')) && id) {
-                    try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
-                    nav(`/doctor/appointments/${id}/followup`);
-                  } else if ((msg.includes('view details') || n.type === 'details') && id) {
-                    nav(`/doctor/appointments/${id}/documents`);
-                  } else if (n.type === 'meet' && n.apptId) {
-                    await openMeetFor(n.apptId);
-                  } else if (n.link) {
-                    nav(n.link);
-                  } else if (n.type === 'meet' || n.type === 'appointment') {
-                    nav('/doctor/appointments');
-                  } else if (n.apptId) {
-                    nav(`/doctor/appointments/${id}/documents`);
-                  }
-                  setNotifs((prev) => prev.filter((x) => x.id !== n.id));
-                } catch (_) {}
-              }} className="flex items-center gap-2 bg-white shadow-lg border border-amber-200 rounded-lg px-3 py-2 cursor-pointer">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2a7 7 0 00-7 7v3l-2 3h18l-2-3V9a7 7 0 00-7-7zm0 20a3 3 0 003-3H9a3 3 0 003 3z" fill="#F59E0B"/>
-              </svg>
-              <div className="text-sm text-slate-900">{n.text}</div>
-              </button>
-            ))}
-          </div>
           <div className="relative mb-6">
             <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Doctor Dashboard</h1>

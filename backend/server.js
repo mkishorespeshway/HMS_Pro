@@ -146,8 +146,9 @@ setInterval(async () => {
       const tenBefore = start.getTime() - 10 * 60 * 1000;
       const fiveRemain = end.getTime() - 5 * 60 * 1000;
       const oneRemain = end.getTime() - 60 * 1000;
-      const windowMs = 60 * 1000;
-      if (now >= tenBefore && now < tenBefore + windowMs) {
+      const windowMs = 5 * 60 * 1000; // 5 minutes for start notification
+      const windowMsOther = 60000; // 1 minute for other notifications
+      if (now >= tenBefore && now < tenBefore + windowMsOther) {
         await createNotification(app, { userId: a.doctor, title: 'Reminder', message: 'Your consultation starts in 10 minutes. Be ready to join.', type: 'reminder', link: '/doctor/dashboard', dedupeKey: `rem10_${id}` });
         await createNotification(app, { userId: a.patient, title: 'Reminder', message: 'Your consultation starts in 10 minutes. Be ready to join.', type: 'reminder', link: '/appointments', dedupeKey: `rem10p_${id}` });
       }
@@ -155,17 +156,17 @@ setInterval(async () => {
         await createNotification(app, { userId: a.doctor, title: 'Join Meet', message: 'Join Meet is now available — click to start consultation.', type: 'meet', link: '/doctor/dashboard', dedupeKey: `remstart_${id}` });
         await createNotification(app, { userId: a.patient, title: 'Join Meet', message: 'Join Meet is now available — click to start consultation.', type: 'meet', link: '/appointments', dedupeKey: `remstartp_${id}` });
       }
-      if (now >= fiveRemain && now < fiveRemain + windowMs) {
+      if (now >= fiveRemain && now < fiveRemain + windowMsOther) {
         await createNotification(app, { userId: a.doctor, title: 'Time Alert', message: 'Only 5 minutes left in your consultation.', type: 'timer', link: '/doctor/dashboard', dedupeKey: `rem5_${id}` });
         await createNotification(app, { userId: a.patient, title: 'Time Alert', message: 'Only 5 minutes left in your consultation.', type: 'timer', link: '/appointments', dedupeKey: `rem5p_${id}` });
       }
-      if (now >= oneRemain && now < oneRemain + windowMs) {
+      if (now >= oneRemain && now < oneRemain + windowMsOther) {
         await createNotification(app, { userId: a.doctor, title: 'Time Alert', message: '1 minute remaining — please conclude conversation.', type: 'timer', link: '/doctor/dashboard', dedupeKey: `rem1_${id}` });
         await createNotification(app, { userId: a.patient, title: 'Time Alert', message: '1 minute remaining — please conclude conversation.', type: 'timer', link: '/appointments', dedupeKey: `rem1p_${id}` });
       }
     }
   } catch (_) {}
-}, 60000);
+}, 30000);
 
 
 app.use('/api/auth', authRoutes);

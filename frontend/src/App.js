@@ -40,11 +40,7 @@ function Header() {
   const [bell, setBell] = useState(() => {
     try { return Number(localStorage.getItem('patientBellCount') || 0) || 0; } catch(_) { return 0; }
   });
-  const [notifs, setNotifs] = useState([]);
-  const [seenIds, setSeenIds] = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem('seenNotifIds') || '[]')); } catch(_) { return new Set(); }
-  });
-  const [muteUntil, setMuteUntil] = useState(0);
+  // Removed notifs, seenIds, muteUntil - handled by NotificationManager
   const [panelOpen, setPanelOpen] = useState(false);
   const [panelItems, setPanelItems] = useState([]);
   const [panelLoading, setPanelLoading] = useState(false);
@@ -152,125 +148,27 @@ function Header() {
         try { localStorage.setItem('patientBellCount', String(unread)); } catch(_) {}
       } catch (_) {}
     })();
-    try {
-      const chan = new BroadcastChannel('chatmsg');
-      const onMsg = (e) => {
-        try {
-          const { apptId, actor, kind } = e.data || {};
-          if (String(actor || '').toLowerCase() !== 'doctor') return;
-          setBell((c) => {
-            const next = c + 1;
-            try { localStorage.setItem('patientBellCount', String(next)); } catch(_) {}
-            return next;
-          });
-          try { localStorage.setItem('lastChatApptId', String(apptId || '')); } catch(_) {}
+  }, [token]);
+  useEffect(() => {
+    const onNewNotif = () => {
+      setBell((c) => {
+        const next = c + 1;
+        try { localStorage.setItem('patientBellCount', String(next)); } catch(_) {}
+        return next;
+      });
+      if (panelOpen) {
+        (async () => {
           try {
-            const id = String(Date.now()) + String(Math.random());
-            const text = 'New message from doctor';
-            const apptIdStr = String(apptId || '');
-            setNotifs((prev) => [{ id, text, type: 'chat', kind: kind || 'pre', apptId: apptIdStr }, ...prev].slice(0, 4));
-            setTimeout(() => { setNotifs((prev) => prev.filter((n) => n.id !== id)); }, 6000);
+            const { data } = await API.get('/notifications');
+            setPanelItems(Array.isArray(data) ? data : []);
+            setPanelUnread((c) => c + 1);
           } catch(_) {}
-        } catch(_) {}
-      };
-      chan.onmessage = onMsg;
-      return () => { try { chan.close(); } catch(_) {} };
-    } catch(_) {}
-  }, [token]);
-  useEffect(() => {
-    const origin = String(API.defaults.baseURL || '').replace(/\/(api)?$/, '');
-    const w = window;
-    const cleanup = [];
-    const onReady = () => {
-      try {
-        const socket = w.io ? w.io(origin, { transports: ['polling', 'websocket'], auth: { token: localStorage.getItem('token') || '' } }) : null;
-        if (socket) {
-          socket.on('notify', (p) => {
-            try {
-              if (Date.now() < muteUntil) return;
-              const id = String(Date.now()) + String(Math.random());
-              const text = p?.message || '';
-              const link = p?.link || '';
-              const type = p?.type || 'general';
-              const apptId = p?.apptId ? String(p.apptId) : '';
-              const kind = p?.kind || '';
-              try {
-                if (p?.type === 'chat' && p?.apptId) localStorage.setItem('lastChatApptId', String(p.apptId));
-              } catch(_) {}
-              try {
-                const sid = String(p?.id || '');
-                if (sid) {
-                  setSeenIds((prev) => {
-                    const next = new Set(prev);
-                    next.add(sid);
-                    try { localStorage.setItem('seenNotifIds', JSON.stringify(Array.from(next))); } catch(_) {}
-                    return next;
-                  });
-                }
-              } catch(_) {}
-              setBell((c) => {
-                const next = c + 1;
-                try { localStorage.setItem('patientBellCount', String(next)); } catch(_) {}
-                return next;
-              });
-              setNotifs((prev) => [{ id, text, link, type, kind, apptId }, ...prev].slice(0, 4));
-              setTimeout(() => { setNotifs((prev) => prev.filter((n) => n.id !== id)); }, 6000);
-              if (panelOpen) {
-                const item = { _id: p?.id || String(Date.now()), id: p?.id || String(Date.now()), message: text, link, type, kind, createdAt: new Date().toISOString(), read: false, apptId };
-                setPanelItems((prev) => {
-                  const exists = prev.some((x) => String(x._id || x.id) === String(item._id || item.id));
-                  if (exists) return prev;
-                  return [item, ...prev].slice(0, 100);
-                });
-                setPanelUnread((c) => c + 1);
-              }
-            } catch (_) {}
-          });
-          cleanup.push(() => { try { socket.close(); } catch(_) {} });
-        }
-      } catch (_) {}
+        })();
+      }
     };
-    if (!token) return () => {};
-    if (!w.io) {
-      const s = document.createElement('script');
-      s.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
-      s.async = true;
-      s.defer = true;
-      s.onload = onReady;
-      document.body.appendChild(s);
-      cleanup.push(() => { try { document.body.removeChild(s); } catch(_) {} });
-    } else {
-      onReady();
-    }
-    return () => { cleanup.forEach((fn) => fn()); };
-  }, [token]);
-
-  useEffect(() => {
-    const t = setInterval(async () => {
-      try {
-        if (!token) return;
-        const { data } = await API.get('/notifications', { params: { unread: 1 } });
-        const items = Array.isArray(data) ? data : [];
-        items.forEach((n) => {
-          const sid = String(n._id || n.id || '');
-          if (!sid || seenIds.has(sid)) return;
-          const id = String(Date.now()) + String(Math.random());
-          const text = n.message || '';
-          const link = n.link || '';
-          const type = n.type || 'general';
-          const apptId = n.apptId ? String(n.apptId) : '';
-          setNotifs((prev) => [{ id, text, link, type, apptId }, ...prev].slice(0, 4));
-          setTimeout(() => { setNotifs((prev) => prev.filter((x) => x.id !== id)); }, 6000);
-          setSeenIds((prev) => {
-            const next = new Set(prev); next.add(sid);
-            try { localStorage.setItem('seenNotifIds', JSON.stringify(Array.from(next))); } catch(_) {}
-            return next;
-          });
-        });
-      } catch(_) {}
-    }, 15000);
-    return () => clearInterval(t);
-  }, [token, seenIds]);
+    window.addEventListener('hospozen_notif', onNewNotif);
+    return () => window.removeEventListener('hospozen_notif', onNewNotif);
+  }, [panelOpen]);
   if (hideHeader) return null;
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50">
@@ -673,43 +571,6 @@ function Header() {
           </div>
         )}
       </div>
-      {token && notifs.length > 0 && (
-        <div className="fixed right-4 top-20 z-[60] space-y-2">
-          {notifs.map((n) => (
-            <button
-              key={n.id}
-              onClick={async () => {
-                try {
-                  const id = String(n.apptId || '');
-                  const msg = String(n.text || n.message || '').toLowerCase();
-                  if (n.type === 'chat' && id) {
-                    try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
-                    nav(n.kind === 'followup' ? `/appointments/${id}/followup` : `/appointments/${id}/details`);
-                  } else if ((msg.includes('follow up') || n.type === 'followup') && id) {
-                    nav(`/appointments/${id}/followup`);
-                  } else if (n.type === 'meet' && id) {
-                    nav(`/appointments?joinMeet=${id}`);
-                  } else if (n.link) {
-                    nav(n.link);
-                  } else {
-                    nav('/appointments');
-                  }
-                  try { if (n._id || n.idDb) await API.put(`/notifications/${n._id || n.idDb}/read`); } catch(_) {}
-                } catch(_) {}
-              }}
-              className="block w-80 text-left px-4 py-3 rounded-xl shadow-lg border border-blue-200 bg-white/95 hover:bg-blue-50 transition"
-            >
-              <div className="flex items-start gap-3">
-                <TypeIcon type={n.type} />
-                <div className="flex-1">
-                  <div className="text-sm text-slate-900 font-semibold">{n.text || n.message || 'Notification'}</div>
-                  {n.apptId && <div className="text-xs text-slate-500 mt-1">Appt #{n.apptId}</div>}
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
     </header>
   );
 }
@@ -785,6 +646,7 @@ function App() {
     <HelmetProvider>
       <BrowserRouter>
         <Header />
+        <NotificationManager />
         <MetaManager />
         <div className="pt-16 px-4 sm:px-6 page-gradient">
           <Suspense fallback={<div className="p-8 text-center">Loading…</div>}>
@@ -826,4 +688,183 @@ function App() {
     </HelmetProvider>
   );
 }
+
+function NotificationManager() {
+  const [notifs, setNotifs] = useState([]);
+  const [seenIds, setSeenIds] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('seenNotifIds') || '[]')); } catch(_) { return new Set(); }
+  });
+  const token = localStorage.getItem('token');
+  const nav = useNavigate();
+
+  useEffect(() => {
+    const origin = String(API.defaults.baseURL || '').replace(/\/(api)?$/, '');
+    const w = window;
+    const cleanup = [];
+    const onReady = () => {
+      try {
+        const socket = w.io ? w.io(origin, { transports: ['polling', 'websocket'], auth: { token: localStorage.getItem('token') || '' } }) : null;
+        if (socket) {
+          socket.on('notify', (p) => {
+            try {
+              const id = String(Date.now()) + String(Math.random());
+              const sid = String(p?.id || '');
+              if (sid) {
+                setSeenIds((prev) => {
+                  const next = new Set(prev);
+                  next.add(sid);
+                  try { localStorage.setItem('seenNotifIds', JSON.stringify(Array.from(next))); } catch(_) {}
+                  return next;
+                });
+              }
+              window.dispatchEvent(new CustomEvent('hospozen_notif', { detail: p }));
+              setNotifs((prev) => [{
+                id,
+                text: p?.message || '',
+                link: p?.link || '',
+                type: p?.type || 'general',
+                kind: p?.kind || '',
+                apptId: p?.apptId ? String(p.apptId) : ''
+              }, ...prev].slice(0, 4));
+              setTimeout(() => { setNotifs((prev) => prev.filter((n) => n.id !== id)); }, 6000);
+            } catch (_) {}
+          });
+          cleanup.push(() => { try { socket.close(); } catch(_) {} });
+        }
+      } catch (_) {}
+    };
+    if (!token) return () => {};
+    if (!w.io) {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
+      s.async = true; s.defer = true; s.onload = onReady;
+      document.body.appendChild(s);
+      cleanup.push(() => { try { document.body.removeChild(s); } catch(_) {} });
+    } else { onReady(); }
+    return () => { cleanup.forEach((fn) => fn()); };
+   }, [token]);
+ 
+   useEffect(() => {
+     try {
+       const chan = new BroadcastChannel('chatmsg');
+       chan.onmessage = (e) => {
+         try {
+           const { apptId, actor, kind } = e.data || {};
+           if (String(actor || '').toLowerCase() !== 'doctor') return;
+           const id = String(Date.now()) + String(Math.random());
+           const text = 'New message from doctor';
+           const apptIdStr = String(apptId || '');
+           window.dispatchEvent(new CustomEvent('hospozen_notif', { 
+             detail: { message: text, type: 'chat', kind: kind || 'pre', apptId: apptIdStr } 
+           }));
+           setNotifs((prev) => [{
+             id,
+             text,
+             type: 'chat',
+             kind: kind || 'pre',
+             apptId: apptIdStr
+           }, ...prev].slice(0, 4));
+           setTimeout(() => { setNotifs((prev) => prev.filter((n) => n.id !== id)); }, 6000);
+         } catch(_) {}
+       };
+       return () => { try { chan.close(); } catch(_) {} };
+     } catch(_) {}
+   }, []);
+ 
+   useEffect(() => {
+    const t = setInterval(async () => {
+      try {
+        if (!token) return;
+        const { data } = await API.get('/notifications', { params: { unread: 1 } });
+        const items = Array.isArray(data) ? data : [];
+        items.forEach((n) => {
+          const sid = String(n._id || n.id || '');
+          if (!sid || seenIds.has(sid)) return;
+          window.dispatchEvent(new CustomEvent('hospozen_notif', { detail: n }));
+          const id = String(Date.now()) + String(Math.random());
+          setNotifs((prev) => [{
+            id,
+            text: n.message || '',
+            link: n.link || '',
+            type: n.type || 'general',
+            apptId: n.apptId ? String(n.apptId) : ''
+          }, ...prev].slice(0, 4));
+          setTimeout(() => { setNotifs((prev) => prev.filter((x) => x.id !== id)); }, 6000);
+          setSeenIds((prev) => {
+            const next = new Set(prev); next.add(sid);
+            try { localStorage.setItem('seenNotifIds', JSON.stringify(Array.from(next))); } catch(_) {}
+            return next;
+          });
+        });
+      } catch(_) {}
+    }, 15000);
+    return () => clearInterval(t);
+  }, [token, seenIds]);
+
+  if (!token || notifs.length === 0) return null;
+
+  const TypeIcon = ({ type }) => {
+    const c = 'w-5 h-5';
+    if (type === 'chat') return (
+      <svg className={c} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 5a3 3 0 013-3h10a3 3 0 013 3v9a3 3 0 01-3 3H9l-5 4V5z" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    );
+    if (type === 'meet') return (
+      <svg className={c} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 7a3 3 0 013-3h8a3 3 0 013 3v10a3 3 0 01-3 3H6a3 3 0 01-3-3V7z" stroke="#7C3AED" strokeWidth="2"/>
+        <path d="M21 10l-4 3 4 3V10z" fill="#7C3AED"/>
+      </svg>
+    );
+    if (type === 'appointment') return (
+      <svg className={c} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7 2v3m10-3v3M3 8h18M5 6h14a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" stroke="#059669" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    );
+    return (
+      <svg className={c} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2a7 7 0 00-7 7v3l-2 3h18l-2-3V9a7 7 0 00-7-7zm0 20a3 3 0 003-3H9a3 3 0 003 3z" fill="#F59E0B"/>
+      </svg>
+    );
+  };
+
+  return (
+    <div className="fixed right-4 top-20 z-[60] space-y-2">
+      {notifs.map((n) => (
+        <button
+          key={n.id}
+          onClick={async () => {
+            try {
+              const id = String(n.apptId || '');
+              const msg = String(n.text || '').toLowerCase();
+              if (n.type === 'chat' && id) {
+                try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
+                nav(n.kind === 'followup' ? `/appointments/${id}/followup` : `/appointments/${id}/details`);
+              } else if ((msg.includes('follow up') || n.type === 'followup') && id) {
+                nav(`/appointments/${id}/followup`);
+              } else if (n.type === 'meet' && id) {
+                nav(`/appointments?joinMeet=${id}`);
+              } else if (n.link) {
+                nav(n.link);
+              } else {
+                nav('/appointments');
+              }
+              setNotifs(prev => prev.filter(x => x.id !== n.id));
+            } catch(_) {}
+          }}
+          className="block w-80 text-left px-4 py-3 rounded-xl shadow-lg border border-blue-200 bg-white/95 hover:bg-blue-50 transition"
+        >
+          <div className="flex items-start gap-3">
+            <TypeIcon type={n.type} />
+            <div className="flex-1">
+              <div className="text-sm text-slate-900 font-semibold">{n.text || 'Notification'}</div>
+              {n.apptId && <div className="text-xs text-slate-500 mt-1">Appt #{n.apptId}</div>}
+            </div>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default App;
