@@ -246,6 +246,7 @@ function Header() {
                   <button
                     onClick={async () => {
                       try {
+                        window.dispatchEvent(new CustomEvent('close_notif_popups'));
                         fancyLog('Notifications', 'Panel toggled', { bg: 'linear-gradient(90deg,#dbeafe,#ede9fe)', fg: '#1d4ed8' });
                         setPanelOpen(!panelOpen);
                         if (!panelOpen) {
@@ -698,6 +699,12 @@ function NotificationManager() {
   const nav = useNavigate();
 
   useEffect(() => {
+    const handleClose = () => setNotifs([]);
+    window.addEventListener('close_notif_popups', handleClose);
+    return () => window.removeEventListener('close_notif_popups', handleClose);
+  }, []);
+
+  useEffect(() => {
     const origin = String(API.defaults.baseURL || '').replace(/\/(api)?$/, '');
     const w = window;
     const cleanup = [];
@@ -726,7 +733,7 @@ function NotificationManager() {
                 kind: p?.kind || '',
                 apptId: p?.apptId ? String(p.apptId) : ''
               }, ...prev].slice(0, 4));
-              setTimeout(() => { setNotifs((prev) => prev.filter((n) => n.id !== id)); }, 6000);
+              setTimeout(() => { setNotifs((prev) => prev.filter((n) => n.id !== id)); }, 30000);
             } catch (_) {}
           });
           cleanup.push(() => { try { socket.close(); } catch(_) {} });
@@ -743,7 +750,7 @@ function NotificationManager() {
     } else { onReady(); }
     return () => { cleanup.forEach((fn) => fn()); };
    }, [token]);
- 
+
    useEffect(() => {
      try {
        const chan = new BroadcastChannel('chatmsg');
@@ -764,15 +771,15 @@ function NotificationManager() {
              kind: kind || 'pre',
              apptId: apptIdStr
            }, ...prev].slice(0, 4));
-           setTimeout(() => { setNotifs((prev) => prev.filter((n) => n.id !== id)); }, 6000);
+           setTimeout(() => { setNotifs((prev) => prev.filter((n) => n.id !== id)); }, 30000);
          } catch(_) {}
        };
        return () => { try { chan.close(); } catch(_) {} };
      } catch(_) {}
    }, []);
- 
+
    useEffect(() => {
-    const t = setInterval(async () => {
+    const fetchNow = async () => {
       try {
         if (!token) return;
         const { data } = await API.get('/notifications', { params: { unread: 1 } });
@@ -789,7 +796,7 @@ function NotificationManager() {
             type: n.type || 'general',
             apptId: n.apptId ? String(n.apptId) : ''
           }, ...prev].slice(0, 4));
-          setTimeout(() => { setNotifs((prev) => prev.filter((x) => x.id !== id)); }, 6000);
+          setTimeout(() => { setNotifs((prev) => prev.filter((x) => x.id !== id)); }, 30000);
           setSeenIds((prev) => {
             const next = new Set(prev); next.add(sid);
             try { localStorage.setItem('seenNotifIds', JSON.stringify(Array.from(next))); } catch(_) {}
@@ -797,7 +804,9 @@ function NotificationManager() {
           });
         });
       } catch(_) {}
-    }, 15000);
+    };
+    fetchNow();
+    const t = setInterval(fetchNow, 15000);
     return () => clearInterval(t);
   }, [token, seenIds]);
 
@@ -858,7 +867,6 @@ function NotificationManager() {
             <TypeIcon type={n.type} />
             <div className="flex-1">
               <div className="text-sm text-slate-900 font-semibold">{n.text || 'Notification'}</div>
-              {n.apptId && <div className="text-xs text-slate-500 mt-1">Appt #{n.apptId}</div>}
             </div>
           </div>
         </button>

@@ -874,6 +874,7 @@ export default function DoctorDashboard() {
               <button
                 onClick={async () => {
                   try {
+                    window.dispatchEvent(new CustomEvent('close_notif_popups'));
                     setPanelOpen((v) => !v);
                     if (!panelOpen) {
                       setPanelLoading(true);
