@@ -288,6 +288,11 @@
   color: #fff;
 }
 
+.badge-confirmed {
+  background-image: linear-gradient(to right, #facc15, #eab308);
+  color: #fff;
+}
+
 .badge-busy {
   background-image: linear-gradient(to right, #f59e0b, #fb923c);
   color: #fff;

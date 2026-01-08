@@ -60,7 +60,13 @@ export default function AdminAppointments() {
           <td className="px-4 py-3">{a.doctor?.name || "--"}</td>
           <td className="px-4 py-3">₹{a.fee || 0}</td>
           <td className="px-4 py-3">
-            <span className={`badge ${String(a.status || '').toUpperCase()==='PENDING' ? 'badge-busy' : ((String(a.status || '').toUpperCase()==='CANCELLED' || String(a.status || '').toUpperCase()==='CANCELED') ? 'badge-offline' : 'badge-online')}`}>
+            <span className={`badge ${(() => {
+              const s = String(a.status || '').toUpperCase();
+              if (s === 'PENDING') return 'badge-busy';
+              if (s === 'CANCELLED' || s === 'CANCELED') return 'badge-offline';
+              if (s === 'CONFIRMED') return 'badge-confirmed';
+              return 'badge-online';
+            })()}`}>
               {a.status}
             </span>
           </td>

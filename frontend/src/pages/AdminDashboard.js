@@ -228,7 +228,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-slate-700 text-sm">{b.date} {b.startTime}</div>
-                      <span className={`badge ${b.status === 'CONFIRMED' ? 'badge-online' : b.status === 'CANCELLED' ? 'badge-offline' : 'badge-busy'}`}>{b.status}</span>
+                      <span className={`badge ${b.status === 'CONFIRMED' ? 'badge-confirmed' : b.status === 'CANCELLED' ? 'badge-offline' : 'badge-busy'}`}>{b.status}</span>
                     </div>
                   </div>
                 ))}
