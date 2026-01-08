@@ -163,6 +163,16 @@ setInterval(async () => {
       if (now >= end.getTime() && a.status !== 'COMPLETED') {
         a.status = 'COMPLETED';
         await a.save();
+        
+        // Also update doctor status to online and not busy
+        try {
+          const DoctorProfile = require('./models/DoctorProfile');
+          await DoctorProfile.findOneAndUpdate(
+            { user: a.doctor },
+            { isOnline: true, isBusy: false }
+          );
+        } catch(_) {}
+
         await createNotification(app, { userId: a.doctor, title: 'Session Ended', message: 'The appointment slot has ended. Session marked as completed.', type: 'info', link: '/doctor/dashboard', dedupeKey: `ended_${id}` });
         await createNotification(app, { userId: a.patient, title: 'Session Ended', message: 'The appointment slot has ended. Session marked as completed.', type: 'info', link: '/appointments', dedupeKey: `endedp_${id}` });
         // Emit socket to both so they close windows if open

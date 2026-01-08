@@ -303,8 +303,9 @@ export default function DoctorDashboard() {
       setOnline(true);
       setBusy(true);
       try { const chan = new BroadcastChannel('doctorStatus'); const uid = localStorage.getItem('userId') || ''; chan.postMessage({ uid, online: true, busy: true }); chan.close(); } catch(_) {}
+      const meetName = `meet_${id}`;
       try {
-        meetWinRef.current = window.open(url, 'doctorMeet');
+        meetWinRef.current = window.open(url, meetName);
         meetMonitorRef.current = setInterval(async () => {
           try {
             const end = new Date(a.date);
@@ -335,7 +336,11 @@ export default function DoctorDashboard() {
             setBusy(false);
             setOnline(true);
             try { const chan = new BroadcastChannel('doctorStatus'); const uid2 = localStorage.getItem('userId') || ''; chan.postMessage({ uid: uid2, online: true, busy: false }); chan.close(); } catch(_) {}
-            try { if (meetWinRef.current && !meetWinRef.current.closed) meetWinRef.current.close(); } catch(_) {}
+            try { 
+              if (meetWinRef.current && !meetWinRef.current.closed) meetWinRef.current.close(); 
+              const w2 = window.open('', meetName);
+              if (w2 && !w2.closed) w2.close();
+            } catch(_) {}
             meetWinRef.current = null;
             if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; }
             return;
@@ -375,11 +380,22 @@ export default function DoctorDashboard() {
       setOnline(true);
       try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'exit' }); } catch(_) {}
       try {
+        const uid = localStorage.getItem('userId') || '';
+        if (uid) {
+          localStorage.setItem(`doctorBusyById_${uid}`, '0');
+          API.put('/doctors/me/status', { isOnline: true, isBusy: false }).catch(() => {});
+        }
+      } catch(_) {}
+      setBusy(false);
+      setOnline(true);
+      try { const chan = new BroadcastChannel('doctorStatus'); const uid2 = localStorage.getItem('userId') || ''; chan.postMessage({ uid: uid2, online: true, busy: false }); chan.close(); } catch(_) {}
+      try {
         if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; }
+        const meetName = `meet_${id}`;
         if (meetWinRef.current && !meetWinRef.current.closed) { meetWinRef.current.close(); }
         try {
-          const w = window.open('', 'doctorMeet');
-          if (w && !w.closed) w.close();
+          const w2 = window.open('', meetName);
+          if (w2 && !w2.closed) w2.close();
         } catch(_) {}
         meetWinRef.current = null;
       } catch(_) {}
@@ -1126,7 +1142,7 @@ export default function DoctorDashboard() {
                     <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto sm:justify-end">
                       {(() => {
                         const s = String(a.status).toUpperCase();
-                        const showPay = s !== 'CANCELLED' && s !== 'COMPLETED';
+                        const showPay = s === 'CONFIRMED' || s === 'PENDING';
                         return showPay ? (
                           <span className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
                             {String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Payment Pending'}

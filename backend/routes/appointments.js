@@ -220,6 +220,16 @@ router.put("/:id/complete", authenticate, async (req, res) => {
 
     appt.status = "COMPLETED";
     await appt.save();
+
+    // Reset doctor status to online and not busy
+    try {
+      const DoctorProfile = require('../models/DoctorProfile');
+      await DoctorProfile.findOneAndUpdate(
+        { user: appt.doctor },
+        { isOnline: true, isBusy: false }
+      );
+    } catch (_) {}
+
     res.json(appt);
   } catch (e) {
     res.status(500).json({ message: e.message });

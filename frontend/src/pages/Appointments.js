@@ -454,6 +454,9 @@ export default function Appointments() {
                 try {
                   const w = meetWinRef.current[id];
                   if (w && !w.closed) w.close();
+                  const name = meetWindowName(id);
+                  const w2 = window.open('', name);
+                  if (w2 && !w2.closed) w2.close();
                   meetWinRef.current[id] = null;
                 } catch(_) {}
                 setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, status: 'COMPLETED' } : x)));
@@ -709,7 +712,7 @@ export default function Appointments() {
     } catch (_) {}
   };
 
-  const meetWindowName = (id) => `patientMeet_${String(id || '')}`;
+  const meetWindowName = (id) => `meet_${String(id || '')}`;
 
   const meetLinkFor = (appt) => {
     try {
@@ -1025,6 +1028,9 @@ export default function Appointments() {
                                           try {
                                             const w = meetWinRef.current[idX];
                                             if (w && !w.closed) w.close();
+                                            const name = meetWindowName(idX);
+                                            const w2 = window.open('', name);
+                                            if (w2 && !w2.closed) w2.close();
                                             meetWinRef.current[idX] = null;
                                           } catch(_) {}
                                           clearInterval(monitor);
