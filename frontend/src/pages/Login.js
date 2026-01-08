@@ -24,6 +24,7 @@ const nav = useNavigate();
         toRemove.forEach((k) => { try { localStorage.removeItem(k); } catch(_) {} });
       } catch(_) {}
       try { localStorage.setItem("token", data.token); } catch(_) {}
+      try { localStorage.setItem("userRole", userRole || "patient"); } catch(_) {}
       try { if (data?.user?.id) localStorage.setItem("userId", data.user.id); } catch(_) {}
       if (userRole === "admin") {
         nav("/admin/dashboard");

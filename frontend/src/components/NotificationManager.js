@@ -73,6 +73,47 @@ export default function NotificationManager({ actor = 'patient' }) {
               setTimeout(() => { setNotifs((prev) => prev.filter((n) => n.id !== id)); }, 30000);
             } catch (_) {}
           });
+
+          socket.on('chat:new', (msg) => {
+            try {
+              const { apptId, actor: msgActor, kind, text } = msg || {};
+              if (actor === 'patient' && String(msgActor || '').toLowerCase() !== 'doctor') return;
+              if (actor === 'doctor' && String(msgActor || '').toLowerCase() === 'doctor') return;
+              const id = String(apptId || '');
+              if (!id) return;
+              const t = String(text || '').trim();
+              if (t) {
+                const key = kind === 'followup' ? `fu_${id}_chat` : `wr_${id}_chat`;
+                const arr = JSON.parse(localStorage.getItem(key) || '[]');
+                const next = (Array.isArray(arr) ? arr : []).concat(t);
+                localStorage.setItem(key, JSON.stringify(next));
+                
+                // Show notification popup
+                const sender = actor === 'patient' ? 'doctor' : 'patient';
+                const fullText = `New message from ${sender}: ${t}`;
+                const nid = String(Date.now()) + String(Math.random());
+                
+                window.dispatchEvent(new CustomEvent('hospozen_notif', { 
+                  detail: { message: fullText, type: 'chat', kind: kind || 'pre', apptId: id } 
+                }));
+                
+                setNotifs((prev) => [{
+                  id: nid,
+                  text: fullText,
+                  type: 'chat',
+                  kind: kind || 'pre',
+                  apptId: id
+                }, ...prev].slice(0, 4));
+                setTimeout(() => { setNotifs((prev) => prev.filter((n) => n.id !== nid)); }, 30000);
+
+                try {
+                  const chan = new BroadcastChannel('chatmsg_internal');
+                  chan.postMessage({ apptId: id, actor: msgActor, kind, text: t });
+                  chan.close();
+                } catch(_) {}
+              }
+            } catch(_) {}
+          });
           cleanup.push(() => { try { socket.close(); } catch(_) {} });
         }
       } catch (_) {}
@@ -136,6 +177,7 @@ export default function NotificationManager({ actor = 'patient' }) {
             text: n.message || '',
             link: n.link || '',
             type: n.type || 'general',
+            kind: n.kind || '',
             apptId: n.apptId ? String(n.apptId) : ''
           }, ...prev].slice(0, 4));
           setTimeout(() => { setNotifs((prev) => prev.filter((x) => x.id !== id)); }, 30000);

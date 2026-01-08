@@ -505,34 +505,23 @@ export default function DoctorDashboard() {
                 }
               } catch (_) {}
             });
-            socket.on('chat:new', (msg) => {
+            const internalChan = new BroadcastChannel('chatmsg_internal');
+            internalChan.onmessage = (e) => {
               try {
-                const { apptId, actor, kind, text } = msg || {};
-                if (String(actor || '').toLowerCase() !== 'patient') return;
+                const { apptId, kind, text } = e.data || {};
                 const id = String(apptId || '');
                 if (!id) return;
                 const t = String(text || '').trim();
-                if (kind === 'pre' && t) {
-                  try {
-                    const k = `wr_${id}_chat`;
-                    const arr = JSON.parse(localStorage.getItem(k) || '[]');
-                    const next = (Array.isArray(arr) ? arr : []).concat(t);
-                    localStorage.setItem(k, JSON.stringify(next));
-                    if (chatAppt && String(chatAppt._id || chatAppt.id) === id) setChatAppt((prev) => ({ ...(prev || {}) }));
-                  } catch(_) {}
-                } else if (kind === 'followup' && t) {
-                  try {
-                    const k = `fu_${id}_chat`;
-                    const arr = JSON.parse(localStorage.getItem(k) || '[]');
-                    const next = (Array.isArray(arr) ? arr : []).concat(t);
-                    localStorage.setItem(k, JSON.stringify(next));
-                    if (followAppt && String(followAppt._id || followAppt.id) === id) setFuChat((prev) => prev.concat(t));
-                  } catch(_) {}
+                if (!t) return;
+                if (kind === 'pre') {
+                  if (chatAppt && String(chatAppt._id || chatAppt.id) === id) setChatAppt((prev) => ({ ...(prev || {}) }));
+                } else if (kind === 'followup') {
+                  if (followAppt && String(followAppt._id || followAppt.id) === id) setFuChat((prev) => prev.concat(t));
                 }
-                setBellCount((c) => c + 1);
                 try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
               } catch (_) {}
-            });
+            };
+            cleanup.push(() => { try { internalChan.close(); } catch(_) {} });
             cleanup.push(() => { try { socket.close(); } catch(_) {} });
           }
         } catch(_) {}
@@ -643,7 +632,9 @@ export default function DoctorDashboard() {
   };
 
   const canFollowUp = (a) => {
-    if (!a || !a.prescriptionText) return false;
+    if (!a) return false;
+    const s = String(a.status || '').toUpperCase();
+    if (s !== 'COMPLETED') return false;
     const ts = apptStartTs(a);
     const now = Date.now();
     const diff = now - ts;

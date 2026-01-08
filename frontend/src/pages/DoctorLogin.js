@@ -24,6 +24,7 @@ export default function DoctorLogin() {
         setError("Only doctors can login here");
       } else {
         localStorage.setItem("token", data.token);
+        localStorage.setItem("userRole", "doctor");
         if (data?.user?.id) localStorage.setItem("userId", data.user.id);
         try {
           const uid = String(data?.user?.id || "");

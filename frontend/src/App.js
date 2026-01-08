@@ -278,7 +278,7 @@ function Header() {
                     )}
                   </button>
 
-                  <NotificationManager />
+                  <NotificationManager actor={localStorage.getItem('userRole') === 'doctor' ? 'doctor' : 'patient'} />
 
                   {/* Enhanced Notification Panel */}
                   {panelOpen && (
