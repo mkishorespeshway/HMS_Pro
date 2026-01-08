@@ -88,24 +88,6 @@ export default function NotificationManager({ actor = 'patient' }) {
                 const next = (Array.isArray(arr) ? arr : []).concat(t);
                 localStorage.setItem(key, JSON.stringify(next));
                 
-                // Show notification popup
-                const sender = actor === 'patient' ? 'doctor' : 'patient';
-                const fullText = `New message from ${sender}: ${t}`;
-                const nid = String(Date.now()) + String(Math.random());
-                
-                window.dispatchEvent(new CustomEvent('hospozen_notif', { 
-                  detail: { message: fullText, type: 'chat', kind: kind || 'pre', apptId: id } 
-                }));
-                
-                setNotifs((prev) => [{
-                  id: nid,
-                  text: fullText,
-                  type: 'chat',
-                  kind: kind || 'pre',
-                  apptId: id
-                }, ...prev].slice(0, 4));
-                setTimeout(() => { setNotifs((prev) => prev.filter((n) => n.id !== nid)); }, 30000);
-
                 try {
                   const chan = new BroadcastChannel('chatmsg_internal');
                   chan.postMessage({ apptId: id, actor: msgActor, kind, text: t });
@@ -140,21 +122,7 @@ export default function NotificationManager({ actor = 'patient' }) {
            if (actor === 'patient' && String(msgActor || '').toLowerCase() !== 'doctor') return;
            if (actor === 'doctor' && String(msgActor || '').toLowerCase() === 'doctor') return;
  
-           const id = String(Date.now()) + String(Math.random());
-           const sender = actor === 'patient' ? 'doctor' : 'patient';
-           const text = msgText ? `New message from ${sender}: ${msgText}` : `New message from ${sender}`;
-           const apptIdStr = String(apptId || '');
-           window.dispatchEvent(new CustomEvent('hospozen_notif', { 
-             detail: { message: text, type: 'chat', kind: kind || 'pre', apptId: apptIdStr } 
-           }));
-           setNotifs((prev) => [{
-             id,
-             text,
-             type: 'chat',
-             kind: kind || 'pre',
-             apptId: apptIdStr
-           }, ...prev].slice(0, 4));
-           setTimeout(() => { setNotifs((prev) => prev.filter((n) => n.id !== id)); }, 30000);
+           // We no longer show popups here to avoid duplication with 'notify' socket event
          } catch(_) {}
        };
        return () => { try { chan.close(); } catch(_) {} };
