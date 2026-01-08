@@ -85,7 +85,7 @@
       if (!email || !emailRegex.test(email)) { alert('Please enter a valid lowercase email ending with @gmail.com or @hms.com'); return; }
        const phoneSan = String(phone || "").replace(/\D/g, "");
        if (!/^[6-9]\d{9}$/.test(phoneSan)) { alert('Phone must start 6-9 and be 10 digits'); return; }
-      if (address && address.length > 50) { alert('Address cannot exceed 50 characters'); return; }
+      if (address && address.length > 150) { alert('Address cannot exceed 150 characters'); return; }
        {
          const exp = ageFromBirthday(birthday);
          const norm = String(age).trim() === '' ? '' : String(Math.max(0, Math.min(120, Number(String(age).replace(/\D/g, '')))));
@@ -194,7 +194,7 @@
                      </div>
                      <div className="sm:col-span-2">
                        <label className="block text-sm font-semibold text-slate-700 mb-2">Address</label>
-                       <textarea rows={3} maxLength={50} value={address} onChange={(e) => setAddress(e.target.value)} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105" />
+                       <textarea rows={3} maxLength={150} value={address} onChange={(e) => setAddress(e.target.value)} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105" />
                      </div>
                    </div>
                  )}
