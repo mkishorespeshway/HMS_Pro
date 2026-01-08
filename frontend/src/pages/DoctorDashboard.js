@@ -1089,283 +1089,52 @@ export default function DoctorDashboard() {
             </div>
           </div>
 
-          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-6 mb-6">
-            <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 shadow-lg">
-              <div className="flex items-center gap-2 text-slate-700 mb-3">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M7 2a1 1 0 000 2h1v2h8V4h1a1 1 0 100-2H7zM5 8a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2H5zm3 3h8v2H8v-2zm0 4h8v2H8v-2z" fill="#4B5563"/>
-                </svg>
-                <span>Upcoming Appointments</span>
-              </div>
-              {upcoming.length === 0 ? (
-                <div className="text-slate-600">No upcoming appointments</div>
-              ) : (
-                <div className="space-y-2">
-                  {upcoming.map((a) => (
-                    <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-lg px-3 py-2 hover:shadow-sm">
-                      <div className="min-w-0">
-                        <div className="font-semibold text-slate-900">{a.patient?.name || 'Patient'}</div>
-                        <div className="text-xs text-slate-600">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end mt-1 sm:mt-0">
-                        {String(a.status).toUpperCase() !== 'CANCELLED' && (
-                          <span className={`inline-block text-xs px-2 py-1 rounded ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}</span>
-                        )}
-                        {String(a.status).toUpperCase() === 'PENDING' && (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => accept(a._id || a.id)}
-                              className="h-6 w-6 rounded-full bg-green-600 hover:bg-green-700 text-white flex items-center justify-center"
-                              title="Accept"
-                            >
-                              ✓
-                            </button>
-                            <button
-                              onClick={() => reject(a._id || a.id)}
-                              className="h-6 w-6 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center"
-                              title="Reject"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 shadow-lg">
-              <div className="flex items-center gap-2 text-slate-700 mb-3">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2a7 7 0 00-7 7v3l-2 3h18l-2-3V9a7 7 0 00-7-7zm0 20a3 3 0 003-3H9a3 3 0 003 3z" fill="#16A34A"/>
-                </svg>
-                <span>Completed Consultations</span>
-              </div>
-              {completed.length === 0 ? (
-                <div className="text-slate-600">No completed consultations</div>
-              ) : (
-                <div className="space-y-2">
-                  {completed.map((a) => (
-                    <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-lg px-3 py-2 hover:shadow-sm">
-                      <div className="min-w-0">
-                        <div className="font-semibold text-slate-900">{a.patient?.name || 'Patient'}</div>
-                        <div className="text-xs text-slate-600">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end mt-1 sm:mt-0">
-                        {a.prescriptionText ? (
-                          <button onClick={() => nav(`/prescription/${a._id || a.id}`)} className="px-2 py-1 rounded-md border border-indigo-600 text-indigo-700 text-xs">Prescription</button>
-                        ) : (
-                          <span className="text-xs text-slate-600">No prescription</span>
-                        )}
-                        {canFollowUp(a) && (
-                          <button
-                            onClick={() => { const id = String(a._id || a.id || ''); if (id) { try { localStorage.setItem('lastChatApptId', id); } catch(_) {} nav(`/doctor/appointments/${id}/followup`); } }}
-                            className="px-2 py-1 rounded-md border border-green-600 text-green-700 text-xs"
-                          >
-                            Follow-up
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="max-w-5xl mx-auto bg-white/80 backdrop-blur-md border border-white/30 rounded-2xl p-6 mb-6 shadow-lg">
-            <div className="flex items-center gap-2 text-slate-700 mb-3">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 9a7 7 0 0114 0H5z" fill="#06B6D4"/>
-              </svg>
-              <span>Hospital / Clinic Details</span>
-            </div>
-            <div className="grid gap-3 md:grid-cols-2 text-sm">
-              <div className="flex items-center gap-2 text-slate-700">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 9a7 7 0 0114 0H5z" fill="#4B5563"/>
-                </svg>
-                <div>Name: <span className="text-slate-900">{String(profile?.clinic?.name || '').trim() || '--'}</span></div>
-              </div>
-              <div className="flex items-center gap-2 text-slate-700">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M5 3a2 2 0 00-2 2v14l9-4 9 4V5a2 2 0 00-2-2H5z" fill="#0EA5E9"/>
-                </svg>
-                <div>City: <span className="text-slate-900">{String(profile?.clinic?.city || '').trim() || '--'}</span></div>
-              </div>
-              <div className="md:col-span-2 flex items-center gap-2 text-slate-700">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 11h18v10H3V11zm2-8h14v6H5V3z" fill="#06B6D4"/>
-                </svg>
-                <div>Address: <span className="text-slate-900">{String(profile?.clinic?.address || '').trim() || '--'}</span></div>
-              </div>
-            </div>
-          </div>
-
-          <div id="all-appointments" className="max-w-5xl mx-auto bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-6 mb-6 shadow-lg">
-            <div className="flex items-center gap-2 text-slate-700 mb-3">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7 2a1 1 0 000 2h1v2h8V4h1a1 1 0 100-2H7zM5 8a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2H5zm3 3h8v2H8v-2zm0 4h8v2H8v-2z" fill="#4B5563"/>
-              </svg>
-              <span>All Appointments</span>
-            </div>
-            {loading && <div className="text-slate-600">Loading...</div>}
-            {error && !loading && <div className="text-red-600 mb-3 text-sm">{error}</div>}
-            <div className="space-y-2">
-              {(list || []).length === 0 && !loading ? (
-                <div className="text-slate-600">No appointments</div>
-              ) : (
-                (list || []).slice().sort((x, y) => apptStartTs(y) - apptStartTs(x)).map((a) => (
-                  <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border border-slate-200 rounded-lg px-3 py-2">
-                    <div className="min-w-0">
-                      <div className="font-semibold text-slate-900">{a.patient?.name || 'Patient'}</div>
-                      <div className="text-xs text-slate-600">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end mt-1 sm:mt-0">
-                      {(() => {
-                        const s = String(a.status).toUpperCase();
-                        const cls = s === 'PENDING' ? 'bg-amber-100 text-amber-700' : s === 'CONFIRMED' ? 'bg-indigo-100 text-indigo-700' : s === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
-                        const txt = s === 'PENDING' ? 'Pending' : s === 'CONFIRMED' ? 'Confirmed' : s === 'COMPLETED' ? 'Completed' : 'Cancelled';
-                        return <span className={`inline-block text-xs px-2 py-1 rounded ${cls}`}>{txt}</span>;
-                      })()}
-                      {(() => {
-                        const s = String(a.status).toUpperCase();
-                        const showPay = s !== 'CANCELLED' && s !== 'COMPLETED';
-                        return showPay ? (
-                          <span className={`inline-block text-xs px-2 py-1 rounded ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}</span>
-                        ) : null;
-                      })()}
-                      {null}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="max-w-5xl mx-auto bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-6 shadow-lg">
-            <div className="flex items-center gap-2 text-slate-700 mb-3">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7 2a1 1 0 000 2h1v2h8V4h1a1 1 0 100-2H7zM5 8a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2H5zm3 3h8v2H8v-2zm0 4h8v2H8v-2z" fill="#4B5563"/>
-              </svg>
-              <span>Latest Bookings</span>
-            </div>
-            {loading && <div className="text-slate-600">Loading...</div>}
-            {error && !loading && <div className="text-red-600 mb-3 text-sm">{error}</div>}
-            <div className="space-y-3">
-              {latest.length === 0 && !loading ? (
-                <div className="text-slate-600">No recent bookings</div>
-              ) : (
-                latest.map((a) => (
-                  <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border border-slate-200 rounded-lg px-3 py-2">
-                    <div className="flex items-center gap-3 min-w-0">
-                      {(() => {
-                        const pid = String(a.patient?._id || a.patient || "");
-                        let img = String(a.patient?.photoBase64 || localStorage.getItem(`userPhotoBase64ById_${pid}`) || "");
-                        let src = img;
-                        if (img && !img.startsWith("data:") && !img.startsWith("http")) {
-                          src = `data:image/png;base64,${img}`;
-                        }
-                        const ok = src.startsWith("data:") || src.startsWith("http");
-                        return ok ? (
-                          <img src={src} alt="User" className="h-8 w-8 rounded-full object-cover border" />
-                        ) : (
-                          <div className="h-8 w-8 rounded-full border bg-white" />
-                        );
-                      })()}
-                      <div>
-                        <div className="font-semibold text-slate-900">{a.patient?.name || "User"}</div>
-                        <div className="text-xs text-slate-600">{(() => {
-                          const p = a.patient || {};
-                          if (p.age !== undefined && p.age !== null && p.age !== "") return `Age: ${p.age}`;
-                          const pid = String(p._id || a.patient || "");
-                          const locAge = localStorage.getItem(`userAgeById_${pid}`) || "";
-                          if (locAge) return `Age: ${locAge}`;
-                          const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || "";
-                          if (!dob) return "";
-                          const d = new Date(dob);
-                          if (Number.isNaN(d.getTime())) return "";
-                          const t = new Date();
-                          let age = t.getFullYear() - d.getFullYear();
-                          const m = t.getMonth() - d.getMonth();
-                          if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
-                          return `Age: ${age}`;
-                        })()}</div>
-                        <div className="text-xs text-slate-600">Booking on {new Date(a.date).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}</div>
-                      </div>
-                    </div>
-                    {String(a.status).toUpperCase() === "PENDING" ? (
-                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end mt-1 sm:mt-0">
-                        <button
-                          onClick={() => accept(a._id || a.id)}
-                          className="h-6 w-6 rounded-full bg-green-600 hover:bg-green-700 text-white flex items-center justify-center"
-                          title="Accept"
-                        >
-                          ✓
-                        </button>
-                        <button
-                          onClick={() => reject(a._id || a.id)}
-                          className="h-6 w-6 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center"
-                          title="Reject"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ) : (
-                      (() => {
-                        const s = String(a.status || "").toUpperCase();
-                        return (
-                          <span
-                            className={`inline-block text-xs px-2 py-1 rounded ${s === "CANCELLED" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}
-                          >
-                            {s === "CANCELLED" ? "Cancelled" : s === "CONFIRMED" ? "Accepted" : "Completed"}
-                          </span>
-                      );
-                    })()
-                  )}
-                    {canFollowUp(a) && (
-                      <button
-                        onClick={() => { const id = String(a._id || a.id || ''); if (id) { try { localStorage.setItem('lastChatApptId', id); } catch(_) {} nav(`/doctor/appointments/${id}/followup`); } }}
-                        className="ml-2 px-2 py-1 rounded-md border border-green-600 text-green-700 text-xs"
-                      >
-                        Follow-up
-                      </button>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          {/* Today's Appointments */}
           <div className="max-w-5xl mx-auto bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-6 mb-6 shadow-lg">
-            <div className="flex items-center gap-2 text-slate-700 mb-3">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7 2a1 1 0 000 2h1v2h8V4h1a1 1 0 100-2H7zM5 8a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2H5zm3 3h8v2H8v-2zm0 4h8v2H8v-2z" fill="#4B5563"/>
-              </svg>
-              <span>Today's Appointments</span>
+            <div className="flex items-center gap-2 text-slate-700 mb-4 border-b border-slate-100 pb-2">
+              <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7 2a1 1 0 000 2h1v2h8V4h1a1 1 0 100-2H7zM5 8a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2H5zm3 3h8v2H8v-2zm0 4h8v2H8v-2z" fill="#4F46E5"/>
+                </svg>
+              </div>
+              <span className="font-bold text-lg">Today's Appointments</span>
             </div>
-            {loading && <div className="text-slate-600">Loading...</div>}
-            {error && !loading && <div className="text-red-600 mb-3 text-sm">{error}</div>}
+            {loading && <div className="text-slate-600 animate-pulse">Loading...</div>}
+            {error && !loading && <div className="text-red-600 mb-3 text-sm bg-red-50 p-2 rounded-md border border-red-100">{error}</div>}
             <div className="space-y-3">
               {(latestToday || []).length === 0 && !loading ? (
-                <div className="text-slate-600">No appointments today</div>
+                <div className="text-slate-500 italic py-4 text-center">No appointments scheduled for today</div>
               ) : (
                 (latestToday || []).map((a) => (
-                  <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border border-slate-200 rounded-lg px-3 py-2">
-                    <div>
-                      <div className="font-semibold text-slate-900">{a.patient?.name || 'Patient'}</div>
-                      <div className="text-xs text-slate-600">Time: {a.startTime} • Type: {a.type === 'online' ? 'Online' : 'Clinic'}</div>
+                  <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-slate-100 bg-slate-50/30 rounded-xl px-4 py-3 hover:bg-white hover:shadow-md transition-all duration-300">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+                        {a.patient?.name ? a.patient.name.charAt(0).toUpperCase() : 'P'}
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-900">{a.patient?.name || 'Patient'}</div>
+                        <div className="text-xs text-slate-500 flex items-center gap-2">
+                          <span className="flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            {a.startTime}
+                          </span>
+                          <span>•</span>
+                          <span className={`px-1.5 py-0.5 rounded-full ${a.type === 'online' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                            {a.type === 'online' ? 'Online' : 'Clinic'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end mt-1 sm:mt-0">
+                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto sm:justify-end">
                       {(() => {
                         const s = String(a.status).toUpperCase();
                         const showPay = s !== 'CANCELLED' && s !== 'COMPLETED';
                         return showPay ? (
-                          <span className={`inline-block text-xs px-2 py-1 rounded ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}</span>
+                          <span className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                            {String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Payment Pending'}
+                          </span>
                         ) : null;
                       })()}
-                      {null}
-                      {null}
                       {a.type === 'online' && String(a.status).toUpperCase() === 'CONFIRMED' && (
                         (() => {
                           const start = new Date(a.date);
@@ -1379,12 +1148,10 @@ export default function DoctorDashboard() {
                           const windowStart = start.getTime() - 5 * 60 * 1000;
                           if (now >= end.getTime()) {
                             try { localStorage.removeItem(`leftDoctor_${String(a._id || a.id)}`); } catch(_) {}
-                            return (
-                              <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">Time Expired</span>
-                            );
+                            return <span className="text-xs px-2.5 py-1 rounded-full bg-red-100 text-red-700 font-medium">Time Expired</span>;
                           }
                           if (now < windowStart) {
-                            return <span className="inline-block text-xs px-2 py-1 rounded bg-amber-100 text-amber-700">Available 5 min before</span>;
+                            return <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">Starts Soon</span>;
                           }
                           const id = String(a._id || a.id || '');
                           const joinedDoc = id ? localStorage.getItem(`joinedByDoctor_${id}`) === '1' : false;
@@ -1392,36 +1159,19 @@ export default function DoctorDashboard() {
                           if (joinedDoc) {
                             return (
                               <div className="flex items-center gap-2">
-                                <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Joined</span>
-                                <button
-                                  onClick={() => leaveMeetFor(id)}
-                                  className="px-3 py-1 rounded-md border border-red-600 text-red-700"
-                                >
-                                  Leave
-                                </button>
+                                <span className="px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold animate-pulse">In Meeting</span>
+                                <button onClick={() => leaveMeetFor(id)} className="px-4 py-1.5 rounded-lg border-2 border-red-500 text-red-600 hover:bg-red-50 text-xs font-bold transition-colors">Leave</button>
                               </div>
                             );
                           }
                           if (leftDoc) {
                             return (
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => openMeetFor(id)}
-                                  className="px-3 py-1 rounded-md border border-indigo-600 text-indigo-700"
-                                >
-                                  Rejoin
-                                </button>
-                              </div>
+                              <button onClick={() => openMeetFor(id)} className="px-4 py-1.5 rounded-lg border-2 border-indigo-600 text-indigo-700 hover:bg-indigo-50 text-xs font-bold transition-colors">Rejoin Meeting</button>
                             );
                           }
                           return (
                             <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => openMeetFor(id)}
-                                className="px-3 py-1 rounded-md border border-green-600 text-green-700"
-                              >
-                                Join
-                              </button>
+                              <button onClick={() => openMeetFor(id)} className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 text-xs font-bold shadow-md transition-all active:scale-95">Join Meeting</button>
                               <button
                                 onClick={async () => {
                                   let url = String(localStorage.getItem(`meetlink_${id}`) || a.meetingLink || '').replace(/[`'\"]/g, '').trim();
@@ -1440,7 +1190,7 @@ export default function DoctorDashboard() {
                                   try { const chan = new BroadcastChannel('meetlink'); chan.postMessage({ id, url }); chan.close(); } catch(_) {}
                                   alert('Meeting link set');
                                 }}
-                                className="px-3 py-1 rounded-md border border-indigo-600 text-indigo-700"
+                                className="px-4 py-1.5 rounded-lg border-2 border-indigo-100 text-indigo-600 hover:bg-indigo-50 text-xs font-bold transition-colors"
                               >
                                 Set Link
                               </button>
@@ -1451,7 +1201,7 @@ export default function DoctorDashboard() {
                       {canFollowUp(a) && (
                         <button
                           onClick={() => { const id = String(a._id || a.id || ''); if (id) { try { localStorage.setItem('lastChatApptId', id); } catch(_) {} nav(`/doctor/appointments/${id}/followup`); } }}
-                          className="px-3 py-1 rounded-md border border-green-600 text-green-700"
+                          className="px-4 py-1.5 rounded-lg border-2 border-green-600 text-green-700 hover:bg-green-50 text-xs font-bold transition-colors"
                         >
                           Follow-up
                         </button>
@@ -1462,6 +1212,277 @@ export default function DoctorDashboard() {
               )}
             </div>
           </div>
+
+          {/* Latest Bookings */}
+          <div className="max-w-5xl mx-auto bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-6 mb-6 shadow-lg">
+            <div className="flex items-center gap-2 text-slate-700 mb-4 border-b border-slate-100 pb-2">
+              <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7 2a1 1 0 000 2h1v2h8V4h1a1 1 0 100-2H7zM5 8a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2H5zm3 3h8v2H8v-2zm0 4h8v2H8v-2z" fill="#0284C7"/>
+                </svg>
+              </div>
+              <span className="font-bold text-lg">Latest Bookings</span>
+            </div>
+            {loading && <div className="text-slate-600 animate-pulse">Loading...</div>}
+            {error && !loading && <div className="text-red-600 mb-3 text-sm">{error}</div>}
+            <div className="space-y-4">
+              {latest.length === 0 && !loading ? (
+                <div className="text-slate-500 italic py-4 text-center">No recent bookings found</div>
+              ) : (
+                latest.map((a) => (
+                  <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-slate-100 bg-white rounded-xl px-4 py-3 hover:shadow-md transition-all duration-300">
+                    <div className="flex items-center gap-4 min-w-0">
+                      {(() => {
+                        const pid = String(a.patient?._id || a.patient || "");
+                        let img = String(a.patient?.photoBase64 || localStorage.getItem(`userPhotoBase64ById_${pid}`) || "");
+                        let src = img;
+                        if (img && !img.startsWith("data:") && !img.startsWith("http")) {
+                          src = `data:image/png;base64,${img}`;
+                        }
+                        const ok = src.startsWith("data:") || src.startsWith("http");
+                        return ok ? (
+                          <img src={src} alt="User" className="h-12 w-12 rounded-full object-cover border-2 border-white shadow-sm" />
+                        ) : (
+                          <div className="h-12 w-12 rounded-full border-2 border-white bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold shadow-sm">
+                            {a.patient?.name ? a.patient.name.charAt(0).toUpperCase() : 'U'}
+                          </div>
+                        );
+                      })()}
+                      <div>
+                        <div className="font-bold text-slate-900 leading-tight">{a.patient?.name || "User"}</div>
+                        <div className="text-xs text-slate-500 mt-0.5">{(() => {
+                          const p = a.patient || {};
+                          if (p.age !== undefined && p.age !== null && p.age !== "") return `Age: ${p.age}`;
+                          const pid = String(p._id || a.patient || "");
+                          const locAge = localStorage.getItem(`userAgeById_${pid}`) || "";
+                          if (locAge) return `Age: ${locAge}`;
+                          const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || "";
+                          if (!dob) return "";
+                          const d = new Date(dob);
+                          if (Number.isNaN(d.getTime())) return "";
+                          const t = new Date();
+                          let age = t.getFullYear() - d.getFullYear();
+                          const m = t.getMonth() - d.getMonth();
+                          if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
+                          return `Age: ${age}`;
+                        })()}</div>
+                        <div className="text-xs text-slate-400 font-medium">Booked for {new Date(a.date).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}</div>
+                      </div>
+                    </div>
+                    {String(a.status).toUpperCase() === "PENDING" ? (
+                      <div className="flex items-center gap-3 w-full sm:w-auto sm:justify-end">
+                        <button
+                          onClick={() => accept(a._id || a.id)}
+                          className="flex-1 sm:flex-none px-4 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 font-bold text-xs transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1"
+                        >
+                          <span>Accept</span>
+                        </button>
+                        <button
+                          onClick={() => reject(a._id || a.id)}
+                          className="flex-1 sm:flex-none px-4 py-1.5 rounded-lg bg-white border-2 border-red-100 text-red-600 hover:border-red-200 hover:bg-red-50 font-bold text-xs transition-all flex items-center justify-center gap-1"
+                        >
+                          <span>Reject</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const s = String(a.status || "").toUpperCase();
+                          const colorClass = s === "CANCELLED" ? "bg-red-100 text-red-700" : s === "CONFIRMED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700";
+                          return (
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${colorClass}`}>
+                              {s === "CANCELLED" ? "Cancelled" : s === "CONFIRMED" ? "Accepted" : "Completed"}
+                            </span>
+                          );
+                        })()}
+                        {canFollowUp(a) && (
+                          <button
+                            onClick={() => { const id = String(a._id || a.id || ''); if (id) { try { localStorage.setItem('lastChatApptId', id); } catch(_) {} nav(`/doctor/appointments/${id}/followup`); } }}
+                            className="px-3 py-1 rounded-lg border-2 border-green-600 text-green-700 hover:bg-green-50 font-bold text-xs transition-colors"
+                          >
+                            Follow-up
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Hospital / Clinic Details */}
+          <div className="max-w-5xl mx-auto bg-white/80 backdrop-blur-md border border-white/30 rounded-2xl p-6 mb-6 shadow-lg">
+            <div className="flex items-center gap-2 text-slate-700 mb-4 border-b border-slate-100 pb-2">
+              <div className="h-8 w-8 rounded-lg bg-cyan-50 flex items-center justify-center">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 9a7 7 0 0114 0H5z" fill="#0891B2"/>
+                </svg>
+              </div>
+              <span className="font-bold text-lg">Hospital / Clinic Details</span>
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 text-sm">
+              <div className="flex items-center gap-3 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 9a7 7 0 0114 0H5z" fill="#64748B"/>
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500 font-medium">Hospital Name</div>
+                  <div className="text-slate-900 font-bold text-base">{String(profile?.clinic?.name || '').trim() || '--'}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 3a2 2 0 00-2 2v14l9-4 9 4V5a2 2 0 00-2-2H5z" fill="#0EA5E9"/>
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500 font-medium">City / Location</div>
+                  <div className="text-slate-900 font-bold text-base">{String(profile?.clinic?.city || '').trim() || '--'}</div>
+                </div>
+              </div>
+              <div className="md:col-span-2 flex items-start gap-3 bg-indigo-50/30 p-4 rounded-xl border border-indigo-100/50">
+                <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm mt-0.5">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 11h18v10H3V11zm2-8h14v6H5V3z" fill="#06B6D4"/>
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-slate-500 font-medium">Full Address</div>
+                  <div className="text-slate-900 font-bold text-base leading-relaxed">
+                    {String(profile?.clinic?.address || '').trim() || '--'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Stats Grid */}
+          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-6 mb-6">
+            <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 shadow-lg">
+              <div className="flex items-center gap-2 text-slate-700 mb-4 border-b border-slate-100 pb-2">
+                <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 2a1 1 0 000 2h1v2h8V4h1a1 1 0 100-2H7zM5 8a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2H5zm3 3h8v2H8v-2zm0 4h8v2H8v-2z" fill="#4B5563"/>
+                  </svg>
+                </div>
+                <span className="font-bold">Upcoming Appointments</span>
+              </div>
+              {upcoming.length === 0 ? (
+                <div className="text-slate-500 italic py-4 text-center text-sm">No upcoming appointments</div>
+              ) : (
+                <div className="space-y-2">
+                  {upcoming.map((a) => (
+                    <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/70 backdrop-blur-sm border border-slate-100 rounded-lg px-3 py-2 hover:shadow-sm transition-all">
+                      <div className="min-w-0">
+                        <div className="font-bold text-slate-900 text-sm">{a.patient?.name || 'Patient'}</div>
+                        <div className="text-[10px] text-slate-500">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end mt-1 sm:mt-0">
+                        {String(a.status).toUpperCase() !== 'CANCELLED' && (
+                          <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                            {String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}
+                          </span>
+                        )}
+                        {String(a.status).toUpperCase() === 'PENDING' && (
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => accept(a._id || a.id)} className="h-5 w-5 rounded-full bg-green-600 hover:bg-green-700 text-white flex items-center justify-center text-[10px]" title="Accept">✓</button>
+                            <button onClick={() => reject(a._id || a.id)} className="h-5 w-5 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center text-[10px]" title="Reject">✕</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 shadow-lg">
+              <div className="flex items-center gap-2 text-slate-700 mb-4 border-b border-slate-100 pb-2">
+                <div className="h-8 w-8 rounded-lg bg-green-50 flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2a7 7 0 00-7 7v3l-2 3h18l-2-3V9a7 7 0 00-7-7zm0 20a3 3 0 003-3H9a3 3 0 003 3z" fill="#16A34A"/>
+                  </svg>
+                </div>
+                <span className="font-bold">Completed Consultations</span>
+              </div>
+              {completed.length === 0 ? (
+                <div className="text-slate-500 italic py-4 text-center text-sm">No completed consultations</div>
+              ) : (
+                <div className="space-y-2">
+                  {completed.map((a) => (
+                    <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/70 backdrop-blur-sm border border-slate-100 rounded-lg px-3 py-2 hover:shadow-sm transition-all">
+                      <div className="min-w-0">
+                        <div className="font-bold text-slate-900 text-sm">{a.patient?.name || 'Patient'}</div>
+                        <div className="text-[10px] text-slate-500">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end mt-1 sm:mt-0">
+                        {a.prescriptionText ? (
+                          <button onClick={() => nav(`/prescription/${a._id || a.id}`)} className="px-2 py-0.5 rounded-md border border-indigo-600 text-indigo-700 text-[10px] font-bold hover:bg-indigo-50">Prescription</button>
+                        ) : (
+                          <span className="text-[10px] text-slate-400">No prescription</span>
+                        )}
+                        {canFollowUp(a) && (
+                          <button
+                            onClick={() => { const id = String(a._id || a.id || ''); if (id) { try { localStorage.setItem('lastChatApptId', id); } catch(_) {} nav(`/doctor/appointments/${id}/followup`); } }}
+                            className="px-2 py-0.5 rounded-md border border-green-600 text-green-700 text-[10px] font-bold hover:bg-green-50"
+                          >
+                            Follow-up
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* All Appointments */}
+          <div id="all-appointments" className="max-w-5xl mx-auto bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-6 mb-12 shadow-lg">
+            <div className="flex items-center gap-2 text-slate-700 mb-4 border-b border-slate-100 pb-2">
+              <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7 2a1 1 0 000 2h1v2h8V4h1a1 1 0 100-2H7zM5 8a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2H5zm3 3h8v2H8v-2zm0 4h8v2H8v-2z" fill="#4B5563"/>
+                </svg>
+              </div>
+              <span className="font-bold text-lg text-slate-800">History & All Appointments</span>
+            </div>
+            {loading && <div className="text-slate-600 animate-pulse">Loading...</div>}
+            {error && !loading && <div className="text-red-600 mb-3 text-sm">{error}</div>}
+            <div className="space-y-2">
+              {(list || []).length === 0 && !loading ? (
+                <div className="text-slate-500 italic py-4 text-center">No appointment history found</div>
+              ) : (
+                (list || []).slice().sort((x, y) => apptStartTs(y) - apptStartTs(x)).map((a) => (
+                  <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-100 rounded-xl px-4 py-2.5 hover:bg-slate-50/50 transition-colors">
+                    <div className="min-w-0">
+                      <div className="font-bold text-slate-900 text-sm">{a.patient?.name || 'Patient'}</div>
+                      <div className="text-[11px] text-slate-500 font-medium">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto sm:justify-end">
+                      {(() => {
+                        const s = String(a.status).toUpperCase();
+                        const cls = s === 'PENDING' ? 'bg-amber-100 text-amber-700' : s === 'CONFIRMED' ? 'bg-indigo-100 text-indigo-700' : s === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+                        const txt = s === 'PENDING' ? 'Pending' : s === 'CONFIRMED' ? 'Confirmed' : s === 'COMPLETED' ? 'Completed' : 'Cancelled';
+                        return <span className={`inline-block text-[10px] font-bold px-2 py-1 rounded-full ${cls}`}>{txt}</span>;
+                      })()}
+                      {(() => {
+                        const s = String(a.status).toUpperCase();
+                        const showPay = s !== 'CANCELLED' && s !== 'COMPLETED';
+                        return showPay ? (
+                          <span className={`inline-block text-[10px] font-bold px-2 py-1 rounded-full ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}</span>
+                        ) : null;
+                      })()}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
         </main>
       </div>
       {null}
