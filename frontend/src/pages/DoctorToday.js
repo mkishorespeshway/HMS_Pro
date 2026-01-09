@@ -528,6 +528,7 @@ export default function DoctorToday() {
     <tr key={a._id} className="border-t border-slate-100/60 hover:bg-indigo-50/40 transition-colors">
       <td className="px-4 py-3">{i + 1}</td>
       <td className="px-4 py-3">{a.patient?.name || ""}</td>
+      <td className="px-4 py-3 text-capitalize">{a.patient?.gender || "--"}</td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
           <span className={`inline-block text-xs px-2 py-1 rounded ${a.type === 'offline' ? 'bg-indigo-100 text-indigo-700' : 'bg-cyan-100 text-cyan-700'}`}>{a.type === "offline" ? "Clinic" : "Online"}</span>
@@ -863,6 +864,7 @@ export default function DoctorToday() {
                   <tr>
                     <th className="px-4 py-3 text-left">#</th>
                     <th className="px-4 py-3 text-left">Patient</th>
+                    <th className="px-4 py-3 text-left">Gender</th>
                     <th className="px-4 py-3 text-left">Payment</th>
                     <th className="px-4 py-3 text-left">Age</th>
                     <th className="px-4 py-3 text-left">Date & Time</th>
@@ -873,11 +875,11 @@ export default function DoctorToday() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-6 text-center text-slate-600">Loading...</td>
+                      <td colSpan={8} className="px-4 py-6 text-center text-slate-600">Loading...</td>
                     </tr>
                   ) : list.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-6 text-center text-slate-600">No appointments found</td>
+                      <td colSpan={8} className="px-4 py-6 text-center text-slate-600">No appointments found</td>
                     </tr>
                   ) : (
                     rows
@@ -912,7 +914,8 @@ export default function DoctorToday() {
                         })()}
                       </div>
                       <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div className="text-slate-700">Age: <span className="text-slate-900">{(() => { const p = a.patient || {}; if (p.age !== undefined && p.age !== null && p.age !== "") return p.age; const pid = String(p._id || a.patient || ""); const locAge = localStorage.getItem(`userAgeById_${pid}`) || ""; if (locAge) return String(locAge); const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || ""; if (!dob) return ""; const b = new Date(dob); if (Number.isNaN(b.getTime())) return ""; const today = new Date(); let age = today.getFullYear() - b.getFullYear(); const m = today.getMonth() - b.getMonth(); if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--; return String(age); })()}</span></div>
+                            <div className="text-slate-700">Gender: <span className="text-slate-900 text-capitalize">{a.patient?.gender || '--'}</span></div>
+                            <div className="text-slate-700">Age: <span className="text-slate-900">{(() => { const p = a.patient || {}; if (p.age !== undefined && p.age !== null && p.age !== "") return p.age; const pid = String(p._id || a.patient || ""); const locAge = localStorage.getItem(`userAgeById_${pid}`) || ""; if (locAge) return String(locAge); const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || ""; if (!dob) return ""; const b = new Date(dob); if (Number.isNaN(b.getTime())) return ""; const today = new Date(); let age = today.getFullYear() - b.getFullYear(); const m = today.getMonth() - b.getMonth(); if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--; return String(age); })()}</span></div>
                         <div className="text-slate-700">Date & Time: <span className="text-slate-900">{a.date} {a.startTime}</span></div>
                         <div className="text-slate-700">Fee: <span className="text-slate-900">₹{a.fee || 0}</span></div>
                       </div>

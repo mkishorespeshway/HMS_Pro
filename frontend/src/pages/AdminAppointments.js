@@ -40,6 +40,7 @@ export default function AdminAppointments() {
         <tr key={a._id} className="border-t">
           <td className="px-4 py-3">{i + 1}</td>
           <td className="px-4 py-3">{a.patient?.name || "User"}</td>
+          <td className="px-4 py-3 text-capitalize">{a.patient?.gender || "--"}</td>
           <td className="px-4 py-3">{(() => {
             const p = a.patient || {};
             if (p.age !== undefined && p.age !== null && p.age !== "") return p.age;
@@ -75,7 +76,7 @@ export default function AdminAppointments() {
       ))
     : (
         <tr>
-          <td colSpan={7} className="px-4 py-6 text-center text-slate-600">No appointments found</td>
+          <td colSpan={8} className="px-4 py-6 text-center text-slate-600">No appointments found</td>
         </tr>
       );
 
@@ -206,6 +207,7 @@ export default function AdminAppointments() {
                   <tr>
                     <th className="px-4 py-3 text-left">#</th>
                     <th className="px-4 py-3 text-left">Patient</th>
+                    <th className="px-4 py-3 text-left">Gender</th>
                     <th className="px-4 py-3 text-left">Age</th>
                     <th className="px-4 py-3 text-left">Date & Time</th>
                     <th className="px-4 py-3 text-left">Doctor Name</th>
@@ -216,11 +218,11 @@ export default function AdminAppointments() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-6 text-center text-slate-600">Loading...</td>
+                      <td colSpan={8} className="px-4 py-6 text-center text-slate-600">Loading...</td>
                     </tr>
                   ) : error ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-6 text-center text-red-600">{error}</td>
+                      <td colSpan={8} className="px-4 py-6 text-center text-red-600">{error}</td>
                     </tr>
                   ) : (
                     rows
@@ -243,6 +245,7 @@ export default function AdminAppointments() {
                       <div className="text-sm text-slate-600">#{i + 1}</div>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="text-slate-700">Gender: <span className="text-slate-900 text-capitalize">{a.patient?.gender || '--'}</span></div>
                       <div className="text-slate-700">Age: <span className="text-slate-900">{(() => {
                         const p = a.patient || {};
                         if (p.age !== undefined && p.age !== null && p.age !== "") return p.age;

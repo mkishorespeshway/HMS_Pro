@@ -1160,7 +1160,23 @@ export default function DoctorDashboard() {
                         {a.patient?.name ? a.patient.name.charAt(0).toUpperCase() : 'P'}
                       </div>
                       <div>
-                        <div className="font-bold text-slate-900">{a.patient?.name || 'Patient'}</div>
+                        <div className="font-bold text-slate-900">{a.patient?.name || 'Patient'}{a.patient?.gender ? ` (${a.patient.gender.charAt(0).toUpperCase() + a.patient.gender.slice(1)})` : ""}</div>
+                        <div className="text-[10px] text-slate-500">{(() => {
+                          const p = a.patient || {};
+                          if (p.age !== undefined && p.age !== null && p.age !== "") return `Age: ${p.age}`;
+                          const pid = String(p._id || a.patient || "");
+                          const locAge = localStorage.getItem(`userAgeById_${pid}`) || "";
+                          if (locAge) return `Age: ${locAge}`;
+                          const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || "";
+                          if (!dob) return "";
+                          const d = new Date(dob);
+                          if (Number.isNaN(d.getTime())) return "";
+                          const t = new Date();
+                          let age = t.getFullYear() - d.getFullYear();
+                          const m = t.getMonth() - d.getMonth();
+                          if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
+                          return `Age: ${age}`;
+                        })()}</div>
                         <div className="text-xs text-slate-500 flex items-center gap-2">
                           <span className="flex items-center gap-1">
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -1297,7 +1313,7 @@ export default function DoctorDashboard() {
                         );
                       })()}
                       <div>
-                        <div className="font-bold text-slate-900 leading-tight">{a.patient?.name || "User"}</div>
+                        <div className="font-bold text-slate-900 leading-tight">{a.patient?.name || "User"}{a.patient?.gender ? ` (${a.patient.gender.charAt(0).toUpperCase() + a.patient.gender.slice(1)})` : ""}</div>
                         <div className="text-xs text-slate-500 mt-0.5">{(() => {
                           const p = a.patient || {};
                           if (p.age !== undefined && p.age !== null && p.age !== "") return `Age: ${p.age}`;
@@ -1430,7 +1446,23 @@ export default function DoctorDashboard() {
                   {upcoming.map((a) => (
                     <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/70 backdrop-blur-sm border border-slate-100 rounded-lg px-3 py-2 hover:shadow-sm transition-all">
                       <div className="min-w-0">
-                        <div className="font-bold text-slate-900 text-sm">{a.patient?.name || 'Patient'}</div>
+                        <div className="font-bold text-slate-900 text-sm">{a.patient?.name || 'Patient'}{a.patient?.gender ? ` (${a.patient.gender.charAt(0).toUpperCase() + a.patient.gender.slice(1)})` : ""}</div>
+                        <div className="text-[10px] text-slate-500">{(() => {
+                          const p = a.patient || {};
+                          if (p.age !== undefined && p.age !== null && p.age !== "") return `Age: ${p.age}`;
+                          const pid = String(p._id || a.patient || "");
+                          const locAge = localStorage.getItem(`userAgeById_${pid}`) || "";
+                          if (locAge) return `Age: ${locAge}`;
+                          const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || "";
+                          if (!dob) return "";
+                          const d = new Date(dob);
+                          if (Number.isNaN(d.getTime())) return "";
+                          const t = new Date();
+                          let age = t.getFullYear() - d.getFullYear();
+                          const m = t.getMonth() - d.getMonth();
+                          if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
+                          return `Age: ${age}`;
+                        })()}</div>
                         <div className="text-[10px] text-slate-500">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end mt-1 sm:mt-0">
@@ -1467,7 +1499,23 @@ export default function DoctorDashboard() {
                   {completed.map((a) => (
                     <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/70 backdrop-blur-sm border border-slate-100 rounded-lg px-3 py-2 hover:shadow-sm transition-all">
                       <div className="min-w-0">
-                        <div className="font-bold text-slate-900 text-sm">{a.patient?.name || 'Patient'}</div>
+                        <div className="font-bold text-slate-900 text-sm">{a.patient?.name || 'Patient'}{a.patient?.gender ? ` (${a.patient.gender.charAt(0).toUpperCase() + a.patient.gender.slice(1)})` : ""}</div>
+                        <div className="text-[10px] text-slate-500">{(() => {
+                          const p = a.patient || {};
+                          if (p.age !== undefined && p.age !== null && p.age !== "") return `Age: ${p.age}`;
+                          const pid = String(p._id || a.patient || "");
+                          const locAge = localStorage.getItem(`userAgeById_${pid}`) || "";
+                          if (locAge) return `Age: ${locAge}`;
+                          const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || "";
+                          if (!dob) return "";
+                          const d = new Date(dob);
+                          if (Number.isNaN(d.getTime())) return "";
+                          const t = new Date();
+                          let age = t.getFullYear() - d.getFullYear();
+                          const m = t.getMonth() - d.getMonth();
+                          if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
+                          return `Age: ${age}`;
+                        })()}</div>
                         <div className="text-[10px] text-slate-500">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end mt-1 sm:mt-0">
@@ -1511,7 +1559,23 @@ export default function DoctorDashboard() {
                 (list || []).slice().sort((x, y) => apptStartTs(y) - apptStartTs(x)).map((a) => (
                   <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-100 rounded-xl px-4 py-2.5 hover:bg-slate-50/50 transition-colors">
                     <div className="min-w-0">
-                      <div className="font-bold text-slate-900 text-sm">{a.patient?.name || 'Patient'}</div>
+                      <div className="font-bold text-slate-900 text-sm">{a.patient?.name || 'Patient'}{a.patient?.gender ? ` (${a.patient.gender.charAt(0).toUpperCase() + a.patient.gender.slice(1)})` : ""}</div>
+                      <div className="text-[10px] text-slate-500">{(() => {
+                        const p = a.patient || {};
+                        if (p.age !== undefined && p.age !== null && p.age !== "") return `Age: ${p.age}`;
+                        const pid = String(p._id || a.patient || "");
+                        const locAge = localStorage.getItem(`userAgeById_${pid}`) || "";
+                        if (locAge) return `Age: ${locAge}`;
+                        const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || "";
+                        if (!dob) return "";
+                        const d = new Date(dob);
+                        if (Number.isNaN(d.getTime())) return "";
+                        const t = new Date();
+                        let age = t.getFullYear() - d.getFullYear();
+                        const m = t.getMonth() - d.getMonth();
+                        if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
+                        return `Age: ${age}`;
+                      })()}</div>
                       <div className="text-[11px] text-slate-500 font-medium">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto sm:justify-end">

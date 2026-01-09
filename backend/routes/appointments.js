@@ -167,7 +167,7 @@ router.get("/today", authenticate, async (req, res) => {
     if (req.user.role !== "doctor") return res.status(403).json({ message: "Only doctors" });
     const today = new Date().toISOString().slice(0, 10);
     const list = await Appointment.find({ doctor: req.user._id, date: today })
-        .populate("patient", "name email photoBase64 birthday")
+        .populate("patient", "name email photoBase64 birthday gender")
         .sort({ startTime: 1 });
     res.json(list);
 });
@@ -425,7 +425,7 @@ router.get("/mine", authenticate, async (req, res) => {
 
   const list = await Appointment.find(filter)
     .populate("doctor", "name")
-    .populate("patient", "name photoBase64 birthday");
+    .populate("patient", "name photoBase64 birthday gender");
 
   res.json(list);
 });

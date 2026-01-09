@@ -211,7 +211,7 @@ export default function AdminDashboard() {
                       <div>
                         <div className="text-slate-900 text-sm">{b.patient?.name || "Patient"}</div>
                         <div className="text-slate-600 text-xs">with {b.doctor?.name ? `Dr. ${b.doctor.name}` : "Doctor"}</div>
-                        <div className="text-slate-600 text-xs">{(() => {
+                        <div className="text-slate-600 text-xs">{b.patient?.gender ? `${b.patient.gender.charAt(0).toUpperCase() + b.patient.gender.slice(1)} | ` : ""}{(() => {
                           const p = b.patient || {};
                           if (p.age !== undefined && p.age !== null && p.age !== "") return `Age: ${p.age}`;
                           const dob = p.birthday || p.dob || p.dateOfBirth || "";

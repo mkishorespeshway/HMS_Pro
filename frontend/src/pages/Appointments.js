@@ -808,6 +808,9 @@ export default function Appointments() {
                       })()}
                     </div>
                     <div className="text-sm text-slate-700">Date & Time: <span className="text-slate-900">{isPrescriptionsView ? `${a.date} | ${a.time}` : `${a.date} | ${a.startTime}`}</span></div>
+                    {!isPrescriptionsView && (
+                      <div className="text-sm text-slate-700">Gender: <span className="text-slate-900 text-capitalize">{a.patient?.gender || "--"}</span></div>
+                    )}
                     {!isPrescriptionsView && (() => {
                       try {
                         const docId = String(a.doctor?._id || a.doctor || '');
