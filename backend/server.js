@@ -82,6 +82,8 @@ io.on('connection', (socket) => {
       if (decoded?.id) socket.join(`user:${String(decoded.id)}`);
     }
   } catch (_) {}
+const Appointment = require('./models/Appointment');
+
   socket.on('disconnect', () => {});
   socket.on('chat:new', async (msg) => {
     try {
@@ -89,6 +91,16 @@ io.on('connection', (socket) => {
     } catch (_) {}
     try {
       await notifyChat(app, msg);
+    } catch (_) {}
+    try {
+      const { apptId, actor, kind, text } = msg || {};
+      if (kind === 'pre' && text) {
+        await Appointment.findOneAndUpdate(
+          { _id: apptId },
+          { $push: { preChat: { actor, text, createdAt: new Date() } } },
+          { new: true }
+        );
+      }
     } catch (_) {}
   });
   socket.on('meet:update', async (msg) => {

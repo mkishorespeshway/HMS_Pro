@@ -41,7 +41,8 @@ export default function DoctorAppointmentDocuments() {
         const wrS = String(localStorage.getItem(`wr_${id}_symptoms`) || "");
         const fuS = String(localStorage.getItem(`fu_${id}_symptoms`) || "");
         
-        const baseMsgs = Array.isArray(wrMsgs) ? wrMsgs : [];
+        const serverChat = Array.isArray(fetched?.preChat) ? fetched.preChat.map(msg => msg.text) : [];
+        const baseMsgs = serverChat.length > 0 ? serverChat : (Array.isArray(wrMsgs) ? wrMsgs : []);
         
         // Smart merge: prioritize server files, then deduplicate others by name
         const merged = [...serverF];

@@ -22,6 +22,11 @@ const appointmentSchema = new mongoose.Schema({
     name: { type: String },
     url: { type: String }
   }],
+  preChat: [{
+    actor: { type: String },
+    text: { type: String },
+    createdAt: { type: Date, default: Date.now }
+  }],
   ratingStars: { type: Number, min: 1, max: 5 },
   ratingText: { type: String },
   ratedAt: { type: Date }

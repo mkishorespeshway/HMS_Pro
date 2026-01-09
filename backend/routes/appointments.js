@@ -379,10 +379,10 @@ router.put("/patient-details", authenticate, async (req, res) => {
   if (doctorId) filter.doctor = doctorId;
   if (date) filter.date = String(date);
   if (startTime) filter.startTime = String(startTime);
-  const appt = await Appointment.findOne(filter);
-  if (!appt) return res.status(404).json({ message: "Appointment not found" });
-  appt.patientSymptoms = typeof symptoms === 'string' ? symptoms : appt.patientSymptoms;
-  appt.patientSummary = typeof summary === 'string' ? summary : appt.patientSummary;
+  const update = {};
+  if (typeof symptoms === 'string') update.patientSymptoms = symptoms;
+  if (typeof summary === 'string') update.patientSummary = summary;
+
   try {
     if (Array.isArray(reports)) {
       const clean = [];
@@ -408,10 +408,12 @@ router.put("/patient-details", authenticate, async (req, res) => {
         seen.add(key);
         clean.push({ name, url });
       }
-      appt.patientReports = clean.slice(0, 20);
+      update.patientReports = clean.slice(0, 20);
     }
   } catch (_) {}
-  await appt.save();
+
+  const appt = await Appointment.findOneAndUpdate(filter, { $set: update }, { new: true });
+  if (!appt) return res.status(404).json({ message: "Appointment not found" });
   res.json({ ok: true });
 });
 
