@@ -289,7 +289,7 @@ export default function SearchDoctors() {
             )}
           </div>
         </header>
-        <div className="pt-10 px-4 sm:px-6 page-gradient">
+        <div className="pt-4 px-4 sm:px-6 page-gradient">
           <div className="max-w-7xl mx-auto relative">
             <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>
             <div className="animate-fade-in" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>

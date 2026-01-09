@@ -768,7 +768,8 @@ export default function DoctorToday() {
   ));
 
   return (
-    <div className="max-w-7xl mx-auto px-4 pt-16 page-gradient">
+    <div className="max-w-7xl mx-auto px-4 pt-4 page-gradient relative">
+      <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>
       <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
           <div className="flex items-center justify-between h-16">
@@ -853,9 +854,11 @@ export default function DoctorToday() {
       )}
       <div className="grid grid-cols-12 gap-6">
         <main className="col-span-12">
-          <div className="relative mb-6">
-            <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Doctor Appointments</h1>
+          <div className="relative mb-10 text-center">
+            <h2 className="inline-block px-8 py-3 text-xl sm:text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+              Doctor Appointments
+              <div className="absolute -bottom-1 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
+            </h2>
           </div>
           <div className="max-w-5xl mx-auto bg-white/85 backdrop-blur-sm rounded-2xl border border-white/30 shadow-2xl overflow-hidden">
             <div className="hidden sm:block overflow-x-auto">

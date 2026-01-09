@@ -313,8 +313,9 @@ export default function DoctorDetails() {
           </div>
         </header>
       ) : null}
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <div className={`max-w-7xl mx-auto ${isAdminRoute ? 'pt-10' : 'pt-8'} px-4 animate-fade-in`}>
+      <div className={`min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 ${isAdminRoute ? 'pt-16' : 'pt-4'} relative`}>
+        <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>
+        <div className="max-w-7xl mx-auto px-4 animate-fade-in">
         <div className="relative mb-10 text-center">
           <h2 className="inline-block px-8 py-3 text-xl sm:text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
             Doctor Profile
