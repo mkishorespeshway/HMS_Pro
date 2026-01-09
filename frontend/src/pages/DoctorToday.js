@@ -170,6 +170,42 @@ export default function DoctorToday() {
         const socket = w.io ? w.io(origin, { transports: ['polling', 'websocket'], auth: { token: localStorage.getItem('token') || '' } }) : null;
         if (socket) {
           socketRef.current = socket;
+          socket.on('chat:new', (msg) => {
+            try {
+              const { apptId, actor, text, kind } = msg || {};
+              if (String(actor || '').toLowerCase() === 'doctor') return;
+              
+              const id = String(apptId || '');
+              if (kind === 'pre') {
+                const t = String(text || '').trim();
+                if (t) {
+                  const k = `wr_${id}_chat`;
+                  const arr = JSON.parse(localStorage.getItem(k) || '[]');
+                  const next = [...arr, t];
+                  localStorage.setItem(k, JSON.stringify(next));
+                  
+                  // Update UI if this appointment is being viewed
+                  setDetailsAppt((prev) => {
+                    if (prev && String(prev._id || prev.id) === id) {
+                      setWrChat(next.map(it => typeof it === 'string' ? it : String(it?.text || '')).filter(Boolean));
+                    }
+                    return prev;
+                  });
+                }
+              } else if (kind === 'report') {
+                // Refresh if needed
+                load();
+              } else if (kind === 'details') {
+                const id = String(apptId || '');
+                if (id) {
+                  API.get(`/appointments/${id}`).then((res) => {
+                    const data = res?.data || {};
+                    setDetailsAppt((prev) => (prev && String(prev._id || prev.id) === id ? ({ ...(prev || {}), ...(data || {}) }) : prev));
+                  }).catch(() => {});
+                }
+              }
+            } catch (_) {}
+          });
         }
       } catch(_) {}
     };

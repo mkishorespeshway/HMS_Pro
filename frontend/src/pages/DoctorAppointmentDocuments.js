@@ -32,6 +32,8 @@ export default function DoctorAppointmentDocuments() {
         setError(e.response?.data?.message || e.message || "Failed to load appointment");
       }
       try {
+        const serverSymptoms = String(fetched?.patientSymptoms || "").trim();
+        const serverSummary = String(fetched?.patientSummary || "").trim();
         const wrMsgs = JSON.parse(localStorage.getItem(`wr_${id}_chat`) || "[]");
         const wrF = JSON.parse(localStorage.getItem(`wr_${id}_files`) || "[]");
         const fuF = JSON.parse(localStorage.getItem(`fu_${id}_files`) || "[]");
@@ -67,8 +69,8 @@ export default function DoctorAppointmentDocuments() {
         });
         setChat(baseMsgs.map((it) => (typeof it === 'string' ? it : String(it?.text || ''))).filter(Boolean));
         setFiles(cleanFiles);
-        setSymptoms(wrS || fuS || "");
-        setSummary(String(fuS || ""));
+        setSymptoms(serverSymptoms || wrS || fuS || "");
+        setSummary(serverSummary || String(fuS || ""));
       } catch (_) {
         setChat([]); setFiles([]); setSymptoms(""); setSummary("");
       }
@@ -89,7 +91,43 @@ export default function DoctorAppointmentDocuments() {
       const onReady = () => {
         try {
           const socket = w.io ? w.io(origin, { transports: ['polling', 'websocket'], auth: { token: localStorage.getItem('token') || '' } }) : null;
-          if (socket) socketRef.current = socket;
+          if (socket) {
+            socketRef.current = socket;
+            socket.on('chat:new', (msg) => {
+              try {
+                const { apptId, actor, text, kind } = msg || {};
+                if (String(apptId || '') !== String(id)) return;
+                if (String(actor || '').toLowerCase() === 'doctor') return;
+                
+                let displayMsg = '';
+                if (kind === 'pre') {
+                  displayMsg = String(text || '').trim();
+                } else if (kind === 'report') {
+                  displayMsg = String(text || 'Report uploaded').trim();
+                  // Re-fetch appointment to get new reports
+                  API.get(`/appointments/${id}`).then(({ data }) => {
+                    if (Array.isArray(data?.patientReports)) {
+                      setFiles(data.patientReports.filter(x => String(x?.by || '').toLowerCase() !== 'doctor'));
+                    }
+                  }).catch(() => {});
+                } else if (kind === 'details') {
+                  API.get(`/appointments/${id}`).then(({ data }) => {
+                    setAppt(data);
+                    setSymptoms(String(data?.patientSymptoms || "").trim());
+                    setSummary(String(data?.patientSummary || "").trim());
+                  }).catch(() => {});
+                }
+
+                if (displayMsg) {
+                  setChat((prev) => {
+                    const next = [...prev, displayMsg];
+                    try { localStorage.setItem(`wr_${id}_chat`, JSON.stringify(next)); } catch(_) {}
+                    return next;
+                  });
+                }
+              } catch (_) {}
+            });
+          }
         } catch(_) {}
       };
       if (!w.io) {

@@ -407,6 +407,14 @@ export default function Appointments() {
                     localStorage.setItem(k, JSON.stringify(next));
                     if (followAppt && String(followAppt._id || followAppt.id) === id) setFuChat((prev) => prev.concat(m));
                   }
+                } else if (kind === 'details') {
+                  if (detailsAppt && String(detailsAppt._id || detailsAppt.id) === id) {
+                    API.get(`/appointments/${id}`).then(({ data }) => {
+                      setDetailsAppt((prev) => (prev && String(prev._id || prev.id) === id ? { ...prev, ...data } : prev));
+                      setDetSymptoms(String(data?.patientSymptoms || "").trim());
+                      setDetSummary(String(data?.patientSummary || "").trim());
+                    }).catch(() => {});
+                  }
                 }
               } catch (_) {}
             } catch (_) {}

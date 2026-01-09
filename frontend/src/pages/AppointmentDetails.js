@@ -71,9 +71,33 @@ export default function AppointmentDetails() {
       const w = window;
       const onReady = () => {
         try {
-          const socket = w.io ? w.io(origin, { transports: ["polling", "websocket"] }) : null;
+          const socket = w.io ? w.io(origin, { transports: ["polling", "websocket"], auth: { token: localStorage.getItem('token') || '' } }) : null;
           if (socket) {
             socketRef.current = socket;
+            socket.on('chat:new', (msg) => {
+              try {
+                const { apptId, actor, text, kind } = msg || {};
+                if (String(apptId || '') !== String(id)) return;
+                if (String(actor || '').toLowerCase() === 'patient') return;
+                
+                if (kind === 'pre') {
+                  const t = String(text || '').trim();
+                  if (t) {
+                    setDetChat((prev) => {
+                      const next = [...prev, t];
+                      try { localStorage.setItem(`wr_${id}_chat`, JSON.stringify(next)); } catch(_) {}
+                      return next;
+                    });
+                  }
+                } else if (kind === 'details') {
+                  API.get(`/appointments/${id}`).then(({ data }) => {
+                    setAppt(data);
+                    setDetSymptoms(String(data?.patientSymptoms || "").trim());
+                    setDetSummary(String(data?.patientSummary || "").trim());
+                  }).catch(() => {});
+                }
+              } catch (_) {}
+            });
             cleanup.push(() => { try { socket.close(); } catch(_) {} });
           }
         } catch(_) {}
@@ -106,6 +130,9 @@ export default function AppointmentDetails() {
         localStorage.setItem(`wr_${id}_symptoms`, String(detSymptoms || ""));
         localStorage.setItem(`fu_${id}_symptoms`, String(detSummary || ""));
       } catch (_) {}
+      try {
+        socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'patient', kind: 'details', text: 'Details updated' });
+      } catch (_) {}
       alert("Updated");
     } catch (e) {
       try {
@@ -120,10 +147,13 @@ export default function AppointmentDetails() {
             reports: detPrevFiles,
           });
           try {
-            localStorage.setItem(`wr_${id}_symptoms`, String(detSymptoms || ""));
-            localStorage.setItem(`fu_${id}_symptoms`, String(detSummary || ""));
-          } catch (_) {}
-          alert("Updated");
+        localStorage.setItem(`wr_${id}_symptoms`, String(detSymptoms || ""));
+        localStorage.setItem(`fu_${id}_symptoms`, String(detSummary || ""));
+      } catch (_) {}
+      try {
+        socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'patient', kind: 'details', text: 'Details updated' });
+      } catch (_) {}
+      alert("Updated");
           return;
         }
       } catch (e2) {
