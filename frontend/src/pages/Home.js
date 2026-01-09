@@ -245,7 +245,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                  <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent pb-1">
                     HospoZen
                   </span>
                   <span className="text-xs text-blue-600 font-medium tracking-wider uppercase">Healthcare Platform</span>
@@ -253,7 +253,7 @@ export default function Home() {
               </div>
 
               <div className="relative mb-10 text-center">
-                <h1 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+                <h1 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10 pb-4">
                   Care Beyond Limits
                   <br />
                   <span className="text-blue-600">Healing Through Innovation</span>
@@ -296,7 +296,7 @@ export default function Home() {
             <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 rounded-full text-sm font-semibold animate-slide-in-down shadow-lg border border-blue-200/50 mb-6">
               <span className="mr-2">🎯</span> Choose Your Specialist
             </div>
-            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent animate-slide-in-up mb-6">Find by Specialization</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent animate-slide-in-up mb-6 pb-2">Find by Specialization</h2>
             <p className="text-gray-600 text-xl max-w-3xl mx-auto animate-fade-in leading-relaxed" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>Simply browse through our comprehensive range of medical specializations and schedule your appointment with qualified professionals.</p>
           </div>
           <div className="relative overflow-hidden">
@@ -393,7 +393,7 @@ export default function Home() {
       <section className="py-20 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 to-blue-900 bg-clip-text text-transparent animate-slide-in-up">Why Choose HospoZen</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 to-blue-900 bg-clip-text text-transparent animate-slide-in-up pb-2">Why Choose HospoZen</h2>
             <p className="text-gray-600 mt-6 text-xl animate-fade-in" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>Experience healthcare innovation at its finest</p>
           </div>
           <div className="grid md:grid-cols-3 gap-10">
@@ -442,7 +442,7 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                    <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent pb-1">
                       HospoZen
                     </span>
                     <span className="text-xs text-blue-600 font-medium tracking-wider uppercase">Healthcare Platform</span>

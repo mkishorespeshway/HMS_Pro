@@ -20,7 +20,7 @@ export default function Contact() {
       </Helmet>
       <div className="max-w-7xl mx-auto pt-8 px-4 animate-fade-in">
         <div className="relative mb-10 text-center">
-          <h1 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+          <h1 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10 pb-4">
             Contact Information
             <div className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
           </h1>
@@ -64,7 +64,7 @@ export default function Contact() {
                   </div>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent pb-1">
                     HospoZen
                   </span>
                   <span className="text-xs text-blue-600 font-medium tracking-wider uppercase">Healthcare Platform</span>
