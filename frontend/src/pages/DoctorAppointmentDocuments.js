@@ -182,24 +182,6 @@ export default function DoctorAppointmentDocuments() {
     } catch (_) {}
   };
 
-  const submit = async () => {
-    try {
-      const d = appt || {};
-      await API.put(`/appointments/${id}/patient-details`, {
-        symptoms: symptoms,
-        summary: summary,
-        date: d.date,
-        startTime: d.startTime,
-        doctorId: String(d.doctor?._id || d.doctor || ""),
-        reports: files,
-      });
-      alert("Medical report updated successfully!");
-    } catch (e) {
-      console.error("Failed to update medical report:", e);
-      alert("Failed to update medical report. Please try again.");
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pt-4 relative">
       <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>
@@ -324,8 +306,6 @@ export default function DoctorAppointmentDocuments() {
 
           </div>
         )}
-
-        <button onClick={submit} className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white">Submit</button>
 
         {isFullPreview && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
