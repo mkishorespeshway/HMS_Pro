@@ -252,11 +252,14 @@ export default function Home() {
                 </div>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight animate-slide-in-left text-gray-900 mb-6">
-                Care Beyond Limits
-                <br />
-                <span className="text-blue-600">Healing Through Innovation</span>
-              </h1>
+              <div className="relative mb-10 text-center">
+                <h1 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+                  Care Beyond Limits
+                  <br />
+                  <span className="text-blue-600">Healing Through Innovation</span>
+                  <div className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
+                </h1>
+              </div>
 
               <p className="text-gray-700 text-lg leading-relaxed animate-fade-in mb-8" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>
                 Empowering lives through revolutionary healthcare solutions that blend cutting-edge technology with heartfelt compassion.

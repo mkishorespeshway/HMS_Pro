@@ -176,7 +176,12 @@ export default function AppointmentDetails() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="max-w-4xl mx-auto pt-8 px-4">
         <div className="flex items-center justify-between mb-6">
-          <div className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Patient Details</div>
+        <div className="relative mb-10 text-center">
+          <h1 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+            Patient Details
+            <div className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
+          </h1>
+        </div>
           <button onClick={() => nav('/appointments')} className="px-4 py-2 rounded-md border border-slate-300">Back</button>
         </div>
         {loading && <div className="text-slate-600">Loading...</div>}

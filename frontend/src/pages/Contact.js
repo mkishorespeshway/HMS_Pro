@@ -19,7 +19,12 @@ export default function Contact() {
         <meta name="twitter:image" content={OG_FALLBACK} />
       </Helmet>
       <div className="max-w-7xl mx-auto pt-8 px-4 animate-fade-in">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-8 text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent animate-slide-in-left">Contact Information</h2>
+        <div className="relative mb-10 text-center">
+          <h1 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+            Contact Information
+            <div className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
+          </h1>
+        </div>
         <section className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-2xl p-6 mb-8 animate-slide-in-left opacity-0" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
           <div className="text-center text-slate-600 tracking-widest font-semibold mb-6 animate-fade-in" style={{ animationDelay: '0.4s', animationFillMode: 'forwards' }}>CONTACT US</div>
           <div className="grid md:grid-cols-2 gap-8 items-start">

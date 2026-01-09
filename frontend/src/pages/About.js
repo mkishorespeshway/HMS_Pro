@@ -60,7 +60,12 @@ export default function About() {
         <div className="max-w-7xl mx-auto px-4 pt-12 md:pt-16">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="animate-slide-in-left">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent">Your Trusted Healthcare Partner</h1>
+              <div className="relative mb-10 text-center">
+                <h1 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+                  Your Trusted Healthcare Partner
+                  <div className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
+                </h1>
+              </div>
               <p className="mt-4 text-slate-600 max-w-xl">Discover verified doctors, book appointments in seconds, and get secure online consultations with e‑prescriptions.</p>
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
                 <a href="/search" className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold shadow-xl hover:from-blue-700 hover:to-purple-700 transition text-center">Find Doctors</a>

@@ -766,7 +766,12 @@ export default function Appointments() {
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 pt-12 md:pt-16 animate-fade-in">
       
-      <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent mb-4">{isPrescriptionsView ? 'Prescriptions' : 'My appointments'}</h1>
+      <div className="relative mb-10 text-center">
+        <h1 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+          {isPrescriptionsView ? 'Prescriptions' : 'My appointments'}
+          <div className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
+        </h1>
+      </div>
       <div className="glass-card rounded-2xl animate-slide-in-left">
         {loading ? (
           <div className="p-4 text-slate-600">Loading...</div>

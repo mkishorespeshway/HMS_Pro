@@ -429,7 +429,12 @@ export default function SearchDoctors() {
         <meta name="twitter:image" content={OG_FALLBACK} />
       </Helmet>
       <div className="max-w-7xl mx-auto pt-8 px-4 animate-fade-in">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-8 text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent animate-slide-in-right">Find Your Perfect Doctor</h2>
+          <div className="relative mb-10 text-center">
+            <h1 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+              Find Your Perfect Doctor
+              <div className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
+            </h1>
+          </div>
         <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/30 shadow-2xl p-6 mb-8 animate-fade-in opacity-0 relative z-20" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
           <div className="grid sm:grid-cols-4 gap-4 items-end">
             <div className="sm:col-span-1 relative">

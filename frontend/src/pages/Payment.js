@@ -75,7 +75,12 @@ export default function Payment() {
 
   return (
   <div className="max-w-xl mx-auto bg-white p-6 rounded-lg shadow-sm border border-slate-200 mt-8">
-    <h2 className="text-2xl font-semibold mb-4">Complete Payment</h2>
+    <div className="relative mb-10 text-center">
+      <h1 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+        Complete Payment
+        <div className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
+      </h1>
+    </div>
       {!appt && <p>Loading appointment...</p>}
       {appt && (
         <div className="mb-4 text-slate-700">
