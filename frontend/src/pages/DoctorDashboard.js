@@ -60,24 +60,23 @@ export default function DoctorDashboard() {
   const TypeIcon = ({ type }) => {
     const c = 'w-5 h-5';
     if (type === 'chat') return (
-      <svg className={c} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M4 5a3 3 0 013-3h10a3 3 0 013 3v9a3 3 0 01-3 3H9l-5 4V5z" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <svg className={c} viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
     );
     if (type === 'meet') return (
-      <svg className={c} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 7a3 3 0 013-3h8a3 3 0 013 3v10a3 3 0 01-3 3H6a3 3 0 01-3-3V7z" stroke="#7C3AED" strokeWidth="2"/>
-        <path d="M21 10l-4 3 4 3V10z" fill="#7C3AED"/>
+      <svg className={c} viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.934a.5.5 0 0 0-.777-.416L16 11"/><rect x="2" y="6" width="14" height="12" rx="3"/>
       </svg>
     );
     if (type === 'appointment') return (
-      <svg className={c} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M7 2v3m10-3v3M3 8h18M5 6h14a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" stroke="#059669" strokeWidth="2" strokeLinecap="round"/>
+      <svg className={c} viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
       </svg>
     );
     return (
-      <svg className={c} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2a7 7 0 00-7 7v3l-2 3h18l-2-3V9a7 7 0 00-7-7zm0 20a3 3 0 003-3H9a3 3 0 003 3z" fill="#F59E0B"/>
+      <svg className={c} viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
       </svg>
     );
   };
@@ -936,9 +935,8 @@ export default function DoctorDashboard() {
                   className="inline-flex p-2 sm:p-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 border border-gray-200 hover:border-blue-300 relative"
                   title="Notifications"
                 >
-                  <svg className={`w-6 h-6 ${bellCount > 0 ? 'animate-bounce' : ''}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 22a2 2 0 002-2H10a2 2 0 002 2z" fill="#2563EB"/>
-                    <path d="M12 2a7 7 0 00-7 7v3l-2 3h18l-2-3V9a7 7 0 00-7-7z" stroke="#2563EB" strokeWidth="2" fill="none"/>
+                  <svg className={`w-6 h-6 ${bellCount > 0 ? 'animate-bounce' : ''}`} viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                   </svg>
                   {bellCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center font-bold shadow-lg animate-pulse">
@@ -1102,40 +1100,40 @@ export default function DoctorDashboard() {
           <div className="max-w-5xl mx-auto flex flex-wrap justify-center gap-4 mb-6">
             <div className="relative flex-1 min-w-[160px] bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-4 shadow-2xl transition-transform duration-300 hover:scale-105 hover:bg-indigo-50">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-md bg-indigo-50 border border-indigo-100 flex items-center justify-center">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 1C6.477 1 2 5.477 2 11s4.477 10 10 10 10-4.477 10-10S17.523 1 12 1zm1 5v2h2a1 1 0 110 2h-2v2h2a1 1 0 110 2h-2v2a1 1 0 11-2 0v-2H9a1 1 0 110-2h2V10H9a1 1 0 110-2h2V6a1 1 0 112 0z" fill="#4F46E5"/>
+                <div className="h-10 w-10 rounded-xl bg-indigo-100/50 flex items-center justify-center shadow-sm">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/>
                   </svg>
                 </div>
                 <div>
-                  <div className="text-sm text-slate-600">Earnings</div>
-                  <div className="text-2xl font-semibold">₹{stats.earnings}</div>
+                  <div className="text-xs text-slate-500 font-medium">Earnings</div>
+                  <div className="text-2xl font-bold text-slate-900">₹{stats.earnings}</div>
                 </div>
               </div>
             </div>
-            <div className="relative flex-1 min-w-[160px] bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-4 shadow-2xl transition-transform duration-300 hover:scale-105 hover:bg-indigo-50">
+            <div className="relative flex-1 min-w-[160px] bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-4 shadow-2xl transition-transform duration-300 hover:scale-105 hover:bg-blue-50">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-md bg-blue-50 border border-blue-100 flex items-center justify-center">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M7 2a1 1 0 000 2h1v2h8V4h1a1 1 0 100-2H7zM5 8a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2H5zm3 3h8v2H8v-2zm0 4h8v2H8v-2z" fill="#0EA5E9"/>
+                <div className="h-10 w-10 rounded-xl bg-blue-100/50 flex items-center justify-center shadow-sm">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="m9 16 2 2 4-4"/>
                   </svg>
                 </div>
                 <div>
-                  <div className="text-sm text-slate-600">Appointments</div>
-                  <div className="text-2xl font-semibold">{stats.appointments}</div>
+                  <div className="text-xs text-slate-500 font-medium">Appointments</div>
+                  <div className="text-2xl font-bold text-slate-900">{stats.appointments}</div>
                 </div>
               </div>
             </div>
-            <div className="relative flex-1 min-w-[160px] bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-4 shadow-2xl transition-transform duration-300 hover:scale-105 hover:bg-indigo-50">
+            <div className="relative flex-1 min-w-[160px] bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-4 shadow-2xl transition-transform duration-300 hover:scale-105 hover:bg-cyan-50">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-md bg-cyan-50 border border-cyan-100 flex items-center justify-center">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 9a7 7 0 0114 0H5z" fill="#06B6D4"/>
+                <div className="h-10 w-10 rounded-xl bg-cyan-100/50 flex items-center justify-center shadow-sm">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0891B2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                   </svg>
                 </div>
                 <div>
-                  <div className="text-sm text-slate-600">Patients</div>
-                  <div className="text-2xl font-semibold">{stats.patients}</div>
+                  <div className="text-xs text-slate-500 font-medium">Patients</div>
+                  <div className="text-2xl font-bold text-slate-900">{stats.patients}</div>
                 </div>
               </div>
             </div>
@@ -1144,12 +1142,12 @@ export default function DoctorDashboard() {
           {/* Today's Appointments */}
           <div className="max-w-5xl mx-auto bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-6 mb-6 shadow-lg">
             <div className="flex items-center gap-2 text-slate-700 mb-4 border-b border-slate-100 pb-2">
-              <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M7 2a1 1 0 000 2h1v2h8V4h1a1 1 0 100-2H7zM5 8a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2H5zm3 3h8v2H8v-2zm0 4h8v2H8v-2z" fill="#4F46E5"/>
+              <div className="h-10 w-10 rounded-xl bg-indigo-100/50 flex items-center justify-center shadow-sm">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/>
                 </svg>
               </div>
-              <span className="font-bold text-lg">Today's Appointments</span>
+              <span className="font-bold text-lg text-slate-800">Today's Appointments</span>
             </div>
             {loading && <div className="text-slate-600 animate-pulse">Loading...</div>}
             {error && !loading && <div className="text-red-600 mb-3 text-sm bg-red-50 p-2 rounded-md border border-red-100">{error}</div>}
@@ -1284,12 +1282,12 @@ export default function DoctorDashboard() {
           {/* Latest Bookings */}
           <div className="max-w-5xl mx-auto bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-6 mb-6 shadow-lg">
             <div className="flex items-center gap-2 text-slate-700 mb-4 border-b border-slate-100 pb-2">
-              <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M7 2a1 1 0 000 2h1v2h8V4h1a1 1 0 100-2H7zM5 8a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2H5zm3 3h8v2H8v-2zm0 4h8v2H8v-2z" fill="#0284C7"/>
+              <div className="h-10 w-10 rounded-xl bg-blue-100/50 flex items-center justify-center shadow-sm">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0284C7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
                 </svg>
               </div>
-              <span className="font-bold text-lg">Latest Bookings</span>
+              <span className="font-bold text-lg text-slate-800">Latest Bookings</span>
             </div>
             {loading && <div className="text-slate-600 animate-pulse">Loading...</div>}
             {error && !loading && <div className="text-red-600 mb-3 text-sm">{error}</div>}
@@ -1384,46 +1382,46 @@ export default function DoctorDashboard() {
           </div>
 
           {/* Hospital / Clinic Details */}
-          <div className="max-w-5xl mx-auto bg-white/80 backdrop-blur-md border border-white/30 rounded-2xl p-6 mb-6 shadow-lg">
+          <div className="max-w-5xl mx-auto bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-6 mb-6 shadow-lg">
             <div className="flex items-center gap-2 text-slate-700 mb-4 border-b border-slate-100 pb-2">
-              <div className="h-8 w-8 rounded-lg bg-cyan-50 flex items-center justify-center">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 9a7 7 0 0114 0H5z" fill="#0891B2"/>
+              <div className="h-10 w-10 rounded-xl bg-cyan-100/50 flex items-center justify-center shadow-sm">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0891B2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="M9 22V12h6v10"/><path d="M2 9h20"/><path d="M10 4h4"/>
                 </svg>
               </div>
-              <span className="font-bold text-lg">Hospital / Clinic Details</span>
+              <span className="font-bold text-lg text-slate-800">Hospital / Clinic Details</span>
             </div>
             <div className="grid gap-6 md:grid-cols-2 text-sm">
-              <div className="flex items-center gap-3 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-                <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 9a7 7 0 0114 0H5z" fill="#64748B"/>
+              <div className="flex items-center gap-3 bg-white/50 p-3 rounded-xl border border-slate-100 shadow-sm transition-all hover:bg-indigo-50/50">
+                <div className="h-10 w-10 rounded-xl bg-indigo-100/50 flex items-center justify-center shadow-sm">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 21h18"/><path d="M3 7v1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7H3"/><path d="M19 21V10"/><path d="M5 21V10"/>
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500 font-medium">Hospital Name</div>
+                  <div className="text-xs text-slate-500 font-medium uppercase tracking-wider">Hospital Name</div>
                   <div className="text-slate-900 font-bold text-base">{String(profile?.clinic?.name || '').trim() || '--'}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-                <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 3a2 2 0 00-2 2v14l9-4 9 4V5a2 2 0 00-2-2H5z" fill="#0EA5E9"/>
+              <div className="flex items-center gap-3 bg-white/50 p-3 rounded-xl border border-slate-100 shadow-sm transition-all hover:bg-blue-50/50">
+                <div className="h-10 w-10 rounded-xl bg-blue-100/50 flex items-center justify-center shadow-sm">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500 font-medium">City / Location</div>
+                  <div className="text-xs text-slate-500 font-medium uppercase tracking-wider">City / Location</div>
                   <div className="text-slate-900 font-bold text-base">{String(profile?.clinic?.city || '').trim() || '--'}</div>
                 </div>
               </div>
-              <div className="md:col-span-2 flex items-start gap-3 bg-indigo-50/30 p-4 rounded-xl border border-indigo-100/50">
-                <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm mt-0.5">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M3 11h18v10H3V11zm2-8h14v6H5V3z" fill="#06B6D4"/>
+              <div className="md:col-span-2 flex items-start gap-3 bg-white/50 p-4 rounded-xl border border-slate-100 shadow-sm transition-all hover:bg-cyan-50/50">
+                <div className="h-10 w-10 rounded-xl bg-cyan-100/50 flex items-center justify-center shadow-sm mt-0.5">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <div className="text-xs text-slate-500 font-medium">Full Address</div>
+                  <div className="text-xs text-slate-500 font-medium uppercase tracking-wider">Full Address</div>
                   <div className="text-slate-900 font-bold text-base leading-relaxed">
                     {String(profile?.clinic?.address || '').trim() || '--'}
                   </div>
@@ -1434,14 +1432,14 @@ export default function DoctorDashboard() {
 
           {/* Quick Stats Grid */}
           <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-6 mb-6">
-            <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 shadow-lg">
+            <div className="bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-6 shadow-lg">
               <div className="flex items-center gap-2 text-slate-700 mb-4 border-b border-slate-100 pb-2">
-                <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M7 2a1 1 0 000 2h1v2h8V4h1a1 1 0 100-2H7zM5 8a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2H5zm3 3h8v2H8v-2zm0 4h8v2H8v-2z" fill="#4B5563"/>
+                <div className="h-10 w-10 rounded-xl bg-indigo-100/50 flex items-center justify-center shadow-sm">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                   </svg>
                 </div>
-                <span className="font-bold">Upcoming Appointments</span>
+                <span className="font-bold text-slate-800">Upcoming Appointments</span>
               </div>
               {upcoming.length === 0 ? (
                 <div className="text-slate-500 italic py-4 text-center text-sm">No upcoming appointments</div>
@@ -1487,14 +1485,14 @@ export default function DoctorDashboard() {
                 </div>
               )}
             </div>
-            <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 shadow-lg">
+            <div className="bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-6 shadow-lg">
               <div className="flex items-center gap-2 text-slate-700 mb-4 border-b border-slate-100 pb-2">
-                <div className="h-8 w-8 rounded-lg bg-green-50 flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2a7 7 0 00-7 7v3l-2 3h18l-2-3V9a7 7 0 00-7-7zm0 20a3 3 0 003-3H9a3 3 0 003 3z" fill="#16A34A"/>
+                <div className="h-10 w-10 rounded-xl bg-green-100/50 flex items-center justify-center shadow-sm">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
                   </svg>
                 </div>
-                <span className="font-bold">Completed Consultations</span>
+                <span className="font-bold text-slate-800">Completed Consultations</span>
               </div>
               {completed.length === 0 ? (
                 <div className="text-slate-500 italic py-4 text-center text-sm">No completed consultations</div>
@@ -1547,9 +1545,9 @@ export default function DoctorDashboard() {
           {/* All Appointments */}
           <div id="all-appointments" className="max-w-5xl mx-auto bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-6 mb-12 shadow-lg">
             <div className="flex items-center gap-2 text-slate-700 mb-4 border-b border-slate-100 pb-2">
-              <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M7 2a1 1 0 000 2h1v2h8V4h1a1 1 0 100-2H7zM5 8a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2H5zm3 3h8v2H8v-2zm0 4h8v2H8v-2z" fill="#4B5563"/>
+              <div className="h-10 w-10 rounded-xl bg-slate-100/50 flex items-center justify-center shadow-sm">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                 </svg>
               </div>
               <span className="font-bold text-lg text-slate-800">History & All Appointments</span>
