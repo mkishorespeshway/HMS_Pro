@@ -862,7 +862,7 @@ export default function DoctorToday() {
               <table className="min-w-full text-sm">
                 <thead className="bg-slate-50 text-slate-700">
                   <tr>
-                    <th className="px-4 py-3 text-left">#</th>
+                    <th className="px-4 py-3 text-left">S.NO</th>
                     <th className="px-4 py-3 text-left">Patient</th>
                     <th className="px-4 py-3 text-left">Gender</th>
                     <th className="px-4 py-3 text-left">Payment</th>
@@ -896,7 +896,7 @@ export default function DoctorToday() {
                     <div key={a._id || a.id} className="p-4 space-y-2 bg-white rounded-2xl border border-slate-200 shadow-sm min-w-[85vw] snap-center">
                       <div className="flex items-center justify-between">
                         <div className="text-slate-900 font-semibold">{a.patient?.name || ''}</div>
-                        <div className="text-sm text-slate-600">#{i + 1}</div>
+                        <div className="text-sm text-slate-600">S.NO: {i + 1}</div>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <span className={`inline-block text-xs px-2 py-1 rounded ${a.type === 'offline' ? 'bg-indigo-100 text-indigo-700' : 'bg-cyan-100 text-cyan-700'}`}>{a.type === 'offline' ? 'Clinic' : 'Online'}</span>

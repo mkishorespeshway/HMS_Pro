@@ -205,7 +205,7 @@ export default function AdminAppointments() {
               <table className="min-w-full text-sm">
                 <thead className="bg-slate-50 text-slate-700">
                   <tr>
-                    <th className="px-4 py-3 text-left">#</th>
+                    <th className="px-4 py-3 text-left">S.NO</th>
                     <th className="px-4 py-3 text-left">Patient</th>
                     <th className="px-4 py-3 text-left">Gender</th>
                     <th className="px-4 py-3 text-left">Age</th>
@@ -242,7 +242,7 @@ export default function AdminAppointments() {
                   <div key={a._id || a.id} className="p-4 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="text-slate-900 font-semibold">{a.patient?.name || 'User'}</div>
-                      <div className="text-sm text-slate-600">#{i + 1}</div>
+                      <div className="text-sm text-slate-600">S.NO: {i + 1}</div>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div className="text-slate-700">Gender: <span className="text-slate-900 text-capitalize">{a.patient?.gender || '--'}</span></div>
