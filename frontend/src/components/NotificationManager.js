@@ -91,11 +91,6 @@ export default function NotificationManager({ actor = 'patient' }) {
               if (!id) return;
               const t = String(text || '').trim();
               if (t) {
-                const key = kind === 'followup' ? `fu_${id}_chat` : `wr_${id}_chat`;
-                const arr = JSON.parse(localStorage.getItem(key) || '[]');
-                const next = (Array.isArray(arr) ? arr : []).concat(t);
-                localStorage.setItem(key, JSON.stringify(next));
-                
                 try {
                   const chan = new BroadcastChannel('chatmsg_internal');
                   chan.postMessage({ apptId: id, actor: msgActor, kind, text: t });

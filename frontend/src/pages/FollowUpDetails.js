@@ -38,7 +38,7 @@ export default function FollowUpDetails({ actor = 'patient', backTo = '/appointm
         setSymptoms(s1);
         setSummary(s2);
         const fu = JSON.parse(localStorage.getItem(`fu_${id}_chat`) || "[]");
-        const fuN = (Array.isArray(fu) ? fu : []).map((it) => (typeof it === 'string' ? it : String(it?.text || ''))).filter(Boolean);
+        const fuN = (Array.isArray(fu) ? fu : []).map((it) => (typeof it === 'string' ? it.trim() : String(it?.text || '').trim())).filter(Boolean);
         setFuChat(fuN);
         const wrF = JSON.parse(localStorage.getItem(`wr_${id}_files`) || "[]");
         const fuF = JSON.parse(localStorage.getItem(`fu_${id}_files`) || "[]");
@@ -73,8 +73,8 @@ export default function FollowUpDetails({ actor = 'patient', backTo = '/appointm
               if (kind === 'followup' && text) {
                 if (senderActor !== actor) {
                   setFuChat((prev) => {
-                    if (prev.includes(text)) return prev;
-                    const next = [...prev, text];
+                    if (prev.includes(text.trim())) return prev;
+                    const next = [...prev, text.trim()];
                     try { localStorage.setItem(`fu_${id}_chat`, JSON.stringify(next)); } catch (_) {}
                     return next;
                   });
@@ -109,7 +109,7 @@ export default function FollowUpDetails({ actor = 'patient', backTo = '/appointm
       }
       return () => { try { socket && socket.close(); } catch(_) {} };
     } catch(_) { return () => {}; }
-  }, []);
+  }, [actor, id]);
 
   const patientName = appt?.patient?.name || "";
   const patientGender = (() => {
