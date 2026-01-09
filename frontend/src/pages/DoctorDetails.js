@@ -410,7 +410,7 @@ export default function DoctorDetails() {
                 >
                 <option value="video">Video call</option>
                 <option value="audio">Audio call</option>
-                <option value="chat">Chat</option>
+
                 </select>
               </div>
             )}
