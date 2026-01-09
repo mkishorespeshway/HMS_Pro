@@ -133,10 +133,14 @@ export default function AdminSpecializations() {
         </div>
       </header>
 
-      <main className="pt-24 pb-12 px-4 max-w-4xl mx-auto animate-fade-in">
-        <h1 className="text-3xl font-extrabold text-slate-900 mb-8 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Manage Specializations
-        </h1>
+      <main className="pt-10 pb-12 px-4 max-w-4xl mx-auto animate-fade-in">
+        <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>
+        <div className="relative mb-10 text-center">
+          <h2 className="inline-block px-8 py-3 text-xl sm:text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+            Manage Specializations
+            <div className="absolute -bottom-1 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
+          </h2>
+        </div>
 
         {/* Add New Section */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl p-6 mb-8 hover:shadow-2xl transition-all duration-500">

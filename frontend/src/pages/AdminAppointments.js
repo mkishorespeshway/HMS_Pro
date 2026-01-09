@@ -200,10 +200,10 @@ export default function AdminAppointments() {
       </header>
       <div className="pt-10 px-4 sm:px-6 page-gradient">
         <div className="relative max-w-7xl mx-auto">
-          <div className="absolute inset-x-0 -top-12 h-32 bg-gradient-to-r from-blue-100/40 via-purple-100/40 to-indigo-100/40 blur-3xl rounded-full pointer-events-none"></div>
+          <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>
           
           <div className="relative mb-10 text-center">
-            <h2 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+            <h2 className="inline-block px-8 py-3 text-xl sm:text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
               All Appointments
               <div className="absolute -bottom-1 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
             </h2>

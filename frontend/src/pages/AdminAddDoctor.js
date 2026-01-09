@@ -315,10 +315,16 @@ export default function AdminAddDoctor() {
           )}
         </div>
       </header>
-      <div className="pt-14 page-gradient">
+      <div className="pt-10 page-gradient">
         <div className="relative max-w-7xl mx-auto px-4 animate-fade-in">
           <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-3 text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent animate-slide-in-right">Add Doctor</h2>
+          
+          <div className="relative mb-10 text-center">
+            <h2 className="inline-block px-8 py-3 text-xl sm:text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+              Add Doctor
+              <div className="absolute -bottom-1 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
+            </h2>
+          </div>
           <div className="mx-auto max-w-2xl bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-2xl p-6 animate-slide-in-left opacity-0 hover:scale-105 hover:shadow-2xl transition-all duration-500" style={{ animationDelay: '0.1s', animationFillMode: 'forwards' }}>
             <form onSubmit={submit}>
               <label className="block text-sm font-medium text-slate-700 mb-1">Full Name <span className="text-red-500">*</span></label>

@@ -164,10 +164,14 @@ export default function AdminPendingDoctors() {
           )}
         </div>
       </header>
-      <div className="pt-16 px-6 page-gradient">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-semibold">Pending Doctor Approvals</h2>
+      <div className="pt-10 px-6 page-gradient">
+        <div className="max-w-7xl mx-auto relative">
+          <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>
+          <div className="relative mb-10 text-center">
+            <h2 className="inline-block px-8 py-3 text-xl sm:text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+              Pending Doctor Approvals
+              <div className="absolute -bottom-1 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
+            </h2>
           </div>
           {error && <p className="text-red-600 mb-3">{error}</p>}
           {loading && <p className="text-slate-600">Loading...</p>}
