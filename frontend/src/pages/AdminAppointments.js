@@ -62,6 +62,7 @@ export default function AdminAppointments() {
           <td className="px-4 py-3">
             <span className={`badge ${(() => {
               const s = String(a.status || '').toUpperCase();
+              if (s === 'COMPLETED') return 'badge-completed';
               if (s === 'PENDING') return 'badge-busy';
               if (s === 'CANCELLED' || s === 'CANCELED') return 'badge-offline';
               if (s === 'CONFIRMED') return 'badge-confirmed';
@@ -266,9 +267,10 @@ export default function AdminAppointments() {
                       {(() => {
                         const s = String(a.status || "").toUpperCase();
                         let cls = "badge-online";
-                        if (s === "PENDING") cls = "badge-busy";
-                        if (s === "CANCELLED" || s === "CANCELED") cls = "badge-offline";
-                        if (s === "CONFIRMED") cls = "badge-confirmed";
+                        if (s === "COMPLETED") cls = "badge-completed";
+                        else if (s === "PENDING") cls = "badge-busy";
+                        else if (s === "CANCELLED" || s === "CANCELED") cls = "badge-offline";
+                        else if (s === "CONFIRMED") cls = "badge-confirmed";
                         return <span className={`badge ${cls}`}>{a.status}</span>;
                       })()}
                     </div>

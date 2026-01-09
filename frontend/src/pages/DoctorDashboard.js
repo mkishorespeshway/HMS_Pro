@@ -1336,7 +1336,11 @@ export default function DoctorDashboard() {
                       <div className="flex items-center gap-2">
                         {(() => {
                           const s = String(a.status || "").toUpperCase();
-                          const colorClass = s === "CANCELLED" ? "bg-red-100 text-red-700" : s === "CONFIRMED" ? "bg-yellow-100 text-yellow-700" : "bg-blue-100 text-blue-700";
+                          let colorClass = "bg-blue-100 text-blue-700";
+                          if (s === "CANCELLED") colorClass = "bg-red-100 text-red-700";
+                          else if (s === "CONFIRMED") colorClass = "bg-yellow-100 text-yellow-700";
+                          else if (s === "COMPLETED") colorClass = "bg-green-100 text-green-700";
+                          
                           return (
                             <span className={`px-3 py-1 rounded-full text-xs font-bold ${colorClass}`}>
                               {s === "CANCELLED" ? "Cancelled" : s === "CONFIRMED" ? "Confirmed" : "Completed"}
