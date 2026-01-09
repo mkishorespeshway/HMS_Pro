@@ -31,8 +31,10 @@ export default function FollowUpDetails({ actor = 'patient', backTo = '/appointm
         setError(e.response?.data?.message || e.message || "Failed to load appointment");
       }
       try {
-        const s1 = String(localStorage.getItem(`wr_${id}_symptoms`) || "");
-        const s2 = String(localStorage.getItem(`fu_${id}_symptoms`) || "");
+        const serverSymptom = String(fetched?.patientSymptoms || "").trim();
+        const serverSummary = String(fetched?.patientSummary || "").trim();
+        const s1 = serverSymptom || String(localStorage.getItem(`wr_${id}_symptoms`) || "");
+        const s2 = serverSummary || String(localStorage.getItem(`fu_${id}_symptoms`) || "");
         setSymptoms(s1);
         setSummary(s2);
         const fu = JSON.parse(localStorage.getItem(`fu_${id}_chat`) || "[]");
@@ -59,26 +61,51 @@ export default function FollowUpDetails({ actor = 'patient', backTo = '/appointm
 
   useEffect(() => {
     try {
-      const chan = new BroadcastChannel('chatmsg_internal');
-      chan.onmessage = (e) => {
-        try {
-          const { apptId, kind, text } = e.data || {};
-          if (String(apptId) === String(id) && kind === 'followup' && text) {
-            setFuChat((prev) => [...prev, text]);
-          }
-        } catch(_) {}
-      };
-      return () => { try { chan.close(); } catch(_) {} };
-    } catch(_) {}
-  }, [id]);
-
-  useEffect(() => {
-    try {
       const origin = String(API.defaults.baseURL || '').replace(/\/(api)?$/, '');
       const w = window;
       const socket = w.io ? w.io(origin, { transports: ["polling", "websocket"], auth: { token: localStorage.getItem('token') || '' } }) : null;
       if (socket) {
         socketRef.current = socket;
+        socket.on('chat:new', (payload) => {
+          try {
+            const { apptId, kind, text, actor: senderActor } = payload || {};
+            if (String(apptId) === String(id)) {
+              if (kind === 'followup' && text) {
+                if (senderActor !== actor) {
+                  setFuChat((prev) => {
+                    if (prev.includes(text)) return prev;
+                    const next = [...prev, text];
+                    try { localStorage.setItem(`fu_${id}_chat`, JSON.stringify(next)); } catch (_) {}
+                    return next;
+                  });
+                }
+              } else if (kind === 'details') {
+                API.get(`/appointments/${id}`).then(({ data }) => {
+                  setAppt(data);
+                  setSymptoms(String(data?.patientSymptoms || "").trim());
+                  setSummary(String(data?.patientSummary || "").trim());
+                }).catch(() => {});
+              } else if (kind === 'report') {
+                API.get(`/appointments/${id}`).then(({ data }) => {
+                  setAppt(data);
+                  const serverF = Array.isArray(data?.patientReports) ? data.patientReports : [];
+                  setFiles((prev) => {
+                    const seen = new Set();
+                    const uniq = [];
+                    const merged = [...prev, ...serverF];
+                    for (const x of merged) {
+                      const key = `${String(x?.url || '')}|${String(x?.name || '')}`;
+                      if (!key || seen.has(key)) continue;
+                      seen.add(key);
+                      uniq.push(x);
+                    }
+                    return uniq;
+                  });
+                }).catch(() => {});
+              }
+            }
+          } catch (_) {}
+        });
       }
       return () => { try { socket && socket.close(); } catch(_) {} };
     } catch(_) { return () => {}; }

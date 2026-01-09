@@ -176,10 +176,10 @@ export default function DoctorToday() {
               if (String(actor || '').toLowerCase() === 'doctor') return;
               
               const id = String(apptId || '');
-              if (kind === 'pre') {
+              if (kind === 'pre' || kind === 'followup') {
                 const t = String(text || '').trim();
                 if (t) {
-                  const k = `wr_${id}_chat`;
+                  const k = kind === 'followup' ? `fu_${id}_chat` : `wr_${id}_chat`;
                   const arr = JSON.parse(localStorage.getItem(k) || '[]');
                   const next = [...arr, t];
                   localStorage.setItem(k, JSON.stringify(next));
@@ -193,8 +193,30 @@ export default function DoctorToday() {
                   });
                 }
               } else if (kind === 'report') {
-                // Refresh if needed
-                load();
+                const id = String(apptId || '');
+                if (id) {
+                  API.get(`/appointments/${id}`).then((res) => {
+                    const data = res?.data || {};
+                    const serverF = Array.isArray(data?.patientReports) ? data.patientReports : [];
+                    setDetailsAppt((prev) => {
+                      if (prev && String(prev._id || prev.id) === id) {
+                        setWrFiles((p) => {
+                          const seen = new Set();
+                          const uniq = [];
+                          for (const x of [...p, ...serverF]) {
+                            const key = `${String(x?.url || '')}|${String(x?.name || '')}`;
+                            if (!key || seen.has(key)) continue;
+                            seen.add(key);
+                            uniq.push(x);
+                          }
+                          return uniq;
+                        });
+                        return { ...prev, ...data };
+                      }
+                      return prev;
+                    });
+                  }).catch(() => {});
+                }
               } else if (kind === 'details') {
                 const id = String(apptId || '');
                 if (id) {
