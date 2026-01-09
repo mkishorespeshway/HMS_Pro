@@ -6,7 +6,7 @@ async function createNotification(app, payload) {
   const { userId, title, message, type, link, dedupeKey, apptId, text, kind } = payload || {};
   if (!userId || !message) return null;
   let existing = null;
-  if (dedupeKey && type !== 'chat') existing = await Notification.findOne({ user: userId, dedupeKey });
+  if (dedupeKey) existing = await Notification.findOne({ user: userId, dedupeKey });
   if (existing) return existing;
   const doc = await Notification.create({ user: userId, title, message, type, kind, link, dedupeKey, apptId: apptId ? String(apptId) : undefined });
   try {
@@ -39,7 +39,10 @@ async function notifyChat(app, msg) {
         if (String(kind || '').toLowerCase() === 'followup') link = `/doctor/appointments/${id}/followup`;
       }
     } catch (_) {}
-    await createNotification(app, { userId, title, message, type, kind, link, apptId, text });
+
+    // Deduplicate chat notifications within a 5-second window for the same message content
+    const dedupeKey = `chat_${apptId}_${actor}_${message.replace(/\s+/g,'_')}_${Math.floor(Date.now() / 5000)}`;
+    await createNotification(app, { userId, title, message, type, kind, link, apptId, text, dedupeKey });
   } catch (_) {}
 }
 

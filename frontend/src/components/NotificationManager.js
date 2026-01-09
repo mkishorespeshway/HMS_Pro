@@ -50,16 +50,25 @@ export default function NotificationManager({ actor = 'patient' }) {
         if (socket) {
           socket.on('notify', (p) => {
             try {
-              const id = String(Date.now()) + String(Math.random());
               const sid = String(p?.id || '');
+              
+              // Local deduplication check
               if (sid) {
+                let alreadySeen = false;
                 setSeenIds((prev) => {
+                  if (prev.has(sid)) {
+                    alreadySeen = true;
+                    return prev;
+                  }
                   const next = new Set(prev);
                   next.add(sid);
                   try { localStorage.setItem('seenNotifIds', JSON.stringify(Array.from(next))); } catch(_) {}
                   return next;
                 });
+                if (alreadySeen) return;
               }
+
+              const id = String(Date.now()) + String(Math.random());
               window.dispatchEvent(new CustomEvent('hospozen_notif', { detail: p }));
               setNotifs((prev) => [{
                 id,
@@ -134,9 +143,13 @@ export default function NotificationManager({ actor = 'patient' }) {
         if (!token) return;
         const { data } = await API.get('/notifications', { params: { unread: 1 } });
         const items = Array.isArray(data) ? data : [];
+        let changed = false;
+        let nextSeen = new Set(seenIds);
         items.forEach((n) => {
           const sid = String(n._id || n.id || '');
-          if (!sid || seenIds.has(sid)) return;
+          if (!sid || nextSeen.has(sid)) return;
+          changed = true;
+          nextSeen.add(sid);
           window.dispatchEvent(new CustomEvent('hospozen_notif', { detail: n }));
           const id = String(Date.now()) + String(Math.random());
           setNotifs((prev) => [{
@@ -148,16 +161,15 @@ export default function NotificationManager({ actor = 'patient' }) {
             apptId: n.apptId ? String(n.apptId) : ''
           }, ...prev].slice(0, 4));
           setTimeout(() => { setNotifs((prev) => prev.filter((x) => x.id !== id)); }, 30000);
-          setSeenIds((prev) => {
-            const next = new Set(prev); next.add(sid);
-            try { localStorage.setItem('seenNotifIds', JSON.stringify(Array.from(next))); } catch(_) {}
-            return next;
-          });
         });
+        if (changed) {
+          setSeenIds(nextSeen);
+          try { localStorage.setItem('seenNotifIds', JSON.stringify(Array.from(nextSeen))); } catch(_) {}
+        }
       } catch(_) {}
     };
     fetchNow();
-    const t = setInterval(fetchNow, 15000);
+    const t = setInterval(fetchNow, 5000);
     return () => clearInterval(t);
   }, [token, seenIds]);
 
