@@ -463,7 +463,7 @@ export default function SearchDoctors() {
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Search Doctors</label>
                   <input
                     className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 outline-none text-slate-700 font-medium"
-                    placeholder="Search by name, clinic, or specialization..."
+                    placeholder="Search by name or specialization..."
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') search(); }}
