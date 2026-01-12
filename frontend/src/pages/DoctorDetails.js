@@ -506,6 +506,17 @@ export default function DoctorDetails() {
                 const items = mine.data || [];
                 const did = String(doctor?.user?._id || '');
                 const sameDay = (items || []).filter((x) => String(x.date) === String(selectedDate));
+                
+                // Check if patient has any other appointment at the same time with ANY doctor
+                const timeConflict = sameDay.find((x) => 
+                  x.startTime === selectedSlot.start && 
+                  ['PENDING', 'CONFIRMED'].includes(String(x.status).toUpperCase())
+                );
+                if (timeConflict) {
+                  alert("You already have an appointment with a doctor at this time. If you want to book this appointment, please cancel your existing appointment first.");
+                  return;
+                }
+
                 const nowTs = Date.now();
                 const inCall = sameDay.some((x) => {
                   const aid = String(x._id || x.id || '');

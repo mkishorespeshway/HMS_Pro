@@ -53,7 +53,7 @@ router.post("/", authenticate, async (req, res) => {
     if (!doctorId || !date || !startTime || !endTime)
         return res.status(400).json({ message: "Missing fields" });
 
-    // Check conflicts
+    // Check conflicts (Doctor's side)
     const conflict = await Appointment.findOne({
         doctor: doctorId,
         date,
@@ -63,6 +63,17 @@ router.post("/", authenticate, async (req, res) => {
 
     if (conflict)
         return res.status(409).json({ message: "Slot already booked" });
+
+    // Check conflicts (Patient's side)
+    const patientConflict = await Appointment.findOne({
+        patient: req.user._id,
+        date,
+        startTime,
+        status: { $in: ["PENDING", "CONFIRMED"] }
+    });
+
+    if (patientConflict)
+        return res.status(409).json({ message: "You already have an appointment with a doctor at this time. If you want to book this appointment, please cancel your existing appointment first." });
 
     const profile = await DoctorProfile.findOne({ user: doctorId });
     const fee = profile?.consultationFees || 0;
