@@ -82,4 +82,35 @@ async function notifyPrescription(app, apptId) {
   } catch (_) {}
 }
 
-module.exports = { createNotification, notifyChat, notifyAppointmentConfirmed, notifyMeetingLink, notifySessionComplete, notifyPrescription };
+async function notifyAppointmentCancelled(app, appt, cancelledBy) {
+  try {
+    const id = String(appt._id || appt.id || '');
+    const when = `${appt.date} ${appt.startTime}-${appt.endTime}`;
+    const patientName = appt.patient?.name || 'Patient';
+    const doctorName = appt.doctor?.name || 'Doctor';
+
+    if (cancelledBy === 'patient') {
+      // Notify doctor
+      await createNotification(app, {
+        userId: appt.doctor,
+        title: 'Appointment Cancelled',
+        message: `Appointment cancelled by patient: ${patientName}. Time: ${when}.`,
+        type: 'appointment',
+        link: '/doctor/dashboard',
+        dedupeKey: `appt_cancel_doctor_${id}`
+      });
+    } else {
+      // Notify patient
+      await createNotification(app, {
+        userId: appt.patient,
+        title: 'Appointment Cancelled',
+        message: `Your appointment with Dr. ${doctorName} on ${appt.date} at ${appt.startTime} has been cancelled.`,
+        type: 'appointment',
+        link: '/appointments',
+        dedupeKey: `appt_cancel_patient_${id}`
+      });
+    }
+  } catch (_) {}
+}
+
+module.exports = { createNotification, notifyChat, notifyAppointmentConfirmed, notifyMeetingLink, notifySessionComplete, notifyPrescription, notifyAppointmentCancelled };

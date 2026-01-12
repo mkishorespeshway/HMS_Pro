@@ -6,7 +6,7 @@ const DoctorProfile = require("../models/DoctorProfile");
 const { generateSlots } = require("../utils/slotGenerator");
 const { sendMail } = require("../utils/mailer");
 const { createMeetLink } = require("../utils/meeting");
-const { notifyAppointmentConfirmed, notifyMeetingLink, notifySessionComplete, notifyPrescription } = require('../utils/notify');
+const { notifyAppointmentConfirmed, notifyMeetingLink, notifySessionComplete, notifyPrescription, notifyAppointmentCancelled } = require('../utils/notify');
 const cloudinary = require('cloudinary').v2;
 
 // -------------------------------
@@ -249,14 +249,23 @@ router.put("/:id/complete", authenticate, async (req, res) => {
 
 router.put("/:id/cancel", authenticate, async (req, res) => {
     const { id } = req.params;
-    const appt = await Appointment.findById(id);
+    const appt = await Appointment.findById(id).populate('patient', 'name').populate('doctor', 'name');
     if (!appt) return res.status(404).json({ message: "Appointment not found" });
     const uid = String(req.user._id);
-    const isOwner = String(appt.patient) === uid || String(appt.doctor) === uid;
+    const patientId = String(appt.patient?._id || appt.patient);
+    const doctorId = String(appt.doctor?._id || appt.doctor);
+    const isOwner = patientId === uid || doctorId === uid;
     const isAdmin = req.user.role === "admin";
     if (!isOwner && !isAdmin) return res.status(403).json({ message: "Forbidden" });
     appt.status = "CANCELLED";
     await appt.save();
+
+    // Notify the other party
+    const cancelledBy = patientId === uid ? 'patient' : (isAdmin ? 'admin' : 'doctor');
+    try {
+      await notifyAppointmentCancelled(req.app, appt, cancelledBy);
+    } catch (_) {}
+
     res.json(appt);
 });
 
@@ -279,17 +288,23 @@ router.put("/:id/accept", authenticate, async (req, res) => {
 router.put("/:id/reject", authenticate, async (req, res) => {
   const { id } = req.params;
   const { date, startTime } = req.body || {};
-  let appt = await Appointment.findById(id);
+  let appt = await Appointment.findById(id).populate('patient', 'name').populate('doctor', 'name');
   if (!appt && date && startTime) {
-    appt = await Appointment.findOne({ doctor: req.user._id, date, startTime });
+    appt = await Appointment.findOne({ doctor: req.user._id, date, startTime }).populate('patient', 'name').populate('doctor', 'name');
   }
   if (!appt) return res.status(404).json({ message: "Appointment not found" });
   const uid = String(req.user._id);
-  const isDoctor = req.user.role === "doctor" && String(appt.doctor) === uid;
+  const isDoctor = req.user.role === "doctor" && String(appt.doctor?._id || appt.doctor) === uid;
   const isAdmin = req.user.role === "admin";
   if (!isDoctor && !isAdmin) return res.status(403).json({ message: "Forbidden" });
   appt.status = "CANCELLED";
   await appt.save();
+
+  // Rejection is always by doctor/admin, notify patient
+  try {
+    await notifyAppointmentCancelled(req.app, appt, isAdmin ? 'admin' : 'doctor');
+  } catch (_) {}
+
   res.json(appt);
 });
 
