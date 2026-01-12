@@ -78,16 +78,14 @@ export default function DoctorToday() {
         d.setHours(hh, mm, 0, 0);
         return d.getTime();
       };
-      const pending = (items || []).filter((a) => String(a.status).toUpperCase() === "PENDING");
-      const confirmed = (items || []).filter((a) => String(a.status).toUpperCase() === "CONFIRMED");
-      const done = (items || []).filter((a) => {
+      const active = (items || []).filter((a) => {
         const s = String(a.status).toUpperCase();
-        return s === "CANCELLED" || s === "COMPLETED";
+        return s !== "CANCELLED" && s !== "COMPLETED";
       });
-      pending.sort((x, y) => toTS(y) - toTS(x));
-      confirmed.sort((x, y) => toTS(y) - toTS(x));
-      done.sort((x, y) => toTS(y) - toTS(x));
-      items = [...pending, ...confirmed, ...done];
+      const completed = (items || []).filter((a) => String(a.status).toUpperCase() === "COMPLETED");
+      active.sort((x, y) => toTS(y) - toTS(x));
+      completed.sort((x, y) => toTS(y) - toTS(x));
+      items = [...active, ...completed];
       setList(items);
     } catch (e) {
       if (e.message === 'canceled') return;

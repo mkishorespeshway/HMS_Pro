@@ -177,9 +177,13 @@ router.post("/:id/pay", authenticate, async (req, res) => {
 router.get("/today", authenticate, async (req, res) => {
     if (req.user.role !== "doctor") return res.status(403).json({ message: "Only doctors" });
     const today = new Date().toISOString().slice(0, 10);
-    const list = await Appointment.find({ doctor: req.user._id, date: today })
+    const list = await Appointment.find({ 
+        doctor: req.user._id, 
+        date: today,
+        status: { $ne: "CANCELLED" }
+    })
         .populate("patient", "name email photoBase64 birthday gender")
-        .sort({ startTime: 1 });
+        .sort({ startTime: -1 });
     res.json(list);
 });
 

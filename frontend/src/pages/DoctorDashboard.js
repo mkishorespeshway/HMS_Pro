@@ -9,6 +9,26 @@ export default function DoctorDashboard() {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [latestToday, setLatestToday] = useState([]);
+  const sortedToday = useMemo(() => {
+    const arr = (latestToday || []).filter((a) => String(a.status).toUpperCase() !== "CANCELLED");
+    const toTS = (a) => {
+      const d = new Date(a.date);
+      if (Number.isNaN(d.getTime())) return 0;
+      const t = String(a.startTime || "00:00");
+      const parts = t.split(":");
+      const hh = Number(parts[0]) || 0;
+      const mm = Number(parts[1]) || 0;
+      d.setHours(hh, mm, 0, 0);
+      return d.getTime();
+    };
+    return [...arr].sort((x, y) => {
+      const sX = String(x.status).toUpperCase();
+      const sY = String(y.status).toUpperCase();
+      if (sX === "COMPLETED" && sY !== "COMPLETED") return 1;
+      if (sX !== "COMPLETED" && sY === "COMPLETED") return -1;
+      return toTS(y) - toTS(x); // Latest (latest time) first
+    });
+  }, [latestToday]);
   const [error, setError] = useState("");
   const [online, setOnline] = useState(() => {
     const uid = localStorage.getItem("userId") || "";
@@ -699,11 +719,12 @@ export default function DoctorDashboard() {
   const stats = useMemo(() => {
     const patients = new Set();
     let earnings = 0;
-    (list || []).forEach((a) => {
+    const filtered = (list || []).filter((a) => String(a.status).toUpperCase() !== "CANCELLED");
+    filtered.forEach((a) => {
       if (a.patient?._id) patients.add(a.patient._id);
       if (a.paymentStatus === "PAID" || a.status === "COMPLETED") earnings += Number(a.fee || 0);
     });
-    return { appointments: list.length, patients: patients.size, earnings };
+    return { appointments: filtered.length, patients: patients.size, earnings };
   }, [list]);
 
   const upcoming = useMemo(() => {
@@ -1152,10 +1173,10 @@ export default function DoctorDashboard() {
             {loading && <div className="text-slate-600 animate-pulse">Loading...</div>}
             {error && !loading && <div className="text-red-600 mb-3 text-sm bg-red-50 p-2 rounded-md border border-red-100">{error}</div>}
             <div className="space-y-3">
-              {(latestToday || []).length === 0 && !loading ? (
+              {sortedToday.length === 0 && !loading ? (
                 <div className="text-slate-500 italic py-4 text-center">No appointments scheduled for today</div>
               ) : (
-                (latestToday || []).map((a) => (
+                sortedToday.map((a) => (
                   <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-slate-100 bg-slate-50/30 rounded-xl px-4 py-3 hover:bg-white hover:shadow-md transition-all duration-300">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
