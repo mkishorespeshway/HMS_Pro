@@ -26,8 +26,10 @@ export default function AdminDashboard() {
         const a = await API.get("/admin/appointments");
         const list = a.data || [];
         setAppointmentCount(list.length);
-        const setIds = new Set(list.map((x) => x.patient?._id || String(x.patient || "")));
-        setPatientCount(setIds.size);
+
+        const p = await API.get("/admin/patients");
+        setPatientCount(p.data?.length || 0);
+
         const ordered = list.slice().sort((u, v) => rank(u.status) - rank(v.status));
         setLatest(ordered.slice(0, 5));
       } catch (e) {}

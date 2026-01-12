@@ -132,4 +132,14 @@ router.get('/appointments', authenticate, authorize(['admin']), async (req, res)
   res.json(list);
 });
 
+// List all patients (admin)
+router.get('/patients', authenticate, authorize(['admin']), async (req, res) => {
+  try {
+    const patients = await User.find({ role: 'patient' }).select('-passwordHash');
+    res.json(patients);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
 module.exports = router;
