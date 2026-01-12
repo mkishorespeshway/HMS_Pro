@@ -49,6 +49,17 @@ export default function SearchDoctors() {
     return `data:image/png;base64,${s}`;
   };
 
+  const handleDeleteDoctor = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this doctor? This will cancel all their future appointments and remove their account permanently.")) return;
+    try {
+      await API.delete(`/admin/doctors/${id}`);
+      alert("Doctor deleted successfully");
+      search();
+    } catch (e) {
+      alert(e.response?.data?.message || "Failed to delete doctor");
+    }
+  };
+
   const abortRef = useRef(null);
   const search = async () => {
     setError("");
@@ -399,9 +410,18 @@ export default function SearchDoctors() {
                         {typeof d.consultationFees === 'number' && (
                           <div className="text-sm text-slate-600 font-semibold mb-3">Fee: <span className="text-green-600">₹{d.consultationFees}</span></div>
                         )}
-                        <Link to={`/admin/doctors/${d.user._id}`} className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                          View Profile
-                        </Link>
+                        <div className="flex flex-col gap-2">
+                          <Link to={`/admin/doctors/${d.user._id}`} className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                            View Profile
+                          </Link>
+                          <button 
+                            onClick={() => handleDeleteDoctor(d.user._id)}
+                            disabled={d.isOnline !== false}
+                            className={`inline-flex items-center justify-center w-full py-3 px-4 rounded-xl font-semibold shadow-lg transition-all duration-300 ${d.isOnline !== false ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 text-white hover:scale-105'}`}
+                          >
+                            Delete Doctor
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}

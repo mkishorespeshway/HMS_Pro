@@ -5,6 +5,7 @@ const User = require('../models/User');
 const DoctorProfile = require('../models/DoctorProfile');
 const { sendMail } = require('../utils/mailer');
 const Appointment = require('../models/Appointment');
+const { createNotification } = require('../utils/notify');
 
 // Create doctor (admin)
 router.post('/doctors', authenticate, authorize(['admin']), async (req, res) => {
@@ -137,6 +138,56 @@ router.get('/patients', authenticate, authorize(['admin']), async (req, res) => 
   try {
     const patients = await User.find({ role: 'patient' }).select('-passwordHash');
     res.json(patients);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
+// Delete doctor (admin)
+router.delete('/doctors/:id', authenticate, authorize(['admin']), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user || user.role !== 'doctor') return res.status(404).json({ message: 'Doctor not found' });
+
+    const profile = await DoctorProfile.findOne({ user: id });
+    if (profile && profile.isOnline) {
+      return res.status(400).json({ message: 'Cannot delete doctor while they are online. Please ask them to go offline first.' });
+    }
+
+    // Get tomorrow's date string
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+    // Find appointments for tomorrow and onwards
+    const appts = await Appointment.find({
+      doctor: id,
+      date: { $gte: tomorrowStr },
+      status: { $ne: 'CANCELLED' }
+    }).populate('doctor', 'name');
+
+    for (const appt of appts) {
+      appt.status = 'CANCELLED';
+      await appt.save();
+
+      const doctorName = appt.doctor?.name || user.name || 'Doctor';
+      const message = `Your appointment with Dr. ${doctorName} on ${appt.date} has been cancelled as the doctor is no longer available on our platform. We apologize for the inconvenience.`;
+      
+      await createNotification(req.app, {
+        userId: appt.patient,
+        title: 'Appointment Cancelled',
+        message,
+        type: 'appointment',
+        link: '/appointments'
+      });
+    }
+
+    // Delete profile and user
+    await DoctorProfile.deleteOne({ user: id });
+    await User.deleteOne({ _id: id });
+
+    res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ message: e.message });
   }
